@@ -56,12 +56,10 @@ class selfref_ca(abc.ABC): #I am not inheriting this for now, just copying-pasti
         pass
 
     def cellCalculate(self, parent):
-        #print (parent)
         return self.b_rule[(-1-lookupTable[parent])]
 
     def iterate_once(self):
         self.b_rule = self.calculateRule()
-        #print(self.b_rule)
         self.map.append(self.line)
         tempStr = ""
         self.line = self.border + self.line + self.border
@@ -69,9 +67,7 @@ class selfref_ca(abc.ABC): #I am not inheriting this for now, just copying-pasti
         for chnum, ch in enumerate(self.line):
             if chnum == 0 or chnum == (self.size + 1):
                 continue
-            #print(chnum)
             tempStr += self.cellCalculate((self.line[chnum - 1] + ch + self.line[chnum + 1]))
-            #print (tempStr)
 
         self.line = tempStr
 
@@ -79,7 +75,7 @@ class selfref_ca(abc.ABC): #I am not inheriting this for now, just copying-pasti
         while len(self.map) < self.limit:
             self.iterate_once()
 
-        self.map.append(self.line)
+        
         return self.map
 
 class block_ones_majority_srca(selfref_ca):
@@ -190,9 +186,7 @@ class bl_tr_odd_p_mid_nybble_switch_srca(selfref_ca):
         temp = rule_list[5]
         rule_list[5] = rule_list[6]
         rule_list[6] = temp
-        print(rule)
         rule = "".join(rule_list)
-        print(rule)
         return rule
 
 
@@ -201,8 +195,10 @@ def formatline(line):
     for ch in line:
         if ch == '1':
             temp += '#'
-        else:
+        elif ch == '0':
             temp += ' '
+        else:
+            temp += ch
 
     return temp
 
