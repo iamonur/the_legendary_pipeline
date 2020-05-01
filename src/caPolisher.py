@@ -1,6 +1,9 @@
 import cellularAutomata #self-referencing cellular automata
 import operator #To get key with maximum value.
 
+class polisherException(Exception):
+    pass
+
 space_identifiers = {
     0:'0',
     1:'1',
@@ -70,7 +73,6 @@ reverse_space_identifiers = {}
 
 for item in space_identifiers:
     reverse_space_identifiers.update({space_identifiers[item]:item})
-print(reverse_space_identifiers)
 
 
 class polisher:
@@ -79,7 +81,7 @@ class polisher:
         self.ca = ca
         self.map_1 = self.ca.perform()
         self.whole_space = self.get_full_fs(self.map_1)
-        self.connected_spaces, self.test_map_enumed = self.get_connected_fses(self.map_1)
+        self.connected_spaces, self.map_enumed = self.get_connected_fses(self.map_1)
 
     def create_distance_matrix(self, connected_fses, map):
         startingDistance = 2147483647
@@ -184,7 +186,6 @@ class polisher:
 
         return map #Other things are invalid now. Remember to re-calculate.
 
-
     def get_full_fs(self, map):
         ones = 0
         zeroes = 0
@@ -224,7 +225,6 @@ class polisher:
 
         return map
 
-
     def turn_neighboring_cells(self, map, x, y, areaNumber):
         count = 1 #At least this cell is turned
         temp = list(map[x])
@@ -249,6 +249,31 @@ class polisher:
 
         return count, map
 
+    def wallify(self, map, connected_fses):
+        big_chunk = max(connected_fses, key=connected_fses.get)
+        big_chunk_enum = space_identifiers[big_chunk]
+        for ln, line in enumerate(map):
+            foo = list(line)
+            for chn, ch in enumerate(foo):
+                if ch != big_chunk_enum:
+                    foo[chn] = '1'
+            map[ln] = "".join(foo)
+        map_print(map)
+        return map
+
+
+    def perform(self):
+        while self.connected_spaces[max(self.connected_spaces, key=self.connected_spaces.get)] < ((self.minArea/100)*self.ca.limit*self.ca.size):
+
+            if len(self.connected_spaces) == 1:
+                raise polisherException("Cannot generate map with that percentage of area!")
+                
+            self.map_enumed = self.iterate_on_distance_matrix(self.create_distance_matrix(self.connected_spaces, self.map_enumed), self.connected_spaces, self.map_enumed)
+            self.map1 = self.reset_map(self.map_enumed)
+            self.whole_space = self.get_full_fs(self.map_1)
+            self.connected_spaces, self.map_enumed = self.get_connected_fses(self.map_1)
+        return self.reset_map(self.wallify(self.map_enumed, self.connected_spaces))
+
 def map_print(map):
     print("")
     for line in map:
@@ -256,12 +281,4 @@ def map_print(map):
 
 if __name__ == "__main__":
     p = polisher()
-    print(p.whole_space)
-    print(p.connected_spaces)
-    map_print(p.test_map_enumed)
-    #map_print(p.reset_map(p.test_map_enumed))
-    map2 = (p.iterate_on_distance_matrix(p.create_distance_matrix(p.connected_spaces, p.test_map_enumed), p.connected_spaces, p.test_map_enumed))
-    map2 = p.reset_map(map2)
-    foo, map2 = p.get_connected_fses(map2)
-    map_print(map2)
-    print(foo)
+    map_print(p.perform())
