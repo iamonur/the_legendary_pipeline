@@ -1,6 +1,9 @@
 import os
 import subprocess
 
+class spinCompileException(Exception):
+    pass
+
 promela_comment_01 = """
 //Game-1: Escape from opponent to the portal
 //Game-2: Catch the opponent before it gets into the portal.
@@ -23,17 +26,17 @@ promela_comment_02 = """
 # 0 -> width of the map
 # 1 -> height of the map
 promela_header_for_game_1 = """
-typedef row{ //This is for creating 2-D arrays, since they are not supported.
-    byte a[{0}];
-}
+typedef row{{ //This is for creating 2-D arrays, since they are not supported.
+    byte a[{}];
+}}
 
 bit win  = 0;
 bit dead = 0;
-row map[{1}]; //This is your 2-D array.
+row map[{}]; //This is your 2-D array.
 
-chan avatar_turn = [0] of {bit}; //randez-vous at (start of avatar, end of opponent). 0: avatar is dead.
-chan opponent_turn = [0] of {byte, byte}; //the opposite randez-vous. Avatar's location is server with channel.
-chan opponent_turn2 = [0] of {bit};
+chan avatar_turn = [0] of {{bit}}; //randez-vous at (start of avatar, end of opponent). 0: avatar is dead.
+chan opponent_turn = [0] of {{byte, byte}}; //the opposite randez-vous. Avatar's location is server with channel.
+chan opponent_turn2 = [0] of {{bit}};
 """ # TODO: Check if I'm using the opponent_turn2.
 # 0 -> width of the map
 # 1 -> height of the map
@@ -495,28 +498,32 @@ init{{
 promela_init_for_game_1 = """
 init{{
     byte i, ii;
-    for (i : 0 .. {}) {{
+    for (i : 0 .. {length}) {{
         // Initialize walls
-        map[{}].a[i] = 1;
-        map[0].a[i] = 1;
+
         map[i].a[0] = 1;
-        map[i].a[{}] = 1;
+        map[i].a[{width}] = 1;
     }}
-    for (i : 1 .. {}) {{
-        for (ii : 1 .. {}) {{
+    for (i : 0 .. {width}){{
+        map[0].a[i] = 1;
+        map[{length}].a[i] = 1;
+    }}
+
+    for (i : 1 .. {length2}) {{
+        for (ii : 1 .. {width2}) {{
             // Initialize floors
             map[i].a[ii] = 0;
         }}
     }}
     //Generic placement of walls
-    {}
+    {wall_str}
     //Place portal
-    map[{}].a[{}] = 3;
-    run avatar({},{});
-    run opponent({},{});
+    map[{portal_y}].a[{portal_x}] = 3;
+    run avatar({avatar_y},{avatar_x});
+    run opponent({opponent_y},{opponent_x});
 
     opponent_turn2!1;
-    opponent_turn!{},{}
+    opponent_turn!{avatar_y},{avatar_x}
 
 	//avatar_turn!1
 }}
@@ -532,11 +539,16 @@ class SpinClass:
     #self.enemy_location = (y,x) location of the enemy
     #self.portal_location = (y,x) location of the enemy
     #self.map_to_feed = Map with outer walls.
+    #gameType 1 is supported for now, more will come in this module.
 
     def __init__(self, map):
         self.map = map
         self.width = len(map[0])
         self.length = len(map)
+        self.fixed_map = None
+        self.list_walls = []
+        self.promela_whole_file = """{}\n{}\n{}\n{}\n{}\n{}\n{}"""
+        self.wall_string = "{}"
 
     def fix_map(self):
         temp_map = []
@@ -551,6 +563,7 @@ class SpinClass:
                     temp_map[lineNum][chNum] = '.'
                 elif ch == '1':
                     temp_map[lineNum][chNum] = 'w'
+                    self.list_walls.append((lineNum + 1, chNum + 1))
                 elif ch == 'A':
                     self.avatar_location = (lineNum, chNum)
                 elif ch == 'G':
@@ -575,8 +588,46 @@ class SpinClass:
 
         self.fixed_map.insert(0, to_attach)
         self.fixed_map.append(to_attach)
-    #def create_spin(self):
 
+    def create_wall_string(self):
+        for wall in self.list_walls:
+            self.wall_string = self.wall_string.format("\tmap[{}].a[{}] = 1;\n{}".format(wall[0], wall[1], "{}"))
+        self.wall_string = self.wall_string.format(" ")
+
+
+    def create_spin(self):
+        if self.fixed_map is None:
+            self.fix_map()
+        self.create_wall_string()
+        #print(self.wall_string)
+        formatted_init = promela_init_for_game_1.format(
+            avatar_y = self.avatar_location[0]+1,
+            avatar_x = self.avatar_location[1]+1,
+            portal_y = self.portal_location[0]+1,
+            portal_x = self.portal_location[1]+1,
+            opponent_y = self.enemy_location[0]+1,
+            opponent_x = self.enemy_location[1]+1,
+            length = self.length+2,
+            length2 = self.length+1,
+            width = self.width+2,
+            width2 = self.width+1,
+            wall_str = self.wall_string)
+        formatted_header = promela_header_for_game_1.format(self.length + 1, self.width + 1)
+        self.promela_whole_file = self.promela_whole_file.format(promela_comment_01, promela_comment_02, formatted_header, promela_avatar_for_game_1, promela_opponent_for_game_1, formatted_init, promela_ltl_formula_basic)
+
+    def perform(self):
+        self.create_spin()
+        os.system("mkdir ../spin >/dev/null 2>&1")
+        os.system("rm ../spin/temp.pml > /dev/null")
+        f = open("../spin/temp.pml", "a")
+        f.write(self.promela_whole_file)
+        f.close()
+        os.system("spin -a ../spin/temp.pml > /dev/null")
+        proc = subprocess.Popen(["gcc pan.c -DREACH -o ../spin/temp.out"], stdout=subprocess.PIPE, shell=True)
+        (out, err) = proc.communicate()
+        if out != b'':
+            raise spinCompileException("Cannot compile with gcc.")
+        os.system("../spin/temp.out -a -i >/dev/null 2>&1")
 
 
 
@@ -588,6 +639,4 @@ if __name__ == "__main__":
     ss = SpinClass(s.getMap())
     ss.fix_map()
     caPolisher.map_print(ss.fixed_map)
-    print(ss.width)
-    print(ss.length)
-    
+    ss.perform()
