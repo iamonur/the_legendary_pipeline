@@ -62,14 +62,14 @@ class spritePlanner:
         for line in self.map:
             dummy_map.append(list(line))
 
-        (x,y) = self.avatarAt
-        dummy_map[x][y] = 'A'
+        (y, x) = self.avatarAt
+        dummy_map[y][x] = 'A'
 
-        (x,y) = self.portalAt
-        dummy_map[x][y] = 'G'
+        (y, x) = self.portalAt
+        dummy_map[y][x] = 'G'
 
-        (x,y) = self.enemyAt
-        dummy_map[x][y] = 'E'
+        (y, x) = self.enemyAt
+        dummy_map[y][x] = 'E'
 
         for ln, line in enumerate(dummy_map):
             self.map[ln] = "".join(line)
