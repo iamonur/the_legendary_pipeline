@@ -1,5 +1,7 @@
 import caPolisher
 
+#TODO: implement more game types than just Basic, which is game -1 
+
 class spritePlannerException(Exception):
     pass
 

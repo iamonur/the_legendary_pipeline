@@ -5,7 +5,7 @@ class cannotWinException(Exception):
 
 class spinParser:
 
-    def __init__(self, outFile, execFile, trailFile):
+    def __init__(self, outFile="tempfile.txt", execFile="../spin/temp.out", trailFile="temp.pml.trail"):
         self.output_file = outFile
         self.executable_file = execFile
         self.trail_file = trailFile
@@ -94,6 +94,6 @@ class spinParser:
         avatar, opponent = self.__parse_moves(self.__parse_trail_output())
         if av is None:
             raise cannotWinException("Avatar cannot win the game!")
-        return av
+        return av, opponent
 
 if __name__ == "__main__":
