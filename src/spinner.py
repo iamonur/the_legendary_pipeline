@@ -599,7 +599,7 @@ class SpinClass:
         if self.fixed_map is None:
             self.fix_map()
         self.create_wall_string()
-        #print(self.wall_string)
+        
         formatted_init = promela_init_for_game_1.format(
             avatar_y = self.avatar_location[0]+1,
             avatar_x = self.avatar_location[1]+1,
@@ -607,12 +607,12 @@ class SpinClass:
             portal_x = self.portal_location[1]+1,
             opponent_y = self.enemy_location[0]+1,
             opponent_x = self.enemy_location[1]+1,
-            length = self.length+2,
-            length2 = self.length+1,
-            width = self.width+2,
-            width2 = self.width+1,
+            length = self.length+1,
+            length2 = self.length,
+            width = self.width+1,
+            width2 = self.width,
             wall_str = self.wall_string)
-        formatted_header = promela_header_for_game_1.format(self.length + 1, self.width + 1)
+        formatted_header = promela_header_for_game_1.format(self.length + 2, self.width + 2)
         self.promela_whole_file = self.promela_whole_file.format(promela_comment_01, promela_comment_02, formatted_header, promela_avatar_for_game_1, promela_opponent_for_game_1, formatted_init, promela_ltl_formula_basic)
 
     def perform(self):
@@ -622,12 +622,12 @@ class SpinClass:
         f = open("../spin/temp.pml", "a")
         f.write(self.promela_whole_file)
         f.close()
-        os.system("spin -a ../spin/temp.pml > /dev/null")
+        os.system("spin -a ../spin/temp.pml")
         proc = subprocess.Popen(["gcc pan.c -DREACH -o ../spin/temp.out"], stdout=subprocess.PIPE, shell=True)
         (out, err) = proc.communicate()
         if out != b'':
             raise spinCompileException("Cannot compile with gcc.")
-        os.system("../spin/temp.out -a -i >/dev/null 2>&1")
+        os.system("../spin/temp.out -a -I >/dev/null")
 
 
 

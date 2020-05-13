@@ -7,6 +7,7 @@ import player           #my module
 import spinner          #my module
 import spinParser       #my module
 import random           #used in the example feeder
+import timeit
 
 def pipelineError(Exception):
     pass
@@ -29,33 +30,33 @@ def isOKBasic(dict):
             if ch == '1': #wall
                 continue
             elif ch == '0': #floor
-                playable++
+                playable += 1
             elif ch == 'A': #Avatar+floor
-                playable++
+                playable += 1
                 av_loc = (ln,cn)
             elif ch == 'G': #Portal
                 p_loc = (ln,cn)
             elif ch == 'E': #Opponent+floor
                 op_loc = (ln,cn)
-                playable++
+                playable += 1
     playable   = playable/(width*length)
     dist_to_p  = abs(av_loc[0]-p_loc[0])+abs(av_loc[1]-p_loc[1])
     dist_to_p  = dist_to_p/(width*length)
-    dist_to_op = abs(ab_loc[0]-op_loc[0])+abs(av_loc[1]-op_loc[1])
+    dist_to_op = abs(av_loc[0]-op_loc[0])+abs(av_loc[1]-op_loc[1])
     dist_to_op = dist_to_op/(width*length)
     dist_to_op = 1 - dist_to_op
-    level_size = (width/24)*(height/24)
+    level_size = (width/24)*(length/24)
     op_skips = 0
     for move in dict['opponent']:
         if move == -1:
-            op_skips++
+            op_skips += 1
     op_skips = 1 - op_skips/len(dict['opponent'])
     
     #Get counter-intuitive moves, not sure how, TODO: fix this implementation:
     av_counter_in = 0
     for move in dict['avatar']:
         if move == -1:
-            av_counter_in++
+            av_counter_in += 1
     av_counter_in = av_counter_in/len(dict['avatar'])
 
     d_a   = av_counter_in
@@ -63,7 +64,9 @@ def isOKBasic(dict):
     d_map = 0.25*playable + 0.25*dist_to_p + 0.25*dist_to_op + 0.25*level_size
     difficulty = 0.33*d_a + 0.33*d_op + 0.34*d_map
 
-    if difficulty<0.6 or difficulty>0.8:
+    
+
+    if difficulty<0.3 or difficulty>0.8:
         return False
 
     return True
@@ -87,11 +90,12 @@ class startFeeder(): #You can build rules, purely random or just serve a list. T
         self.count = 0
 
     def serve(self):
-        if count > 10:
+        if self.count > 10:
             raise FeederException("Cannot succeed to create a level by this definition, feeder is depleted.")
         ret = []
-        for i in range(0,23):
+        for i in range(0,24):
             ret.append(str(random.randint(0,1)))
+        self.count += 1
         return "".join(ret)
 
 
@@ -100,7 +104,7 @@ class SimManager():
     #@classmethod
     #def createSimManager(mapgenclass, polisherclass, plannerclass, spinnerclass=SpinClass, parserclass=spinParser, playerclass=GameClass, startFeed)
         
-    def __init__(self, isOK, mapGenerator, mapPolisher, sprPlanner, spin=SpinClass, parser=spinParser, player=GameClass, feed=startFeeder, json_args=None)#Gets class definitions as parameters, which is kinda cool.
+    def __init__(self, isOK, mapGenerator, mapPolisher, sprPlanner, spin=spinner.SpinClass, parser=spinParser.spinParser, player=player.GameClass, feed=startFeeder, json_args=None):#Gets class definitions as parameters, which is kinda cool.
         self.mapgen = mapGenerator
         self.mappolish = mapPolisher
         self.spriter = sprPlanner
@@ -109,7 +113,7 @@ class SimManager():
         self.game = player
         self.rng = startFeeder
         self.isOK = isOK
-        if json_args != None:
+        #if json_args != None:
             #To be implemented. Just wanna see if the pipeline works well.
     
 
@@ -118,13 +122,13 @@ class SimManager():
         rng = self.rng()
         while(True):
             try:
-                line = self.rng.serve()
+                line = rng.serve()
             except FeederException: # No more to serve, imagine recovering from that. For me, this is the point we fail to build.
                 return None
-
+                
             try:
                 map_ = self.mappolish(ca = self.mapgen(start = line)).perform()
-            except polisherException:
+            except caPolisher.polisherException:
                 #this map cannot be polished. Let's get a new one.
                 continue
 
@@ -132,28 +136,33 @@ class SimManager():
             mind.perform()
             map_ = mind.getMap() #Throws, but if you get an exception at this point, there is something you need to fix. Thus I let it propagate.
 
-
-
             modelChecker = self.spinner(map_)
             try:
                 modelChecker.perform() #Your output is at your filesystem now.
-            except spinCompileException:
+            except spinner.spinCompileException:
                 continue # I let it flow by now, but this shouldn't happen if your PROMELA code was correct.
 
             get_moves = self.parser()
             try:
                 avatar, opponent = get_moves.perform()
-            except cannotWinException:
+            except spinParser.cannotWinException:
                 continue # You created an unplayable level. Move on with a new one.
+            
+            ret = {"map": map_, 'avatar': avatar, 'opponent': opponent}
 
-            if player(actions_list = avatar).play() == 1:
-                ret = {"map": map_, 'avatar': avatar, 'opponent': opponent}
-                if self.isOK(ret):
-                    return ret
-                else:
-                    continue
+            if self.isOK(ret) is False:
+                continue
+
+            game = self.game(action_list = avatar, level_desc = map_)
+            if game.play() == 1:
+                return ret
+                
                 
 
             else: #We couldn't win while we think we will, best to fix this. Raise with all info.
-                raise ("Map: " + map_ + " avatar_moves: " + "".join(avatar) + " opponent_moves: " + "".join(opponent) + " failed.") #This can be reconstructed.
+                raise NameError("Nuncked up")
+                #raise ("Map: " + map_ + " avatar_moves: " + "".join(avatar) + " opponent_moves: " + "".join(opponent) + " failed.") #This can be reconstructed.
 
+if __name__ == "__main__":
+    s = SimManager(isOKBasic, cellularAutomata.block_ones_majority_srca, caPolisher.polisher, spritePlanner.spritePlanner)
+    s.pipeline()

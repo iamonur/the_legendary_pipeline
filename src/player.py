@@ -12,7 +12,7 @@ BasicGame
     SpriteSet
         goalportal > Immovable color=GREEN
         wall > Immovable color=BLACK
-        floor > Immovable color=BROWN{immovable_opponent}{chaser_opponnent}
+        floor > Immovable color=BROWN{immovable_opponent}{chaser_opponent}
         players > MovingAvatar
             avatar > alternate_keys=True{free_mover_opponent}
     TerminationSet
@@ -25,10 +25,11 @@ BasicGame
         goalportal avatar > killSprite scoreChange=1
         opponent avatar > killSprite scoreChange=-1
     LevelMapping
+        1 > wall
         E > opponent floor
         G > goalportal
         A > avatar floor
-        . > floor
+        0 > floor
 """
 
 skeleton_game_3 = """
@@ -56,15 +57,24 @@ BasicGame
 """
 
 dummy_maze = """
-wwwwwwww
-wA.....w
-w......w
-w...E..w
-w......w
-w......w
-w.....Gw
-wwwwwwww
+11111111
+1A000001
+10000001
+1111E001
+10000001
+10000001
+100000G1
+11111111
 """
+
+def stringify_list_level(level):
+    ret = ""
+    for line in level:
+        ret += "".join(line)
+        ret += "\n"
+
+    return ret
+
 
 dummy_actions = ['Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip']
 
@@ -78,7 +88,7 @@ gamefile = "tempgame.txt"
 levelfile = "tempgame_levl0.txt"
 
 class GameClass:
-    def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_1.format(immovable_opponent="",free_mover_str="",chaser_str=chaser_opponent_str), level_desc=dummy_maze):
+    def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_1.format(immovable_opponent="",free_mover_opponent="",chaser_opponent=chaser_opponent_str), level_desc=dummy_maze):
         
         self.actions = action_list
         self.level = level_desc
@@ -132,13 +142,12 @@ class GameClass:
         game_f.close()
 
         level_f = open(levelfile, 'w')
-        level_f.write(self.level)
+        level_f.write(stringify_list_level(self.level))
         level_f.close()
 
     def play(self):
 
         self.controller.play()
-        print(self.controller.cummulative_reward)
         return self.controller.cummulative_reward
 
 class ChaserGameClass(GameClass):
@@ -152,6 +161,3 @@ class ChaserGameClass(GameClass):
         self._format_actions()
         self._create_controller()
 
-
-if __name__ == "__main__":
-    print("Testin gameclass")

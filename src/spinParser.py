@@ -62,11 +62,9 @@ class spinParser:
     def __parse_moves(self, moves):
 
         if len(moves) == 0:
-            print("EMPT")
             return None, None
 
         if ["LOSE", "-1"] in moves:
-            print("LOST")
             return None, None
 
         avatar_moves = []
@@ -92,8 +90,7 @@ class spinParser:
 
         self.__get_trail_output()
         avatar, opponent = self.__parse_moves(self.__parse_trail_output())
-        if av is None:
+        if avatar is None:
             raise cannotWinException("Avatar cannot win the game!")
-        return av, opponent
+        return avatar, opponent
 
-if __name__ == "__main__":

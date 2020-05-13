@@ -258,7 +258,6 @@ class polisher:
                 if ch != big_chunk_enum:
                     foo[chn] = '1'
             map[ln] = "".join(foo)
-        map_print(map)
         return map
 
 
