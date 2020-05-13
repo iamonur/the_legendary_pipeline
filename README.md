@@ -31,3 +31,6 @@ You will pass the class and function definitions to the simulation manager, and 
 - implement at least functional tests
 - implement unit tests
 - implement all the games.
+
+# Contributions
+If your contribution is meaningful and you code tests for your code, your pull request will be merged 99% of the time. I will be giving feedback & special thanks to you every time. Don't judge me on the tests, I just started developing them.
