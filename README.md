@@ -18,9 +18,11 @@ You will pass the class and function definitions to the simulation manager, and 
 
 # What are the dependencies?
 - *SPIN*: the model checker, and somewhat backbone of the study.
+- *gcc*: Will compile SPIN output.
+- *Linux-based environment*: I did not, also not going to, test it to work on other OSes. It will mostly not work. If anyone develops on other environments, you will probably need to take your own fork and change system commands.
 - *python>=3.6*: py-vgdl requires this "to have nice things"
 - *pybrain*: py-vgdl also demands this
-- *py-vgdl(my fork)*: The fork I have has both RecordedController, and also a predictable and modellable implementation of the class Chaser.
+- *py-vgdl(my fork)*: The fork I have has both RecordedController, and also a predictable and modellable implementation of the class Chaser. It is at: https://github.com/iamonur/py-vgdl
 
 # My games
 - *Run*: Avatar tries to run away from the opponent to the portal : This game is full implemented&tested
