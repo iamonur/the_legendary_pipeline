@@ -79,7 +79,7 @@ class selfref_ca(abc.ABC): #I am not inheriting this for now, just copying-pasti
         return self.map
 
 class block_ones_majority_srca(selfref_ca):
-    def __init__(self, size=24, limit=24, start="010101010101010101010101", borders='0'):
+    def __init__(self, size=24, limit=24, start="110100101110000111011001", borders='0'):
         if len(start) != size:
             raise ValueError("Size or start is not OK!")
 

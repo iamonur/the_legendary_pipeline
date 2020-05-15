@@ -211,7 +211,6 @@ class polisher:
                 if double_break:
                     double_break = False
                     break
-
         return connected_fses, map
 
     def reset_map(self, map):
@@ -250,7 +249,10 @@ class polisher:
         return count, map
 
     def wallify(self, map, connected_fses):
-        big_chunk = max(connected_fses, key=connected_fses.get)
+        big_chunk = max(connected_fses.values())
+        for (k,v) in connected_fses.items():
+            if v == big_chunk:
+                big_chunk = k
         big_chunk_enum = space_identifiers[big_chunk]
         for ln, line in enumerate(map):
             foo = list(line)
@@ -262,16 +264,21 @@ class polisher:
 
 
     def perform(self):
-        while self.connected_spaces[max(self.connected_spaces, key=self.connected_spaces.get)] < ((self.minArea/100)*self.ca.limit*self.ca.size):
-
+        
+        #while self.connected_spaces[max(self.connected_spaces, key=self.connected_spaces.get)] < ((self.minArea/100)*self.ca.limit*self.ca.size):
+       
+        while max(self.connected_spaces.values()) < ((self.minArea/100)*self.ca.limit*self.ca.size):
             if len(self.connected_spaces) == 1:
                 raise polisherException("Cannot generate map with that percentage of area!")
                 
             self.map_enumed = self.iterate_on_distance_matrix(self.create_distance_matrix(self.connected_spaces, self.map_enumed), self.connected_spaces, self.map_enumed)
-            self.map1 = self.reset_map(self.map_enumed)
+            self.map_1 = self.reset_map(self.map_enumed)
             self.whole_space = self.get_full_fs(self.map_1)
             self.connected_spaces, self.map_enumed = self.get_connected_fses(self.map_1)
-        return self.reset_map(self.wallify(self.map_enumed, self.connected_spaces))
+
+
+        a, b = self.get_connected_fses(self.reset_map(self.map_enumed))
+        return self.reset_map (self.wallify (self.map_enumed, a))
 
 def map_print(map):
     print("")
