@@ -1,7 +1,6 @@
 """
-This is the test suite for functionalities. Not a deep-down one, but check if modules/classes raise when need be, and works properly, at least in a given case.
+    This is the test suite for functionalities. Not a deep-down one, but check if modules/classes raise when need be, and works properly, at least in a given case.
 """
-
 import sys
 sys.path.insert(1, '../src') #That's where my modules are
 import unittest
@@ -51,8 +50,30 @@ class ifCreatingSelfrefInterfaceThrows(unittest.TestCase):
 ######################################################################################################################
 class ifBlockOnesMajorityWorks(unittest.TestCase):
     def test(self):
-        self.assertTrue(True)
-        #self.assertEqual(, ca.block_ones_majority_srca().perform())
+        self.assertEqual([  '110100101110000111011001',
+                            '001111110101001010100111',
+                            '100000011010100101010001',
+                            '100000000111100111110001',
+                            '110000001000011000001011',
+                            '100111100011010011100010',
+                            '110000110001011000110011',
+                            '100111100110110011100110',
+                            '110100110110111010110111',
+                            '101011101101110101101110',
+                            '111111111111111111111111',
+                            '111111111111111111111111',
+                            '111111111111111111111111',
+                            '111111111111111111111111',
+                            '111111111111111111111111',
+                            '111111111111111111111111',
+                            '111111111111111111111111',
+                            '111111111111111111111111',
+                            '111111111111111111111111',
+                            '111111111111111111111111',
+                            '111111111111111111111111',
+                            '111111111111111111111111',
+                            '111111111111111111111111',
+                            '111111111111111111111111'], ca.block_ones_majority_srca().perform())
 class ifBlockOnesMajorityThrows(unittest.TestCase):
     def test(self):
         with self.assertRaises(ValueError) as context:
@@ -62,8 +83,30 @@ class ifBlockOnesMajorityThrows(unittest.TestCase):
 #####################################################################################################################
 class ifBlockOnesOddParityWorks(unittest.TestCase):
     def test(self):
-        self.assertTrue(True)
-        #self.assertEqual(, ca.block_ones_odd_parity_srca().perform())
+        self.assertEqual([  '110100101110000111011001',
+                            '010100100010110001001001',
+                            '111111111111011111111111',
+                            '011111111111101111111111',
+                            '100000000000110000000001',
+                            '001111111110000111111100',
+                            '110111111110111011111101',
+                            '111100000011101110000110',
+                            '011100000001100110000010',
+                            '010111111101110111111001',
+                            '111011111110111011111011',
+                            '110111111101110111110110',
+                            '011000000110011000011010',
+                            '000011110000000011000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000'], ca.block_ones_odd_parity_srca().perform())
 class ifBlockOnesOddParityThrows(unittest.TestCase):
     def test(self):
         with self.assertRaises(ValueError) as context:
@@ -84,8 +127,30 @@ class ifBlockTransitionOddParityThrows(unittest.TestCase):
 ######################################################################################################################
 class ifBlockTransOddParMidNybbleSWWorks(unittest.TestCase):
     def test(self):
-        self.assertTrue(True)
-        #self.assertEqual(, ca.bl_tr_odd_p_mid_nybble_switch_srca().perform())
+        self.assertEqual([  '110100101110000111011001',
+                            '101110110101110010100100',
+                            '111011111111010011100100',
+                            '000100000000110100001101',
+                            '001100000001101100011011',
+                            '110011111110010011100101',
+                            '101101111101111101011110',
+                            '000000000000000001000000',
+                            '000000000000000010000001',
+                            '011111111111111000111100',
+                            '001111111111110010011000',
+                            '001111111111100010010000',
+                            '001111111111000000000000',
+                            '000111111110000000000000',
+                            '100000000001000000000000',
+                            '010000000000100000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000'], ca.bl_tr_odd_p_mid_nybble_switch_srca().perform())
 class ifBlockTransOddParMidNybbleSWThrows(unittest.TestCase):
     def test(self):
         with self.assertRaises(ValueError) as context:
@@ -97,8 +162,6 @@ class ifCAPolisherThrows(unittest.TestCase): #100 is not do-able.
     def test(self):
         with self.assertRaises(cap.polisherException) as context:
             cap.polisher(minimumArea=100).perform()
-                #ca.bl_tr_odd_p_mid_nybble_switch_srca(start="0") #Should raise a polisherException
-
             self.assertTrue("" in context.exception)
 class ifCAPolisherWorksWithNoIteration(unittest.TestCase): #NO iteration needed for 1.
     def test(self):
@@ -185,14 +248,47 @@ class ifCAPolisherMultipleIterationsWork(unittest.TestCase): #75 is do-able with
                             '000000000000000000000000',
                             '000000000000000000000000',
                             '000000000000000000000000'], c3.perform())
-
 ####################################################################################################################
-class ifSPThrows(unittest.TestCase):
-    def test(self):
-        self.assertFalse(False)
 class ifSPWorks(unittest.TestCase):
     def test(self):
-        self.assertEqual(1,1)
+        ccc0= ca.bl_tr_odd_p_mid_nybble_switch_srca()
+        cc0 = cap.polisher(ca = ccc0)
+        s = sp.spritePlanner(cc0.perform())
+        s.perform()
+        self.assertEqual([  '111111111111111111111111',
+                            '111111111111111111100111',
+                            '111111111111111111100111',
+                            'A00100000000111100001111',
+                            '001100000001111100011111',
+                            '100001111100010001000101',
+                            '101101111101110101011100',
+                            '000000000000000001000000',
+                            '000000000000000010000001',
+                            '011111111111111000111100',
+                            '001111111111110010011000',
+                            '001111111111100010010000',
+                            '00111111111E000000000000',
+                            '000111111110000000000000',
+                            '100000000001000000000000',
+                            '010000000000100000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '000000000000000000000000',
+                            '00000000000000000000000G'], s.getMap())
+class ifSPThrows(unittest.TestCase):
+    def test(self):
+        
+        with self.assertRaises(sp.spritePlannerException) as context:
+            ccc0= ca.bl_tr_odd_p_mid_nybble_switch_srca()
+            cc0 = cap.polisher(ca = ccc0)
+            s = sp.spritePlanner(cc0.perform())
+            s.getMap()
+
+        self.assertIsInstance(context.exception, sp.spritePlannerException)
 ##########################################################################################################################
 class ifSpinnerWorks(unittest.TestCase): #If spinner works, compilation is done without an exception. Thus, asserting True.
     def test(self):
