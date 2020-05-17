@@ -8,6 +8,7 @@ import spinner          #my module
 import spinParser       #my module
 import random           #used in the example feeder
 import time
+import dbWrapper
 
 def pipelineError(Exception):
     pass
@@ -21,7 +22,6 @@ def list_sort(list): #The lists are not that big, bubblesort will do.
                 list[idx + 1] = temp
 
 def isOKBasic(dict):
-    print(dict['timings'])
     #This is an example difficulty asseser. Implement your own and put it on the pipeline.
     width = len(dict['map'][0])
     length = len(dict['map'])
@@ -114,12 +114,14 @@ class SimManager():
         self.game = player
         self.rng = startFeeder
         self.isOK = isOK
+        self.db = dbWrapper.DBWrapper()
         #if json_args != None:
             #To be implemented. Just wanna see if the pipeline works well.
     
 
 
     def pipeline(self):
+
         rng = self.rng()
         totalExceptions = 0
         while(True):
@@ -166,6 +168,8 @@ class SimManager():
 
             game = self.game(action_list = avatar, level_desc = map_)
             if game.play() == 1:
+                #def insertQ(self, line, linetime, ca, cap, sp, maptime, modeltime, game, seq, func_id, isOK):
+                self.db.insertQ(line,rngtime,self.mapgen.__name__,self.mappolish.__name__,self.spriter.__name__,mapgentime,modeltime,"1",avatar,"1","1")
                 return ret
                 
                 
@@ -176,4 +180,5 @@ class SimManager():
 
 if __name__ == "__main__":
     s = SimManager(isOKBasic, cellularAutomata.block_ones_majority_srca, caPolisher.polisher, spritePlanner.spritePlanner)
-    s.pipeline()
+    while (True):
+        s.pipeline()
