@@ -1,6 +1,3 @@
-# the_legendary_pipeline
-The pipeline/framework for my msc thesis.
-
 # How to use?
 You need to implement:
 - A function that validates your level getting a dictionary input and calculates if the level is OK(True) or NOK(False), example one is not scientific or relies on truth. It is best to implement your own.

@@ -66,7 +66,48 @@ space_identifiers = {
     58:'w',
     59:'x',
     60:'y',
-    61:'z'
+    61:'z',
+    62:'!',
+    63:'^',
+    64:'+',
+    65:'%',
+    66:'&',
+    67:'/',
+    68:'(',
+    69:')',
+    70:'=',
+    71:'*',
+    72:'?',
+    73:'-',
+    74:'_',
+    75:'£',
+    76:'#',
+    77:'$',
+    78:'½',
+    79:'¾',
+    80:'{',
+    81:'[',
+    82:']',
+    83:'}',
+    84:'é',
+    85:',',
+    86:';',
+    87:'`',
+    88:'.',
+    89:':',
+    90:'@',
+    91:'€',
+    92:'¶',
+    93:'₺',
+    94:'←',
+    95:'û',
+    96:'î',
+    97:'ô',
+    98:'~',
+    99:'<',
+    100:'>',
+    101:'|',
+    102:'"',
     }
 
 reverse_space_identifiers = {}
@@ -227,6 +268,8 @@ class polisher:
     def turn_neighboring_cells(self, map, x, y, areaNumber):
         count = 1 #At least this cell is turned
         temp = list(map[x])
+        if areaNumber > 102:
+            raise polisherException("102 is the maximum for area numbers beacuse I ran out of unicode characters!")
         temp[y] = space_identifiers[areaNumber]
         map[x] = "".join(temp)
         if x != 0:

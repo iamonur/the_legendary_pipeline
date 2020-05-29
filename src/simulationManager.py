@@ -7,7 +7,8 @@ import player           #my module
 import spinner          #my module
 import spinParser       #my module
 import random           #used in the example feeder
-import timeit
+import time
+import dbWrapper
 
 def pipelineError(Exception):
     pass
@@ -113,48 +114,62 @@ class SimManager():
         self.game = player
         self.rng = startFeeder
         self.isOK = isOK
+        self.db = dbWrapper.DBWrapper()
         #if json_args != None:
             #To be implemented. Just wanna see if the pipeline works well.
     
 
 
     def pipeline(self):
+
         rng = self.rng()
+        totalExceptions = 0
         while(True):
+            rngtime = time.time()
             try:
                 line = rng.serve()
             except FeederException: # No more to serve, imagine recovering from that. For me, this is the point we fail to build.
+                totalExceptions += 1
                 return None
-                
+            rngtime = time.time() - rngtime
+
+
+            mapgentime = time.time()
             try:
                 map_ = self.mappolish(ca = self.mapgen(start = line)).perform()
             except caPolisher.polisherException:
                 #this map cannot be polished. Let's get a new one.
+                totalExceptions += 1
                 continue
-
             mind = self.spriter(map_)
             mind.perform()
             map_ = mind.getMap() #Throws, but if you get an exception at this point, there is something you need to fix. Thus I let it propagate.
+            mapgentime = time.time() - mapgentime
 
+            modeltime = time.time()
             modelChecker = self.spinner(map_)
             try:
                 modelChecker.perform() #Your output is at your filesystem now.
             except spinner.spinCompileException:
+                totalExceptions += 1
                 continue # I let it flow by now, but this shouldn't happen if your PROMELA code was correct.
 
             get_moves = self.parser()
             try:
                 avatar, opponent = get_moves.perform()
             except spinParser.cannotWinException:
+                totalExceptions += 1
                 continue # You created an unplayable level. Move on with a new one.
-            
-            ret = {"map": map_, 'avatar': avatar, 'opponent': opponent}
+            modeltime = time.time() - modeltime
+            ret = {"map": map_, 'avatar': avatar, 'opponent': opponent, 'timings': {"rng": rngtime, "map_gen": mapgentime, "modelling": modeltime}, "exceptions": totalExceptions}
 
             if self.isOK(ret) is False:
                 continue
 
             game = self.game(action_list = avatar, level_desc = map_)
             if game.play() == 1:
+                #def insertQ(self, line, linetime, ca, cap, sp, maptime, modeltime, game, seq, func_id, isOK):
+                self.db.insertQ(line,rngtime,self.mapgen.__name__,self.mappolish.__name__,self.spriter.__name__,mapgentime,modeltime,"1",avatar,"1","1")
                 return ret
                 
                 
@@ -164,5 +179,6 @@ class SimManager():
                 #raise ("Map: " + map_ + " avatar_moves: " + "".join(avatar) + " opponent_moves: " + "".join(opponent) + " failed.") #This can be reconstructed.
 
 if __name__ == "__main__":
-    s = SimManager(isOKBasic, cellularAutomata.block_ones_majority_srca, caPolisher.polisher, spritePlanner.spritePlanner)
-    s.pipeline()
+    s = SimManager(isOKBasic, cellularAutomata.bl_tr_even_p_mid_nybble_switch_srca, caPolisher.polisher, spritePlanner.spritePlanner)
+    while (True):
+        s.pipeline()

@@ -189,6 +189,41 @@ class bl_tr_odd_p_mid_nybble_switch_srca(selfref_ca):
         rule = "".join(rule_list)
         return rule
 
+class bl_tr_even_p_mid_nybble_switch_srca(selfref_ca):
+    def __init__(self, size=24, limit=24, start ="110100101110000111011001", borders ='1'):
+        if len(start) != size:
+            raise ValueError("Size or start is not OK!")
+
+        self.line = start
+        self.border = borders
+        self.limit = limit
+        self.size = size
+        self.map = []
+
+    def calculateRule(self):
+        block = ""
+        rule = ""
+        for cell in self.line:
+            block += cell
+            if len(block) == 3:
+                transitions = block.count('10') + block.count('01')
+                if transitions == 1:
+                    rule += '0'
+                else:
+                    rule += '1'
+                block = ""
+        rule_list = list(rule)
+
+        temp = rule_list[2]
+        rule_list[2] = rule_list[1]
+        rule_list[1] = temp
+
+        temp = rule_list[5]
+        rule_list[5] = rule_list[6]
+        rule_list[6] = temp
+        rule = "".join(rule_list)
+        return rule
+
 
 def formatline(line):
     temp = ""
