@@ -41,7 +41,9 @@ class spritePlanner:
 
         for ln, l in enumerate(self.map):
             for cn, c in enumerate(l):
-                if c != '1':
+                if c != '0':
+                    continue
+                if (ln,cn) == (y1,x1) or (ln,cn) == (y1,x1):
                     continue
                 if (abs(yy - ln) + abs(xx - cn)) < minDist:
                     minDist = abs(yy - ln) + abs(xx - cn)
@@ -55,6 +57,7 @@ class spritePlanner:
         if self.gameType == 'Basic':
             (self.avatarAt,self.portalAt) = self.findMostDistantCells()
             self.enemyAt = self.findMidCell()
+            
 
     def getMap(self):
         if self.avatarAt == (-1,-1) or self.portalAt == (-1,-1) or self.enemyAt == (-1,-1):
@@ -64,14 +67,16 @@ class spritePlanner:
         for line in self.map:
             dummy_map.append(list(line))
 
+        (y, x) = self.enemyAt
+        dummy_map[y][x] = 'E'
+
         (y, x) = self.avatarAt
         dummy_map[y][x] = 'A'
 
         (y, x) = self.portalAt
         dummy_map[y][x] = 'G'
 
-        (y, x) = self.enemyAt
-        dummy_map[y][x] = 'E'
+        
 
         for ln, line in enumerate(dummy_map):
             self.map[ln] = "".join(line)

@@ -51,14 +51,23 @@ def isOKBasic(dict):
     for move in dict['opponent']:
         if move == -1:
             op_skips += 1
-    op_skips = 1 - op_skips/len(dict['opponent'])
+    
+    if len(dict['opponent']) == 0:
+        op_skips = 1
+    else:
+        op_skips = 1 - op_skips/len(dict['opponent'])
     
     #Get counter-intuitive moves, not sure how, TODO: fix this implementation:
     av_counter_in = 0
     for move in dict['avatar']:
         if move == -1:
             av_counter_in += 1
-    av_counter_in = av_counter_in/len(dict['avatar'])
+
+    if len(dict['avatar']) == 0:
+        av_counter_in = 0
+    else:
+        av_counter_in = av_counter_in/len(dict['avatar'])
+
 
     d_a   = av_counter_in
     d_op  = op_skips
@@ -99,7 +108,16 @@ class startFeeder(): #You can build rules, purely random or just serve a list. T
         self.count += 1
         return "".join(ret)
 
+class dummyFeeder():
+    def __init__(self):
+        self.count = 0
 
+    def serve(self):
+        if self.count > 10:
+            raise FeederException("Cannot succeed to create a level by this definition, feeder is depleted.")
+        
+        self.count += 1
+        return "000000000001000000000000"
 
 class SimManager():
     #@classmethod
@@ -145,7 +163,7 @@ class SimManager():
             mind.perform()
             map_ = mind.getMap() #Throws, but if you get an exception at this point, there is something you need to fix. Thus I let it propagate.
             mapgentime = time.time() - mapgentime
-
+            caPolisher.map_print(map_)
             modeltime = time.time()
             modelChecker = self.spinner(map_)
             try:
@@ -167,6 +185,8 @@ class SimManager():
                 continue
 
             game = self.game(action_list = avatar, level_desc = map_)
+
+
             if game.play() == 1:
                 #def insertQ(self, line, linetime, ca, cap, sp, maptime, modeltime, game, seq, func_id, isOK):
                 self.db.insertQ(line,rngtime,self.mapgen.__name__,self.mappolish.__name__,self.spriter.__name__,mapgentime,modeltime,"1",avatar,"1","1")
@@ -179,6 +199,7 @@ class SimManager():
                 #raise ("Map: " + map_ + " avatar_moves: " + "".join(avatar) + " opponent_moves: " + "".join(opponent) + " failed.") #This can be reconstructed.
 
 if __name__ == "__main__":
-    s = SimManager(isOKBasic, cellularAutomata.bl_tr_even_p_mid_nybble_switch_srca, caPolisher.polisher, spritePlanner.spritePlanner)
+    
     while (True):
+        s = SimManager(isOKBasic, cellularAutomata.elementary_cellular_automata, caPolisher.polisher, spritePlanner.spritePlanner)
         s.pipeline()

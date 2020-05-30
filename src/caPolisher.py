@@ -117,7 +117,7 @@ for item in space_identifiers:
 
 
 class polisher:
-    def __init__(self, ca=cellularAutomata.bl_tr_odd_p_mid_nybble_switch_srca(), minimumArea=60):
+    def __init__(self, ca=cellularAutomata.bl_tr_odd_p_mid_nybble_switch_srca(), minimumArea=50):
         self.minArea = minimumArea
         self.ca = ca
         self.map_1 = self.ca.perform()
@@ -231,9 +231,10 @@ class polisher:
         ones = 0
         zeroes = 0
         for line in map:
-            ones += line.count('1')
             zeroes += line.count('0')
-        return 100 * zeroes / (zeroes + ones)
+        area = len(map) * len(map[0])
+
+        return 100 * zeroes / area
 
     def get_connected_fses(self, map):
         areaNumber = 2
@@ -320,6 +321,19 @@ class polisher:
             self.connected_spaces, self.map_enumed = self.get_connected_fses(self.map_1)
 
 
+        a, b = self.get_connected_fses(self.reset_map(self.map_enumed))
+        return self.reset_map (self.wallify (self.map_enumed, a))
+
+
+class dummyPolisher(polisher):
+    def __init__(self, ca=cellularAutomata.bl_tr_odd_p_mid_nybble_switch_srca(), minimumArea=60):
+        self.minArea = minimumArea
+        self.ca = ca
+        self.map_1 = self.ca.perform()
+        self.whole_space = self.get_full_fs(self.map_1)
+        self.connected_spaces, self.map_enumed = self.get_connected_fses(self.map_1)
+
+    def perform(self):
         a, b = self.get_connected_fses(self.reset_map(self.map_enumed))
         return self.reset_map (self.wallify (self.map_enumed, a))
 

@@ -556,6 +556,7 @@ class SpinClass:
         for line in self.map:
             temp_map.append(list(line))
 
+        checklist = 0
 
         for lineNum, line in enumerate(temp_map):
             for chNum, ch in enumerate(line):
@@ -566,10 +567,16 @@ class SpinClass:
                     self.list_walls.append((lineNum + 1, chNum + 1))
                 elif ch == 'A':
                     self.avatar_location = (lineNum, chNum)
+                    checklist += 1
                 elif ch == 'G':
                     self.portal_location = (lineNum, chNum)
+                    checklist += 1
                 elif ch == 'E':
                     self.enemy_location  = (lineNum, chNum)
+                    checklist += 1
+
+        if checklist != 3:
+          raise spinCompileException("Inproper placement of sprites!")
 
 
         self.fixed_map = []
