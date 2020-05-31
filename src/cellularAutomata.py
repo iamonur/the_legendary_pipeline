@@ -50,7 +50,134 @@ class elementary_cellular_automata:
 
         self.line = tempStr
 
+class conway_maze_with_two_lines:
+    def __init__(self, start="000001010011100101110111", start2="111110101100011010001000", size=24, limit=24, borders='0'):
 
+        if len(start) != size:
+
+            raise ValueError("Size or start is not OK!")
+
+        if len(start2) != size:
+
+            raise ValueError("Size or start is not OK!")
+
+        self.border = borders
+        self.size = size
+        self.limit = limit
+        self.bornAt = 3
+        self.die_low = 1
+        self.die_high = 5
+        self.map = []
+
+        for i in range(0, 10):
+            self.map.append(list("000000000000000000000000"))
+        self.map.append(list("000000000000100000000000"))
+        self.map.append(list("000000000000010000000000"))
+        self.map.append(list("000000000000010000000000"))
+        self.map.append(list("000000000000100000000000"))
+        for i in range(0, 10):
+            self.map.append(list("000000000000000000000000"))
+
+    def work_on_cell(self, positions):
+        count = 0
+        """
+        nw n ne
+        w  .  e
+        sw s se        
+        """
+        nw = None
+        n = None
+        ne = None
+        w = None
+        e = None
+        sw = None
+        s = None
+        se = None
+
+        if positions[0] == 0:
+            nw = self.border
+            n = self.border
+            ne = self.border
+        elif positions[0] == (self.limit-1):
+            sw = self.border
+            s = self.border
+            se = self.border
+        if positions[1] == 0:
+            nw = self.border
+            w = self.border
+            sw = self.border
+        elif positions[1] == (self.size-1):
+            ne = self.border
+            e = self.border
+            se = self.border
+
+        if nw is None:
+            nw = self.map[positions[0]-1][positions[1]-1]
+        if n is None:
+            n = self.map[positions[0]-1][positions[1]]
+        if ne is None:
+            ne = self.map[positions[0]-1][positions[1]+1]
+        if e is None:
+            e = self.map[positions[0]][positions[1]+1]
+        if se is None:
+            se = self.map[positions[0]+1][positions[1]+1]
+        if s is None:
+            s = self.map[positions[0]+1][positions[1]]
+        if sw is None:
+            s = self.map[positions[0]+1][positions[1]-1]
+        if w is None:
+            w = self.map[positions[0]][positions[1]-1]
+
+        if nw is '1':
+            count += 1
+        if w is '1':
+            count += 1
+        if sw is '1':
+            count += 1
+        if s is '1':
+            count += 1
+        if se is '1':
+            count += 1
+        if e is '1':
+            count += 1
+        if ne is '1':
+            count += 1
+        if n is '1':
+            count += 1
+
+
+        change = False
+        if self.map[positions[0]][positions[1]] == '1':
+            if count > 0 and count < 6: #Survives for 1-5
+                pass
+            else:
+                print(positions)
+                self.map[positions[0]][positions[1]] = '0'
+                change = True
+        else:
+            if count == 3:
+                self.map[positions[0]][positions[1]] = '1'
+                change = True
+
+        return change
+
+    def iterate_on_map(self):
+        changes = 0
+        for ln, l in enumerate(self.map):
+            for cn, c in enumerate(l):
+                if self.work_on_cell((ln,cn)):
+                    changes += 1
+
+        return changes
+
+    
+    def perform(self):
+        while self.iterate_on_map() >= 4:
+            pass
+        ret = []
+        for line in self.map:
+            ret.append("".join(line))
+        return ret
 
 
 

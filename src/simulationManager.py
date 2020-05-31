@@ -159,11 +159,11 @@ class SimManager():
                 #this map cannot be polished. Let's get a new one.
                 totalExceptions += 1
                 continue
+            caPolisher.map_print(map_)
             mind = self.spriter(map_)
             mind.perform()
             map_ = mind.getMap() #Throws, but if you get an exception at this point, there is something you need to fix. Thus I let it propagate.
             mapgentime = time.time() - mapgentime
-            caPolisher.map_print(map_)
             modeltime = time.time()
             modelChecker = self.spinner(map_)
             try:
@@ -201,5 +201,5 @@ class SimManager():
 if __name__ == "__main__":
     
     while (True):
-        s = SimManager(isOKBasic, cellularAutomata.elementary_cellular_automata, caPolisher.polisher, spritePlanner.spritePlanner)
+        s = SimManager(isOKBasic, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner)
         s.pipeline()
