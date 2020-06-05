@@ -411,7 +411,7 @@ class CApolisher(polisher):
 
         change = False
         if self.map[positions[0]][positions[1]] == '1':
-            if count > 0 and count < 6: #Survives for 1-5
+            if count > self.die_low-1 and count < self.die_high+1: #Survives for 1-5
                 pass
             else:
                 self.map[positions[0]][positions[1]] = '0'
