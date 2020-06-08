@@ -189,8 +189,8 @@ class SimManager():
 
             if game.play() == 1:
                 #def insertQ(self, line, linetime, ca, cap, sp, maptime, modeltime, game, seq, func_id, isOK):
-                self.db.insertQ(line,rngtime,self.mapgen.__name__,self.mappolish.__name__,self.spriter.__name__,mapgentime,modeltime,"1",avatar,"1","1")
-                return ret
+                #self.db.insertQ(line,rngtime,self.mapgen.__name__,self.mappolish.__name__,self.spriter.__name__,mapgentime,modeltime,"1",avatar,"1","1")
+                print (ret)
                 
                 
 
@@ -198,8 +198,63 @@ class SimManager():
                 raise NameError("Nuncked up")
                 #raise ("Map: " + map_ + " avatar_moves: " + "".join(avatar) + " opponent_moves: " + "".join(opponent) + " failed.") #This can be reconstructed.
 
+class SimManager_woParser:
+    def __init__(self, isOK, mapGenerator, mapPolisher, sprPlanner, mcts, player=player.GameClass, feed=startFeeder, json_args=None):
+        self.isOK = isOK
+        self.mapgen = mapGenerator
+        self.mappolish = mapPolisher
+        self.spriter = sprPlanner
+        self.mcts = mcts
+        self.game = player
+        self.rng = startFeeder
+        self.db = dbWrapper.DBWrapper()
+
+    def pipeline(self):
+
+        rng = self.rng()
+        totalExceptions = 0
+        while(True):
+            rngtime = time.time()
+            try:
+                line = rng.serve()
+            except FeederException:
+                totalExceptions += 1
+                return None
+            rngtime = time.time() - rngtime
+
+            mapgentime = time.time()
+            try:
+                map_ = self.mappolish(ca=self.mapgen(start=line)).perform()
+            except:
+                totalExceptions += 1
+                continue
+            caPolisher.map_print(map_)
+            mind = self.spriter(map_)
+            mind.perform()
+            map_ = mind.getMap()
+            mapgentime = time.time() - mapgentime
+
+            mctstime = time.time()
+            mcts = self.mcts(map_)
+            av_moves = mcts.perform()
+            mctstime = time.time() - mctstime
+
+            ret = {"map":map_, "avatar":avatar, "opponent":[], "timings": {"rng":rngtime, "map_gen":mapgentime, "modelling":mctstime}, "exceptions":totalExceptions}
+
+            if self.isOK(ret) is False:
+                continue
+
+            game = self.game(action_list=avatar, level_desc=map_)
+            if game.play() == 1:
+                print (ret)
+
+
+
 if __name__ == "__main__":
     
     while (True):
         s = SimManager(isOKBasic, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner)
         s.pipeline()
+
+        ss = SimManager_woParser(isOKBasic, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner)
+        ss.pipeline()

@@ -93,4 +93,3 @@ class spinParser:
         if avatar is None:
             raise cannotWinException("Avatar cannot win the game!")
         return avatar, opponent
-
