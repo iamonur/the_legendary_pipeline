@@ -436,10 +436,8 @@ class CApolisher(polisher):
         while self.iterate_on_map() >= 4:
             pass
 
-        map_print(self.map)
         p = polisher(map_1 = self.map)
         a = p.perform()
-        map_print(a)
         return a
 
 class dummyPolisher(polisher):

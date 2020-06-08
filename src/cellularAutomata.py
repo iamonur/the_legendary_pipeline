@@ -25,7 +25,6 @@ class elementary_cellular_automata:
             self.iterate_once()
 
         self.map.append(self.line)
-        print(self.map)
         return self.map
 
     def binaryRule(self):
@@ -151,7 +150,6 @@ class conway_maze_with_two_lines:
             if count > 0 and count < 6: #Survives for 1-5
                 pass
             else:
-                print(positions)
                 self.map[positions[0]][positions[1]] = '0'
                 change = True
         else:

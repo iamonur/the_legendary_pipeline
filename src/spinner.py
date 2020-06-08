@@ -683,7 +683,7 @@ class MCTSNode:
           else:
             raise MCTS_Exception("Unknown sprite in map!")
           #SOUTH
-          if lineNum == len(self.map-1):
+          if lineNum == len(self.map)-1:
             self.opponent_nearbySprites['South'] = 'Wall'
           elif self.map[lineNum + 1][charNum] == '1':
             self.opponent_nearbySprites['South'] = 'Wall'
@@ -743,7 +743,7 @@ class MCTSNode:
           else:
             raise MCTS_Exception("Unknown sprite in map!")
           #SOUTH
-          if lineNum == len(self.map-1):
+          if lineNum == len(self.map)-1:
             self.avatar_nearbySprites['South'] = 'Wall'
           elif self.map[lineNum + 1][charNum] == '1':
             self.avatar_nearbySprites['South'] = 'Wall'
@@ -783,6 +783,7 @@ class MCTSNode:
             raise MCTS_Exception("Unknown sprite in map!")
 
         if char == 'G':
+          self.portal_pos = (lineNum, charNum)
           self.win = False
 
     if self.portal_pos == (-1,-1):
@@ -790,11 +791,13 @@ class MCTSNode:
       self.win = True
 
     elif (self.avatar_pos == (-1,-1)) or (self.opponent_pos == (-1,-1)):
+      caPolisher.map_print(self.map)
+      #print(self.map)
       self.isEnd = True
 
   def serializeMap(self):
     ret = ""
-    for line in self.map():
+    for line in self.map:
       ret += "".join(line)
 
     return ret
@@ -806,9 +809,11 @@ class MCTSNode:
     return self.myHash
 
   def pressLeft(self):
+    print("left")
     #Returns true if already won, false if already lost.
     #If cannot move to left, then skip your move.
     if self.isEnd:
+      print("l")
       return self.win
     if self.leftChild is not None: #Already done this.
       return self.leftChild
@@ -817,15 +822,26 @@ class MCTSNode:
       return self.leftChild
     #You need to move to left for sure.
     mapToPass = copy.deepcopy(self.map)
-    mapToPass[self.avatar_pos[0]][self.avatar_pos[1]] = '0'
-    mapToPass[self.avatar_pos[0]][self.avatar_pos[1]-1] = 'A'
+    
+
+    temp = list(mapToPass[self.avatar_pos[0]])
+    temp[self.avatar_pos[1]] = '0'
+    mapToPass[self.avatar_pos[0]] = "".join(temp)
+
+    temp = list(mapToPass[self.avatar_pos[0]])
+    temp[self.avatar_pos[1] - 1] = 'A'
+    mapToPass[self.avatar_pos[0]] = "".join(temp)
+
+    
     self.leftChild = MCTSNode(mapToPass, self)
     return self.leftChild
 
   def pressRight(self):
+    print("right")
     #Returns true if already won, false if already lost.
     #If cannot move to right, then skip your move.
     if self.isEnd:
+      print("r")
       return self.win
     if self.rightChild is not None: #Already done this.
       return self.rightChild
@@ -834,15 +850,26 @@ class MCTSNode:
       return self.rightChild
     #You need to move to right for sure.
     mapToPass = copy.deepcopy(self.map)
-    mapToPass[self.avatar_pos[0]][self.avatar_pos[1]] = '0'
-    mapToPass[self.avatar_pos[0]][self.avatar_pos[1]+1] = 'A'
+
+    temp = list(mapToPass[self.avatar_pos[0]])
+    temp[self.avatar_pos[1]] = '0'
+    mapToPass[self.avatar_pos[0]] = "".join(temp)
+
+    temp = list(mapToPass[self.avatar_pos[0]])
+    temp[self.avatar_pos[1] + 1] = 'A'
+    mapToPass[self.avatar_pos[0]] = "".join(temp)
+
+
     self.rightChild = MCTSNode(mapToPass, self)
     return self.rightChild
   
   def pressDown(self):
     #Returns true if already won, false if already lost.
     #If cannot move to down, then skip your move.
+    print("down")
+    
     if self.isEnd:
+      print("d")
       return self.win
     if self.downChild is not None: #Already done this.
       return self.downChild
@@ -851,14 +878,23 @@ class MCTSNode:
       return self.downChild
     #You need to move to down for sure.
     mapToPass = copy.deepcopy(self.map)
-    mapToPass[self.avatar_pos[0]][self.avatar_pos[1]] = '0'
-    mapToPass[self.avatar_pos[0] + 1][self.avatar_pos[1]] = 'A'
+
+    temp = list(mapToPass[self.avatar_pos[0]])
+    temp[self.avatar_pos[1]] = '0'
+    mapToPass[self.avatar_pos[0]] = "".join(temp)
+
+    temp = list(mapToPass[self.avatar_pos[0] - 1])
+    temp[self.avatar_pos[1]] = 'A'
+    mapToPass[self.avatar_pos[0] + 1] = "".join(temp)
+
     self.downChild = MCTSNode(mapToPass, self)
     return self.downChild
   
   def pressUp(self):
     #Returns true if already won, false if already lost.
     #If cannot move to down, then skip your move.
+    print("up")
+    
     if self.isEnd:
       return self.win
     if self.upChild is not None: #Already done this.
@@ -868,13 +904,20 @@ class MCTSNode:
       return self.upChild
     #You need to move to up for sure.
     mapToPass = copy.deepcopy(self.map)
-    mapToPass[self.avatar_pos[0]][self.avatar_pos[1]] = '0'
-    mapToPass[self.avatar_pos[0] - 1][self.avatar_pos[1]] = 'A'
+
+    temp = list(mapToPass[self.avatar_pos[0]])
+    temp[self.avatar_pos[1]] = '0'
+    mapToPass[self.avatar_pos[0]] = "".join(temp)
+
+    temp = list(mapToPass[self.avatar_pos[0] - 1])
+    temp[self.avatar_pos[1]] = 'A'
+    mapToPass[self.avatar_pos[0] - 1] = "".join(temp)
+    
     self.upChild = MCTSNode(mapToPass, self)
     return self.upChild
   
   def pressNothing(self):
-
+    print("nothing")
     if self.isEnd:
       return self.win
     if self.skipChild is not None: #Already done this.
@@ -888,26 +931,69 @@ class MCTSNode:
     #Priority is W>A>S>D. But, the thing is broken at some point, thus S>D>W>A.
     #If cannot move to most prior, skips.
     #Cannot move on walls, portal. Can move on floor, avatar.
+    caPolisher.map_print(self.map)
     if self.avatar_pos[0] > self.opponent_pos[0]:  #S
       if self.opponent_nearbySprites['South'] == 'Enemy' or self.opponent_nearbySprites['South'] == 'Floor':
-        self.map[self.opponent_pos[0]][self.opponent_pos[1]] = '0'
-        self.opponent_pos[0] += 1
-        self.map[self.opponent_pos[0]][self.opponent_pos[1]] = 'E'
+        
+        temp = list(self.map[self.opponent_pos[0]])
+        temp[self.opponent_pos[1]] = '0'
+        self.map[self.opponent_pos] = "".join(temp)
+        
+        temp = list(self.opponent_pos)
+        temp[0] += 1
+        self.opponent_pos = tuple(temp)
+
+        temp = list(self.map[self.opponent_pos[0]])
+        temp[self.opponent_pos[1]] = 'E'
+        self.map[self.opponent_pos[0]] = "".join(temp)
+
     elif self.avatar_pos[1] > self.opponent_pos[1]:#D
       if self.opponent_nearbySprites['East'] == 'Enemy' or self.opponent_nearbySprites['East'] == 'Floor':
-        self.map[self.opponent_pos[0]][self.opponent_pos[1]] = '0'
-        self.opponent_pos[1] += 1
-        self.map[self.opponent_pos[0]][self.opponent_pos[1]] = 'E'
+        
+        temp = list(self.map[self.opponent_pos[0]])
+        temp[self.opponent_pos[1]] = '0'
+        self.map[self.opponent_pos[0]] = "".join(temp)
+
+        temp = list(self.opponent_pos)
+        temp[1] += 1
+        self.opponent_pos = tuple(temp)
+
+        temp = list(self.map[self.opponent_pos[0]])
+        temp[self.opponent_pos[1]] = 'E'
+        self.map[self.opponent_pos[0]] = "".join(temp)
+        
     elif self.avatar_pos[0] < self.opponent_pos[0]:#W
       if self.opponent_nearbySprites['North'] == 'Enemy' or self.opponent_nearbySprites['North'] == 'Floor':
-        self.map[self.opponent_pos[0]][self.opponent_pos[1]] = '0'
-        self.opponent_pos[0] -= 1
-        self.map[self.opponent_pos[0]][self.opponent_pos[1]] = 'E'
+        
+        temp = list(self.map[self.opponent_pos[0]])
+        temp[self.opponent_pos[1]] = '0'
+        self.map[self.opponent_pos[0]] = "".join(temp)
+
+        temp = list(self.opponent_pos)
+        temp[0] -= 1
+        self.opponent_pos = tuple(temp)
+        
+        temp = list(self.map[self.opponent_pos[0]])
+        temp[self.opponent_pos[1]] = 'E'
+        self.map[self.opponent_pos[0]] = "".join(temp)
+
+      else:
+        print("a")
+        
     elif self.avatar_pos[1] < self.opponent_pos[1]:#A
       if self.opponent_nearbySprites['West'] == 'Enemy' or self.opponent_nearbySprites['West'] == 'Floor':
-        self.map[self.opponent_pos[0]][self.opponent_pos[1]] = '0'
-        self.opponent_pos[1] -= 1
-        self.map[self.opponent_pos[0]][self.opponent_pos[1]] = 'E'
+        temp = list(self.map[self.opponent_pos[0]])
+        temp[self.opponent_pos[1]] = '0'
+        self.map[self.opponent_pos[0]] = "".join(temp)
+
+        temp = list(self.opponent_pos)
+        temp[1] -= 1
+        self.opponent_pos = tuple(temp)
+
+        temp = list(self.map[self.opponent_pos[0]])
+        temp[self.opponent_pos[1]] = 'E'
+        self.map[self.opponent_pos[0]] = "".join(temp)
+       
     else: # Cannot happen
         raise MCTS_Exception('Opponent_move, something wrong!')
 
@@ -931,21 +1017,74 @@ class MCTSNode:
 
 class MCTSClass_returns_first:
   def __init__(self, map):
-    self.map = map
+    
+    self.map = []
+    for i in range(0,23):
+      self.map.append(list())
     self.width = len(map[0])
     self.length = len(map)
-    
-class MCTSClass_returns_best:
+    self.root = MCTSNode(map, None)
+    self.moveStack = []
+    self.hashPile = set()
 
-class MCTSClass_returns_minima:
+  def perform(self):
+    if self.checkChilderen(self.root):
+      return self.moveStack
+      
+    return "Failed"
+
+  def checkChilderen(self, activeNode):
+    l = len(self.hashPile)
+    
+    self.hashPile.add(activeNode.who())
+    ll = len(self.hashPile)
+    
+    if (l == ll):
+      return False
+
+    print(self.moveStack)
+
+    self.moveStack.append('L')
+    if (self.checkChilderen(activeNode.pressLeft())):
+      return True
+    else:
+      self.moveStack.pop()
+
+    self.moveStack.append('R')
+    if (self.checkChilderen(activeNode.pressRight())):
+      return True
+    else:
+      self.moveStack.pop()
+
+    self.moveStack.append('U')
+    if (self.checkChilderen(activeNode.pressUp())):
+      return True
+    else:
+      self.moveStack.pop()
+
+    self.moveStack.append('D')
+    if (self.checkChilderen(activeNode.pressDown())):
+      return True
+    else:
+      self.moveStack.pop()
+
+    self.moveStack.append('S')
+    if (self.checkChilderen(activeNode.pressNothing())):
+      return True
+    else:
+      self.moveStack.pop()
+
+#class MCTSClass_returns_best:
+
+#class MCTSClass_returns_minima:
 
 
 if __name__ == "__main__":
 
-    import spritePlanner, caPolisher
-    s = spritePlanner.spritePlanner(caPolisher.polisher().perform())
-    s.perform()
-    ss = SpinClass(s.getMap())
-    ss.fix_map()
-    caPolisher.map_print(ss.fixed_map)
-    ss.perform()
+  import cellularAutomata, caPolisher, spritePlanner
+  ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="010101010101010101010101")
+  cap = caPolisher.CApolisher(ca = ca)
+  sp = spritePlanner.spritePlanner(cap.perform())
+  sp.perform()
+  m = MCTSClass_returns_first(sp.getMap())
+  print(m.perform())
