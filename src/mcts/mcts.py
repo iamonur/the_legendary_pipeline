@@ -136,7 +136,7 @@ class MCTS(object):
     def _tree_policy(self):
         current_node = self.root
         while not current_node.is_terminal_node():
-            if not current_node.is_terminal_node():
+            if not current_node.is_fully_expanded():
                 return current_node.expand()
             else:
                 current_node = current_node.best_child()
