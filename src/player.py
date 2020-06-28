@@ -50,10 +50,11 @@ BasicGame
         goalportal avatar > killSprite scoreChange=1
         opponent avatar > stepBack
     LevelMapping
+        1 > wall
         E > opponent floor
         G > goalportal
         A > avatar floor
-        . > floor
+        0 > floor
 """
 
 dummy_maze = """
@@ -133,7 +134,7 @@ class GameClass:
 
     def _create_controller(self):
         
-        self.controller = RecordedController(self.env_name, self.actions, fps=10)
+        self.controller = RecordedController(self.env_name, self.actions, fps=100)
 
     def _save_game_files(self):
 

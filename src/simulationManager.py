@@ -7,6 +7,7 @@ import player           #my module
 import spinner          #my module
 import spinParser       #my module
 import random           #used in the example feeder
+import mcts_bm
 import time
 import dbWrapper
 
@@ -91,6 +92,8 @@ def isOKBasic(dict):
     #With opponent:(0.33)
         #Check percentage of moves that are not 'Skip' of opponent, means the guy is chasing.((1.0 - (Num of skips/Num of moves))*1.0) 
 
+def isOKDummy(dict):
+    return True
 
 class FeederException(Exception):
     pass
@@ -174,7 +177,10 @@ class SimManager():
 
             get_moves = self.parser()
             try:
-                avatar, opponent = get_moves.perform()
+                avatar= get_moves.perform()
+                avatar.pop()
+                opponent = []
+                print(avatar)
             except spinParser.cannotWinException:
                 totalExceptions += 1
                 continue # You created an unplayable level. Move on with a new one.
@@ -253,8 +259,8 @@ class SimManager_woParser:
 if __name__ == "__main__":
     
     while (True):
-        s = SimManager(isOKBasic, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner)
-        s.pipeline()
+        #s = SimManager(isOKBasic, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner)
+        #s.pipeline()
 
-        ss = SimManager_woParser(isOKBasic, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner)
+        ss = SimManager(isOKDummy, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner, spin=mcts_bm.MCTS_Wrapper, parser=spinParser.mctsParser)
         ss.pipeline()

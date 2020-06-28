@@ -93,3 +93,24 @@ class spinParser:
         if avatar is None:
             raise cannotWinException("Avatar cannot win the game!")
         return avatar, opponent
+
+class mctsParser:
+    def __init__(self, mcts_out="asd.txt"):
+        self.file = mcts_out
+
+    def __parse_moves(self):
+        f = open(self.file)
+        lines = f.readlines()
+        f.close()
+        toRet = []
+        for line in lines:
+            toRet.append(line[:-1])
+
+        return toRet
+
+    def perform(self):
+        ret = self.__parse_moves()
+        if ret[-1] == 'LOST':
+            raise cannotWinException
+        return ret
+             
