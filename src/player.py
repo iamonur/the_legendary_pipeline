@@ -67,6 +67,7 @@ BasicGame
         opponent wall > stepBack
         goalportal avatar > killSprite scoreChange=1
         opponent avatar > stepBack
+        avatar opponent > stepBack
     LevelMapping
         1 > wall
         E > opponent floor
@@ -74,7 +75,30 @@ BasicGame
         A > avatar floor
         0 > floor
 """
-
+skeleton_game_2 = """
+BasicGame
+    SpriteSet
+        goalportal > Immovable color=GREEN
+        wall > Immovable color=BLACK
+        floor > Immovable color=BROWN{immovable_opponent}{chaser_opponent}
+        players > MovingAvatar
+            avatar > alternate_keys=True{free_mover_opponent}
+    TerminationSet
+        SpriteCounter stype=goalportal limit=0 win=False
+        SpriteCounter stype=opponent limit=0 win=True
+    InteractionSet
+        goalportal opponent > killSprite scoreChange=-1
+        avatar wall > stepBack
+        opponent wall > stepBack
+        opponent avatar > killSprite scoreChange=1
+        avatar goalportal > stepBack
+    LevelMapping
+        1 > wall
+        E > opponent floor
+        G > goalportal
+        A > avatar floor
+        0 > floor
+"""
 dummy_maze = """11111111\n1A000001\n10000001\n11110001\n10000001\n10000001\n100000G1\n11111111\n"""
 
 def stringify_list_level(level):
@@ -165,7 +189,7 @@ class GameClass:
         self.controller.play()
         return self.controller.cummulative_reward
 
-class ChaserGameClass(GameClass):
+class RacerGameClass(GameClass):
 
     def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_3.format(immovable_opponent = "", free_mover_opponent = "", chaser_opponent = racer_str), level_desc=dummy_maze):
         self.actions = action_list
@@ -187,6 +211,17 @@ class MazeGameClass(GameClass):
         self._format_actions()
         self._create_controller()
 
+class ChaserGameClass(GameClass):
+    
+    def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_2.format(immovable_opponent = "", free_mover_opponent = "", chaser_opponent = racer_str), level_desc=dummy_maze):
+        self.actions = action_list
+        self.level = level_desc
+        self.game = game_desc
+        self._save_game_files()
+        self._register_environment(gamefile, levelfile)
+        self._format_actions()
+        self._create_controller()
+
 if __name__ == "__main__":
-    m = MazeGameClass()
+    m = ChaserGameClass()
     print(m.play())
