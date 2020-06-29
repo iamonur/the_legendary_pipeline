@@ -23,8 +23,9 @@ You will pass the class and function definitions to the simulation manager, and 
 
 # My games
 - *Run*: Avatar tries to run away from the opponent to the portal : This game is full implemented&tested
-- *Catch*: Avatar tries to catch the opponent before it *run*s away : This game is *somewhat* implemented, not tested or  pushed yet.
-- *Race*: Avatar tries to run past the opponent to the portal : This game is *somewhat* implemented, not tested or pushed yet.
+- *Catch*: Avatar tries to catch the opponent before it *run*s away : This game is full implemented&tested
+- *Race*: Avatar tries to run past the opponent to the portal : This game is full implemented&tested
+- *MazeSolver*: Avatar solves the maze that has no enemy on it.
 
 # TODO
 - implement at least functional tests
