@@ -12,6 +12,7 @@ promela_comment_01 = """
 //Game-1: Escape from opponent to the portal
 //Game-2: Catch the opponent before it gets into the portal.
 //Game-3: Race the opponent to the portal.
+//Game-4: Solve the maze.
 //'.' -> Floor
 //'W' -> Wall
 //'A' -> Avatar
@@ -29,6 +30,13 @@ promela_comment_02 = """
 
 # 0 -> width of the map
 # 1 -> height of the map
+promela_header_for_game_4 = """
+typedef row{{
+  byte a[{}]
+}}
+bit win = 0;
+row map[{}];
+"""
 promela_header_for_game_1 = """
 typedef row{{ //This is for creating 2-D arrays, since they are not supported.
     byte a[{}];
@@ -55,7 +63,70 @@ bit turn = 0;
 bit lock = 0;
 row map[{1}]; //This is your 2-D array.
 """
+promela_avatar_game_4 = """
+proctype avatar_mazesolver(int x; int y){
+    map[x].a[y] = 2;
+    byte w, a, s, d;
+    bit foo;
 
+    do
+    ::(win == 0) ->
+        w = map[x].a[y-1];
+        a = map[x-1].a[y];
+        s = map[x].a[y+1];
+        d = map[x+1].a[y];
+
+        if
+        :: w != 1 -> printf("Avatar - W\\n");
+
+            if
+            :: w == 0 ->
+                map[x].a[y] = 0;
+                map[x].a[y-1] = 2;
+                y = y - 1
+            :: w == 3 ->
+                win = 1
+            fi;
+        :: a != 1 -> printf("Avatar - A\\n");
+            
+            if
+            :: a == 0 ->
+                map[x].a[y] = 0;
+                map[x-1].a[y] = 2;
+                x = x - 1
+            :: a == 3 ->
+                win = 1
+            fi;
+
+        :: s != 1 -> printf("Avatar - S\\n");
+
+            if
+            :: s == 0 ->
+                map[x].a[y] = 0;
+                map[x].a[y+1]=2;
+                y = y + 1
+            :: s == 3 ->
+                win = 1
+            fi;
+
+        :: d != 1 -> printf("Avatar - D\\n");
+
+            if
+            :: d == 0 ->
+                map[x].a[y] = 0;
+                map[x+1].a[y] = 2;
+                x = x + 1
+            :: d == 3 ->
+                win = 1
+            fi
+
+        //Normally, there would be a skip option. But not now.
+        fi
+    :: else -> break
+    od;
+    printf("Avatar - Win\\n")
+}
+"""
 promela_avatar_game_3 = """
 proctype avatar_same_goal(int x; int y){
   map[x].a[y] = 2;
@@ -240,7 +311,7 @@ proctype avatar(int x; int y){
 	fi
 }
 """
-
+promela_opponent_for_game_4 = ""
 promela_opponent_for_game_3 = """
 proctype opponent_same_goal(int x; int y; int xx; int yy){ //Works on a global turn variable
   map[x].a[y] = 4;
@@ -471,7 +542,31 @@ promela_ltl_formula_basic = """
 // Counter-Example will be generated -> A scenario to win.
 ltl  { [] !win };
 """
-
+promela_init_for_game_4 = """
+init{{
+    int i, ii;
+    for (i : 0 .. {length}){{
+      //Initialize walls.
+        map[i].a[0] = 1;
+        map[i].a[{width}] = 1;
+    }}
+    for (i : 0 .. {length}){{
+        map[0].a[i] = 1;
+		map[{length}].a[i] = 1;
+    }}
+    for (i : 1 .. {length2}) {{
+        for (ii : 1 .. {width2}) {{
+            // Initialize floors
+            map[i].a[ii] = 0;
+        }}
+    }}
+    //Generic placement of walls 
+    {wall_str}
+    //Place portal
+    map[{portal_y}].a[{portal_x}] = 3;
+    run avatar_mazesolver({avatar_y},{avatar_x});
+}}
+"""
 promela_init_for_game_3 = """
 init{{
     int i, ii;
@@ -761,11 +856,123 @@ class SpinClass_Game3():
       raise spinCompileException("Cannot compile with gcc.")
     os.system("../spin/temp.out -a -I >/dev/null")
 
+class SpinClass_Game4():
+
+	#self.map = map fed to instance
+    #self.width = width of the map
+    #self.length = length of the map
+    #self.fixed_map = map changed to vgdl compliancy
+    #self.avatar_location = (y,x) location of the avatar
+    #self.enemy_location = (y,x) location of the enemy
+    #self.portal_location = (y,x) location of the enemy
+    #self.map_to_feed = Map with outer walls.
+
+  def __init__(self, map):
+    self.map = map
+    self.length = len(map)
+    self.width = len(map[0])#Assuming a rectangle
+    self.fixed_map = None
+    self.list_walls = []
+    self.promela_whole_file = """{}\n{}\n{}\n{}\n{}\n{}\n{}"""
+    self.wall_string = "{}"
+
+  def fix_map(self):
+    temp_map = []
+
+    for line in self.map:
+      temp_map.append(list(line))
+
+      checklist = 0
+
+    for lineNum, line in enumerate(temp_map):
+      for chNum, ch in enumerate(line):
+        if ch == '0':
+          temp_map[lineNum][chNum] = '.'
+        elif ch == '1':
+          temp_map[lineNum][chNum] = 'w'
+          self.list_walls.append((lineNum + 1, chNum + 1))
+        elif ch == 'A':
+          self.avatar_location = (lineNum, chNum)
+          checklist += 1
+        elif ch == 'G':
+          self.portal_location = (lineNum, chNum)
+          checklist += 1
+
+    if checklist != 2:
+      raise spinCompileException("Inproper placement of sprites!")
+
+
+    self.fixed_map = []
+
+    to_attach = ""
+    to_attach_list = []
+    for i in range(0, self.width + 2):
+      to_attach_list.append('w')
+
+    to_attach = to_attach.join(to_attach_list)
+
+    for ln, line in enumerate(temp_map):
+      temp = ''.join(line)
+      temp = 'w' + temp + 'w'
+      self.fixed_map.append(temp)
+
+    self.fixed_map.insert(0, to_attach)
+    self.fixed_map.append(to_attach)
+
+  def create_wall_string(self):
+    for wall in self.list_walls:
+      self.wall_string = self.wall_string.format("\tmap[{}].a[{}] = 1;\n{}".format(wall[0], wall[1], "{}"))
+    self.wall_string = self.wall_string.format(" ")
+
+  def create_spin(self):
+    if self.fixed_map is None:
+      self.fix_map()
+    self.create_wall_string()
+
+    formatted_init = promela_init_for_game_4.format(
+			avatar_y = self.avatar_location[0]+1,
+			avatar_x = self.avatar_location[1]+1,
+			portal_y = self.portal_location[0]+1,
+      portal_x = self.portal_location[1]+1,
+      length = self.length+1,
+      length2 = self.length,
+      width = self.width+1,
+      width2 = self.width,
+      wall_str = self.wall_string
+		)
+    formatted_header = promela_header_for_game_3.format(self.length+2, self.width+2)
+    self.promela_whole_file = self.promela_whole_file.format(
+			promela_comment_01,
+			promela_comment_02,
+			formatted_header,
+			promela_avatar_game_4,
+			promela_opponent_for_game_4,
+			formatted_init,
+			promela_ltl_formula_basic
+		)
+
+  def perform(self):
+    self.create_spin()
+    os.system("mkdir ../spin > /dev/null 2>&1")
+    os.system("rm ../spin/temp.pml > /dev/null")
+    f = open("../spin/temp.pml", "a")
+    f.write(self.promela_whole_file)
+    f.close()
+    os.system("spin -a ../spin/temp.pml")
+    proc = subprocess.Popen(["gcc pan.c -DREACH -o ../spin/temp.out"], stdout=subprocess.PIPE, shell=True)
+    (out, err) = proc.communicate()
+    if out != b'':
+      raise spinCompileException("Cannot compile with gcc.")
+    os.system("../spin/temp.out -a -I >/dev/null")
+
+
 
 if __name__ == "__main__":
 
   import cellularAutomata, caPolisher, spritePlanner
   ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="010101010011001100011100")
   cap = caPolisher.CApolisher(ca = ca)
-  sp = spritePlanner.spritePlanner(cap.perform())
+  sp = spritePlanner.dualSpritePlanner(cap.perform())
   sp.perform()
+  sa = SpinClass_Game4(sp.getMap())
+  sa.perform()

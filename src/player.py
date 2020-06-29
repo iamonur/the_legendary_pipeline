@@ -6,7 +6,25 @@ from vgdl.util.humanplay.human import RecordedController #Controller to be fed w
 import vgdl.interfaces.gym #Gym interface is used for auto-plays
 import gym #Gym is for to be used by the gym interface
 import vgdl.ai
-
+skeleton_game_4 = """
+BasicGame
+    SpriteSet
+        goalportal > Immovable color=GREEN
+        wall > Immovable color=BLACK
+        floor > Immovable color=BROWN
+        players > MovingAvatar
+            avatar > alternate_keys=True
+    TerminationSet
+        SpriteCounter stype=goalportal limit=0 win=True
+    InteractionSet
+        avatar wall > stepBack
+        goalportal avatar > killSprite scoreChange=1
+    LevelMapping
+        1 > wall
+        G > goalportal
+        A > avatar floor
+        0 > floor
+"""
 skeleton_game_1 = """
 BasicGame
     SpriteSet
@@ -57,16 +75,7 @@ BasicGame
         0 > floor
 """
 
-dummy_maze = """
-11111111
-1A000001
-10000001
-1111E001
-10000001
-10000001
-100000G1
-11111111
-"""
+dummy_maze = """11111111\n1A000001\n10000001\n11110001\n10000001\n10000001\n100000G1\n11111111\n"""
 
 def stringify_list_level(level):
     ret = ""
@@ -77,7 +86,7 @@ def stringify_list_level(level):
     return ret
 
 
-dummy_actions = ['Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip']
+dummy_actions = ['D', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip']
 
 immovable_opponent_str ="\n        opponent > Immovable color=BLUE"
 chaser_opponent_str="\n        opponent > Chaser stype=avatar color=RED"
@@ -132,9 +141,11 @@ class GameClass:
             elif action == 'Skip':
                 self.actions[i] = -1
 
+        print(self.actions)
+
     def _create_controller(self):
         
-        self.controller = RecordedController(self.env_name, self.actions, fps=100)
+        self.controller = RecordedController(self.env_name, self.actions, fps=30)
 
     def _save_game_files(self):
 
@@ -143,7 +154,10 @@ class GameClass:
         game_f.close()
 
         level_f = open(levelfile, 'w')
-        level_f.write(stringify_list_level(self.level))
+        if self.level == dummy_maze:
+            level_f.write(self.level)
+        else:
+            level_f.write(stringify_list_level(self.level))
         level_f.close()
 
     def play(self):
@@ -153,12 +167,26 @@ class GameClass:
 
 class ChaserGameClass(GameClass):
 
-    def __init__(self, actions_list=dummy_actions, game_desc=skeleton_game_3.format(immovable_opponent = "", free_mover_opponent = "", chaser_opponent = racer_str), level_desc=dummy_maze):
-        self.actions = actions_list
+    def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_3.format(immovable_opponent = "", free_mover_opponent = "", chaser_opponent = racer_str), level_desc=dummy_maze):
+        self.actions = action_list
         self.level = level_desc
         self.game = game_desc
         self._save_game_files()
-        self._register_environment()
+        self._register_environment(gamefile, levelfile)
         self._format_actions()
         self._create_controller()
 
+class MazeGameClass(GameClass):
+
+    def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_4, level_desc=dummy_maze):
+        self.actions = action_list
+        self.level = level_desc
+        self.game = game_desc
+        self._save_game_files()
+        self._register_environment(gamefile, levelfile)
+        self._format_actions()
+        self._create_controller()
+
+if __name__ == "__main__":
+    m = MazeGameClass()
+    print(m.play())

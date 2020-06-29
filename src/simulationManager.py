@@ -177,8 +177,7 @@ class SimManager():
 
             get_moves = self.parser()
             try:
-                avatar= get_moves.perform()
-                avatar.pop()
+                avatar, opponent= get_moves.perform()
                 opponent = []
                 print(avatar)
             except spinParser.cannotWinException:
@@ -262,5 +261,5 @@ if __name__ == "__main__":
         #s = SimManager(isOKBasic, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner)
         #s.pipeline()
 
-        ss = SimManager(isOKDummy, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner, spin=mcts_bm.MCTS_Wrapper, parser=spinParser.mctsParser)
+        ss = SimManager(isOKDummy, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.dualSpritePlanner, spin=spinner.SpinClass_Game4, parser=spinParser.spinParser, player=player.MazeGameClass)
         ss.pipeline()
