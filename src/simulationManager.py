@@ -261,5 +261,5 @@ if __name__ == "__main__":
         #s = SimManager(isOKBasic, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner)
         #s.pipeline()
 
-        ss = SimManager(isOKDummy, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner, spin=spinner.SpinClass_Game2, parser=spinParser.spinParser, player=player.ChaserGameClass)
+        ss = SimManager(isOKDummy, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner, spin=spinner.SpinClass_Game2_smart, parser=spinParser.spinParser, player=player.ChaserGameClass_Smart)
         ss.pipeline()
