@@ -3,16 +3,18 @@ import sys
 
 def bfs_python(level, wall='1', floor='0', frm=(0,0), goal='G'):
     
-    if level[frm[1]][frm[0]] == wall:
-        return 10000
-        
-    queue = collections.deque([[frm]])
-    seen = set([frm])
     width = len(level[0])
     height = len(level)
 
     if frm[0] > height or frm[1] > width:
         return 10000
+
+    if level[frm[1]][frm[0]] == wall:
+        return 10000
+        
+    queue = collections.deque([[frm]])
+    seen = set([frm])
+    
 
     while queue:
         path = queue.popleft()
