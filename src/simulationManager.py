@@ -157,15 +157,17 @@ class SimManager():
 
             mapgentime = time.time()
             try:
-                map_ = self.mappolish(ca = self.mapgen(start = line)).perform()
+                map_ = self.mappolish(ca = self.mapgen(size=8, limit=8, start = line[0:8])).perform()
             except caPolisher.polisherException:
                 #this map cannot be polished. Let's get a new one.
+                print("asd")
                 totalExceptions += 1
                 continue
             caPolisher.map_print(map_)
             mind = self.spriter(map_)
             mind.perform()
             map_ = mind.getMap() #Throws, but if you get an exception at this point, there is something you need to fix. Thus I let it propagate.
+            caPolisher.map_print(map_)
             mapgentime = time.time() - mapgentime
             modeltime = time.time()
             modelChecker = self.spinner(map_)
@@ -261,5 +263,5 @@ if __name__ == "__main__":
         #s = SimManager(isOKBasic, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner)
         #s.pipeline()
 
-        ss = SimManager(isOKDummy, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.reverseSpritePlanner, spin=spinner.SpinClass_Game2_smart, parser=spinParser.spinParser, player=player.ChaserGameClass_Smart)
+        ss = SimManager(isOKDummy, cellularAutomata.elementary_cellular_automata, caPolisher.polisher, spritePlanner.reverseSpritePlanner, spin=spinner.SpinClass_Game2_smart, parser=spinParser.spinParser, player=player.ChaserGameClass_Smart)
         ss.pipeline()

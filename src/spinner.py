@@ -217,6 +217,7 @@ proctype avatar_chaser(int x; int y){
        :: true -> skip
        fi;
        //c_code{printf("1\\n");};
+       //c_code{map_print2();}
        lock = 0;
    :: else -> break
    od;
@@ -496,6 +497,7 @@ promela_opponent_for_game_2_smart = """
 proctype opponent_runner(int x; int y){
    map[x].a[y] = 4;
    int foo;
+   c_code{put_map();};
  
    do
    :: (win == 0 && dead == 0) ->
@@ -517,6 +519,7 @@ proctype opponent_runner(int x; int y){
        y = next_y;
        if
        :: foo == 3 -> dead = 1; break
+       :: foo == 2 -> win = 1; break
        :: else -> skip
        fi;
       

@@ -26,7 +26,7 @@ class spinParser:
             splitted = line.split()
 
             if splitted[0] == "pan:1:" and splitted[1] == "assertion" and splitted[2] == "violated": #Last meaningful line of the trail file.
-
+                returnable.append(["Avatar", "Skip"])
                 to_push = ["WIN", splitted[-1][:-1]]
                 returnable.append(to_push)
                 return returnable
