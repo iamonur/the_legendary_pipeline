@@ -157,7 +157,7 @@ class SimManager():
 
             mapgentime = time.time()
             try:
-                map_ = self.mappolish(ca = self.mapgen(size=8, limit=8, start = line[0:8])).perform()
+                map_ = self.mappolish(ca = self.mapgen(size=24, limit=24, start = line)).perform()
             except caPolisher.polisherException:
                 #this map cannot be polished. Let's get a new one.
                 print("asd")
