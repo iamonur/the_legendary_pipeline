@@ -1,26 +1,343 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
-#define MAX_LEN 28
+#define MAX_LEN 26
 #define MAX_QUEUE 1024
+//#define __DEBUG_PRINT
+
+typedef struct
+{
+  int X;
+  int Y;
+  int Value;
+  void *NextInSolvedPath;   //AStar_Node*
+  void *Neighbors[4];  //AStar_Node*
+} AStar_Node;
+
+typedef struct
+{
+  AStar_Node *node;
+  void *next; //AStarNode_List*
+} AStarNode_List;
+
+typedef struct
+{
+  AStar_Node   *CameFrom;
+  float        GScore;
+  float        FScore;
+} NodeDataMap;
+
+AStarNode_List *AllNodesGSet;
+
+int map_[MAX_LEN][MAX_LEN];
+int map[MAX_LEN*MAX_LEN];
+int goalx, goaly;
+
+float DistanceBetween(int X1,int Y1, int X2, int Y2)
+{
+  return sqrt((float)((X2-X1)*(X2-X1))+((Y2-Y1)*(Y2-Y1)));
+}
+float CostOfGoal(int X1,int Y1, int X2, int Y2,int (*GetMap)(int,int))
+{
+  return DistanceBetween(X1,Y1,X2,Y2);
+}
+void AddToNodeList(AStarNode_List **List,AStar_Node *NodeToAdd,int *LengthPtr)
+{
+  AStarNode_List *newNode = malloc(sizeof(*newNode));
+  newNode->node = NodeToAdd;
+  newNode->next = *List;
+  
+  *List = newNode;
+  
+  if (LengthPtr)
+  {
+    (*LengthPtr)++;
+  }
+  
+  return;
+}
+
+AStar_Node *CreateNode(int X,int Y,int Value,AStarNode_List **AllNodesSet)
+{
+  AStar_Node *ThisNode = malloc(sizeof(*ThisNode));
+  ThisNode->X          = X;
+  ThisNode->Y          = Y;
+  ThisNode->Value      = Value;
+  ThisNode->Neighbors[0]  = NULL;
+  ThisNode->Neighbors[1]  = NULL;
+  ThisNode->Neighbors[2]  = NULL;
+  ThisNode->Neighbors[3]  = NULL;
+  
+  AddToNodeList(AllNodesSet,ThisNode,NULL);
+  
+  return ThisNode;
+}
+
+AStarNode_List *FindInNodeList(AStarNode_List *List,AStar_Node *NodeToFind)
+{
+  AStarNode_List *FoundNode = NULL;
+  AStarNode_List *CurrentNode   = List;
+  while (CurrentNode)
+  {
+    if ((CurrentNode->node->X == NodeToFind->X) && (CurrentNode->node->Y == NodeToFind->Y))
+    {
+      // Found it.
+      FoundNode = CurrentNode;
+      break;
+    }
+    
+    CurrentNode = CurrentNode->next;
+  }
+  
+  return FoundNode;
+}
+
+void RemoveFromNodeList(AStarNode_List **List,AStar_Node *NodeToRemove,int *LengthPtr)
+{
+  AStarNode_List *CurrentNode   = *List;
+  AStarNode_List *PreviousNode  = NULL;
+  while (CurrentNode)
+  {
+    if ((CurrentNode->node->X == NodeToRemove->X) && (CurrentNode->node->Y == NodeToRemove->Y))
+    {
+      // Found it.
+      if (PreviousNode)
+      {
+        PreviousNode->next = CurrentNode->next;
+      }
+      else
+      {
+        *List = CurrentNode->next;
+      }
+      
+      if (LengthPtr)
+      {
+        (*LengthPtr)--;
+      }
+      break;
+    }
+    else
+    {
+      PreviousNode = CurrentNode;
+      CurrentNode  = CurrentNode->next;
+    }
+  }
+  
+  return;
+}
+
+void RemoveAllFromNodeList(AStarNode_List **List,int FreeNodes)
+{
+  if (!List)
+  {
+    return;
+  }
+  
+  AStarNode_List *CurrentNode   = *List;
+  AStarNode_List *NextNode;
+  
+  while (CurrentNode)
+  {
+    if (FreeNodes && CurrentNode->node)
+    {
+      free(CurrentNode->node);
+    }
+    NextNode = CurrentNode->next;
+    free(CurrentNode);
+    CurrentNode = NextNode;
+  }
+  *List = NULL;
+  return;
+}
 
 
+AStar_Node *AStar_Find(int mapWidth,int mapHeight,int StartX,int StartY,int EndX,int EndY,int (*GetMap)(int,int),NodeDataMap *dataMap)
+{
+  AStar_Node     *Neighbor       = NULL;
+  AStarNode_List *OpenSet        = NULL;
+  AStarNode_List *ClosedSet      = NULL;
+  AStarNode_List *NextInOpenSet  = NULL;
+  AStar_Node   *AStar_SolvedPath = NULL;
+  int           OpenSetLength    = 0;
+  float         TentativeGScore  = 0;
+  float         TentativeFScore  = 0;
+  AStar_Node   *Current;
+  float        LowestFScore;
+  float        NextFScore;
+  int neighbor_pos;
+  AStar_Node     TempNodeToFind;
+  AStarNode_List *TempNeighborNode;
+  int neighborPosInLists;
+  
+  AllNodesGSet = NULL;
+  
+  
+  if ((GetMap(StartX,StartY) >= 9) || (GetMap(EndX,EndY) >= 9))
+  {
+    return NULL;
+  }
+  
+  Current = CreateNode(StartX,StartY,GetMap(StartX,StartY),&AllNodesGSet);
+  
+  dataMap[Current->X + (Current->Y*mapWidth)].GScore   = 0.0;
+  dataMap[Current->X + (Current->Y*mapWidth)].FScore   = dataMap[Current->X + (Current->Y*mapWidth)].GScore + CostOfGoal(Current->X,Current->Y,EndX,EndY,GetMap);
+  dataMap[Current->X + (Current->Y*mapWidth)].CameFrom = NULL;
+  
+  AddToNodeList(&OpenSet,Current,&OpenSetLength);
+  
+  while (OpenSetLength)
+  {
+    Current = NULL;
+    NextInOpenSet = OpenSet;
+    LowestFScore = dataMap[NextInOpenSet->node->X + (NextInOpenSet->node->Y*mapWidth)].FScore;
+    while (NextInOpenSet)
+    {
+      NextFScore = dataMap[NextInOpenSet->node->X + (NextInOpenSet->node->Y*mapWidth)].FScore;
+      if (!Current || (LowestFScore > NextFScore))
+      {
+        Current = NextInOpenSet->node;
+        LowestFScore = NextFScore;
+      }
+      NextInOpenSet = NextInOpenSet->next;
+    }
+    
+    
+    if ((Current->X == EndX) && (Current->Y == EndY))
+    {
+      AStar_SolvedPath = Current;
+      break;
+    }
+    
+    RemoveFromNodeList(&OpenSet,Current,&OpenSetLength);
+    if (!FindInNodeList(ClosedSet,Current))
+    {
+      AddToNodeList(&ClosedSet,Current,NULL);
+    }
+    for (neighbor_pos = 0;neighbor_pos < 4;neighbor_pos++)
+    {
+      Neighbor = Current->Neighbors[neighbor_pos];
+      if (!Neighbor)
+      {
+        TempNodeToFind.X = Current->X;
+        TempNodeToFind.Y = Current->Y;
+        switch(neighbor_pos)
+        {
+          case 0:
+            TempNodeToFind.Y--;
+            break;
+          case 1:
+            TempNodeToFind.X++;
+            break;
+          case 2:
+            TempNodeToFind.Y++;
+            break;
+          default:
+            // Assumed 3
+            TempNodeToFind.X--;
+        }
+        
+        if ((TempNodeToFind.X >= 0) && (TempNodeToFind.X < mapWidth)
+            &&
+            (TempNodeToFind.Y >= 0) && (TempNodeToFind.Y < mapHeight)
+            && (GetMap(TempNodeToFind.X,TempNodeToFind.Y) == 1))
+        {
+          TempNeighborNode = FindInNodeList(AllNodesGSet,&TempNodeToFind);
+          if (TempNeighborNode)
+          {
+            Neighbor = TempNeighborNode->node;
+          }
+          else
+          {
+#ifdef __DEBUG_PRINT
+            printf("Creating new neighbor\n");
+#endif
+            Neighbor = CreateNode(TempNodeToFind.X,TempNodeToFind.Y,GetMap(TempNodeToFind.X,TempNodeToFind.Y),&AllNodesGSet);
+          }
+          
+#ifdef __DEBUG_PRINT
+          printf("Linking current node and neighbor as, well, neighbors\n");
+#endif
+          Current->Neighbors[neighbor_pos] = Neighbor;
+          switch(neighbor_pos)
+          {
+            case 0:
+              Neighbor->Neighbors[2] = Current;
+              break;
+              
+            case 1:
+              Neighbor->Neighbors[3] = Current;
+              break;
+              
+            case 2:
+              Neighbor->Neighbors[0] = Current;
+              break;
+              
+            default:
+              // Assumed 3
+              Neighbor->Neighbors[1] = Current;
+          }
+        }
+        else
+        {
+        }
+      }
+      
+      if (Neighbor)
+      {
+        TentativeGScore = dataMap[Current->X + (Current->Y * mapWidth)].GScore + DistanceBetween(Current->X,Current->Y,Neighbor->X,Neighbor->Y);
 
-typedef struct DUO{int x,y;}duo;
+        TentativeFScore = TentativeGScore + CostOfGoal(Neighbor->X,Neighbor->Y,EndX,EndY,GetMap);
 
-duo intarray[MAX_QUEUE];
+        
+        neighborPosInLists = Neighbor->X + (Neighbor->Y * mapWidth);
+        if (!FindInNodeList(ClosedSet,Neighbor) || (TentativeFScore < dataMap[neighborPosInLists].FScore))
+        {
+          if (!FindInNodeList(OpenSet,Neighbor) || (TentativeFScore < dataMap[neighborPosInLists].FScore))
+          {
+            if (!dataMap[neighborPosInLists].CameFrom)
+            {
+              dataMap[neighborPosInLists].CameFrom = Current;
+            }
+            dataMap[neighborPosInLists].GScore   = TentativeGScore;
+            dataMap[neighborPosInLists].FScore   = TentativeFScore;
+          
+            if (!FindInNodeList(OpenSet,Neighbor))
+            {
 
-int map[MAX_LEN][MAX_LEN];
+              AddToNodeList(&OpenSet,Neighbor,&OpenSetLength);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  RemoveAllFromNodeList(&OpenSet,0);
+  RemoveAllFromNodeList(&ClosedSet,0);
+  return AStar_SolvedPath;
+}
+
 
 void map_print2(){
    int mp2i, mp2j;
-   for(mp2i = 0; mp2i < 10; mp2i++){
-       for(mp2j = 0; mp2j < 10; mp2j++){
+   for(mp2i = 0; mp2i < MAX_LEN; mp2i++){
+       for(mp2j = 0; mp2j < MAX_LEN; mp2j++){
            printf("%d",now.map[mp2i].a[mp2j]);
        }
        printf("\n");
    }
  
+}
+
+void map_print(){
+    for(int i = 0; i < MAX_LEN; i++)
+    {
+        for(int j = 0; j < MAX_LEN; j++){
+            printf("%d",map[i*MAX_LEN + j]);
+        }
+        printf("\n");
+    }
 }
 
 void put_map(){
@@ -45,22 +362,83 @@ void put_map(){
     fclose(fp);
 }
 
+int CustomGetMap( int x, int y )
+{
+	if( x < 0 || x >= MAX_LEN || y < 0 || y >= MAX_LEN )
+	{
+		return 9;	 
+	}
+
+	return map[y*MAX_LEN+x];
+}
+
 void put_map_2_memory(){
     int i, j;
     for(i = 0; i < MAX_LEN; i++){
         for(j = 0; j < MAX_LEN; j++){
-            map[i][j] = now.map[i].a[j];
+            switch (now.map[i].a[j])
+            {
+            case 1:
+                map[MAX_LEN*i+j] = 9;
+                break;
+            case 3:
+                goalx = i;
+                goaly = j;            
+            default:
+                map[MAX_LEN*i+j] = 1;
+            }
         }
     }
 }
 
-int search(int x, int y){
-    if ((x >= MAX_LEN) || (y >= MAX_LEN) || x < 0 || y < 0) return 10000;
-    if (map[x][y] == 1) return 10000;
+void calculate_next_move(int xx, int yy, int* next_x, int* next_y){
+    put_map_2_memory();
+    int x,y,i;
+    int *map_to_display;
+      
+  AStar_Node *Solution;
+  AStar_Node *NextInSolution;
+  AStar_Node *SolutionNavigator;
+  int NextInSolutionPos;
+  NodeDataMap *dataMap = (NodeDataMap*)malloc(sizeof(*dataMap) * MAX_LEN * MAX_LEN);
+  
+  for (i=0;i<MAX_LEN * MAX_LEN;i++)
+  {
+    dataMap[i].GScore   = 0.0;
+    dataMap[i].FScore   = 0.0;
+    dataMap[i].CameFrom = NULL;
+  }
+  int StartX = yy, StartY = xx, EndX = goaly, EndY = goalx;
+   
+  Solution = AStar_Find(MAX_LEN,MAX_LEN,StartX,StartY,EndX,EndY,CustomGetMap,dataMap);
+    
+ 
 
+  SolutionNavigator = NULL;
+  NextInSolution = Solution;
+  
+  // NextInSolution will actually refer to the next node from end to start (that is, we're going reverse from the target).
+  if (NextInSolution)
+  {
+    do
+    {
+      NextInSolutionPos = NextInSolution->X + (NextInSolution->Y * MAX_LEN);
+      NextInSolution->NextInSolvedPath = SolutionNavigator;
+      SolutionNavigator = NextInSolution;
+      NextInSolution = dataMap[NextInSolutionPos].CameFrom;
+    }
+    while ((SolutionNavigator->X != StartX) || (SolutionNavigator->Y != StartY));
+  }
+  *next_y = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->X;
+  *next_x = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->Y;
+  
+  
+  RemoveAllFromNodeList(&AllNodesGSet,1);
+  
+  free(dataMap);
 }
 
-void calculate_next_move(int x, int y, int* next_x, int* next_y){
+void calculate_next_move2(int x, int y, int* next_x, int* next_y){
     int min = 9999;
     char cmd[50];
     FILE* fs;
@@ -100,218 +478,5 @@ void calculate_next_move(int x, int y, int* next_x, int* next_y){
             *next_y = y;
     }
 
-    /*
-        sprintf(cmd, "python3.6 ../spin/miracle.py %d %d > bfs.txt", x-1, y);
-        system(cmd);
-        fs = fopen("bfs.txt", "r");
-        fscanf(fs,"%d",&i);
-        fclose(fs);
-
-        if(i < min){
-            min = i;
-            *next_x = x-1;
-            *next_y = y;
-            ret = "A";
-        }
-        
-    
-
-    sprintf(cmd, "python3.6 ../spin/miracle.py %d %d > bfs.txt", x, y-1);
-    system(cmd);
-    fs = fopen("bfs.txt", "r");
-    fscanf(fs,"%d",&i);
-    fclose(fs);
-
-    if(i < min){
-        min = i;
-        *next_x = x;
-        *next_y = y-1;
-        ret = "W";
-    }
-
-    
-        sprintf(cmd, "python3.6 ../spin/miracle.py %d %d > bfs.txt", x+1, y);
-        system(cmd);
-        fs = fopen("bfs.txt", "r");
-        fscanf(fs,"%d",&i);
-        fclose(fs);
-
-        if(i < min){
-            min = i;
-            *next_x = x+1;
-            *next_y = y;
-            ret = "D";
-        }
-    
-    
-        
-    sprintf(cmd, "python3.6 ../spin/miracle.py %d %d > bfs.txt", x, y+1);
-    system(cmd);
-    fs = fopen("bfs.txt", "r");
-    fscanf(fs,"%d",&i);
-    fclose(fs);
-
-    if(i < min){
-        min = i;
-        *next_x = x;
-        *next_y = y+1;
-        ret = "S";
-    }*/
     return;
 }
-/*
-#define ROW_COUNT 9
-#define COL_COUNT 10
-
-#define WALL 1
-#define GOAL 3
-
-#define TRUE 1
-#define FALSE 0
-
-#define MAX_STACK 1000
-
-typedef struct{
-    int first;
-    int second;
-}Pair;
-
-typedef struct{
-    double first;
-    Pair second;
-}pPair;
-
-typedef struct{
-    int parent_i, parent_j;
-    double f, g, h;
-}cell;
-
-struct stack{
-    int maxsize;
-    int top;
-    Pair *items;
-};
-
-struct stack* newStack(int capacity){
-    struct stack *pt = (struct stack*)malloc(sizeof(struct stack));
-    pt->maxsize = capacity;
-    pt->top = -1;
-    pt->items = (Pair*)malloc(sizeof(Pair)*capacity);
-    return pt;
-}
-
-int size(struct stack *pt){
-    return pt->top + 1;
-}
-
-int isEmpty(struct stack *pt){
-    if (pt-> top == -1) return TRUE;
-    return FALSE;
-}
-
-int isFull(struct stack *pt){
-    if(pt->top == pt->maxsize -1) return TRUE;
-    return FALSE;
-}
-
-unsigned char push(struct stack *pt, Pair x){
-    if (isFull(pt) == TRUE) return FALSE;
-    pt->items[++(pt->top)] = x;
-    return TRUE;
-}
-
-Pair peek(struct stack *pt){
-    if(isEmpty(pt) == FALSE) return pt->items[pt->top];
-    Pair a;
-    a.first = -1;
-    a.second = -1;
-    return a;
-}
-
-Pair pop(struct stack *pt){
-    if(isEmpty(pt) == FALSE) return pt->items[pt->top--];
-    Pair a;
-    a.first = -1;
-    a.second = -1;
-    return a;
-}
-
-unsigned char isValid(int row, int col){
-    if ((row >= 0) && (row < ROW_COUNT) && (col >= 0) && (col < COL_COUNT))
-        return TRUE;
-    return FALSE;
-}
-
-unsigned char isUnBlocked(int grid[][COL_COUNT], int row, int col){
-    if (grid[row][col] == WALL) return FALSE;
-    return TRUE;
-}
-
-unsigned char isDestination(int row, int col, Pair destination){
-    if (row == destination.first && col == destination.second) return TRUE;
-    return FALSE;
-}
-
-double calculateHValue(int row, int col, Pair dest){
-    return ((double)sqrt((row-dest.first)*(row-dest.first) + (col-dest.second)*(col-dest.second)));
-}
-
-void tracePath(cell cellDetails[][COL_COUNT], Pair dest){
-    int row = dest.first;
-    int col = dest.second;
-
-    struct stack *Path = newStack(MAX_STACK);
-
-    while(!(cellDetails[row][col].parent_i == row &&  cellDetails[row][col].parent_j == col)){
-        Pair temp;
-        temp.first = row;
-        temp.second = col;
-        unsigned char ret = push(Path, temp);
-
-        int temp_row = cellDetails[row][col].parent_i;
-        int temp_col = cellDetails[row][col].parent_j;
-
-        row = temp_row;
-        col = temp_col;
-    }
-    Pair q;
-    q.first = row;
-    q.second = col;
-    push(Path, q);
-
-    while(isEmpty(Path) == FALSE){
-        Pair p = pop(Path);
-    }
-    return;
-}
-
-void aStarSearch(int grid[][COL_COUNT], Pair src, Pair dest){
-    if(isValid(src.first, src.second) == FALSE) return;
-    if(isValid(dest.first, dest.second) == FALSE) return;
-    if(isUnBlocked(grid,src.first, src.second) == FALSE || isUnblocked(grid, dest.first, dest.second) == FALSE) return;
-
-    unsigned char closedList[ROW_COUNT][COL_COUNT];
-    memset(closedList, FALSE, sizeof(closedList));
-
-    cell cellDetails[ROW_COUNT][COL_COUNT];
-    int i, j;
-    for(i = 0; i < ROW_COUNT; i++)
-        for(j = 0; j < COL_COUNT; j++){
-            cellDetails[i][j].f = __FLT_MAX__;
-            cellDetails[i][j].g = __FLT_MAX__;
-            cellDetails[i][j].h = __FLT_MAX__;
-            cellDetails[i][j].parent_i = -1;
-            cellDetails[i][j].parent_j = -1;
-        }
-
-    i = src.first;
-    j = src.second;
-
-    cellDetails[i][j].f = 0.0;
-    cellDetails[i][j].g = 0.0;
-    cellDetails[i][j].h = 0.0;
-    cellDetails[i][j].parent_i = i;
-    cellDetails[i][j].parent_j = j;
-
-    
-}*/
