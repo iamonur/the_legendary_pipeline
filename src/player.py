@@ -49,8 +49,56 @@ BasicGame
         A > avatar floor
         0 > floor
 """
-
+skeleton_game_1_smart = """
+BasicGame
+    SpriteSet
+        goalportal > Immovable color=GREEN
+        wall > Immovable color=BLACK
+        floor > Immovable color=BROWN{immovable_opponent}{chaser_opponent}
+        players > MovingAvatar
+            avatar > alternate_keys=True{free_mover_opponent}
+    TerminationSet
+        SpriteCounter stype=goalportal limit=0 win=True
+        SpriteCounter stype=opponent limit=0 win=False
+    InteractionSet
+        opponent goalportal > stepBack
+        avatar wall > stepBack
+        opponent wall > stepBack
+        goalportal avatar > killSprite scoreChange=1
+        opponent avatar > killSprite scoreChange=-1
+    LevelMapping
+        1 > wall
+        E > opponent floor
+        G > goalportal
+        A > avatar floor
+        0 > floor
+"""
 skeleton_game_3 = """
+BasicGame
+    SpriteSet
+        goalportal > Immovable color=GREEN
+        wall > Immovable color=BLACK
+        floor > Immovable color=BROWN{immovable_opponent}{chaser_opponent}
+        players > MovingAvatar
+            avatar > alternate_keys=True{free_mover_opponent}
+    TerminationSet
+        SpriteCounter stype=goalportal limit=0 win=True
+        SpriteCounter stype=opponent limit=0 win=False
+    InteractionSet
+        goalportal opponent > killSprite scoreChange=-1
+        avatar wall > stepBack
+        opponent wall > stepBack
+        goalportal avatar > killSprite scoreChange=1
+        opponent avatar > stepBack
+        avatar opponent > stepBack
+    LevelMapping
+        1 > wall
+        E > opponent floor
+        G > goalportal
+        A > avatar floor
+        0 > floor
+"""
+skeleton_game_3_smart = """
 BasicGame
     SpriteSet
         goalportal > Immovable color=GREEN
@@ -99,7 +147,31 @@ BasicGame
         A > avatar floor
         0 > floor
 """
-dummy_maze = """11111111\n1A000001\n10000001\n11110001\n10000001\n10000001\n100000G1\n11111111\n"""
+skeleton_game_2_smart = """
+BasicGame
+    SpriteSet
+        goalportal > Immovable color=GREEN
+        wall > Immovable color=BLACK
+        floor > Immovable color=BROWN{immovable_opponent}{chaser_opponent}
+        players > MovingAvatar
+            avatar > alternate_keys=True{free_mover_opponent}
+    TerminationSet
+        SpriteCounter stype=goalportal limit=0 win=False
+        SpriteCounter stype=opponent limit=0 win=True
+    InteractionSet
+        goalportal opponent > killSprite scoreChange=-1
+        avatar wall > stepBack
+        opponent wall > stepBack
+        opponent avatar > killSprite scoreChange=1
+        avatar goalportal > stepBack
+    LevelMapping
+        1 > wall
+        E > opponent floor
+        G > goalportal
+        A > avatar floor
+        0 > floor
+"""
+dummy_maze = """11111111\n1A000E01\n10000001\n11110001\n10000001\n10000001\n100000G1\n11111111\n"""
 
 def stringify_list_level(level):
     ret = ""
@@ -110,9 +182,11 @@ def stringify_list_level(level):
     return ret
 
 
-dummy_actions = ['D', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip']
+dummy_actions = ['D', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip']
 
 immovable_opponent_str ="\n        opponent > Immovable color=BLUE"
+smart_racer_opponent_str = "\n        opponent > SmartChaser stype=goalportal color=RED"
+smart_chaser_opponent_str = "\n        opponent > SmartChaser stype=goalportal color=RED"
 chaser_opponent_str="\n        opponent > Chaser stype=avatar color=RED"
 racer_str="\n        opponent > Chaser stype=goalportal color=RED"
 astar_chaser_str="\n        opponent > AStarChaser stype=avatar color=RED"
@@ -169,7 +243,7 @@ class GameClass:
 
     def _create_controller(self):
         
-        self.controller = RecordedController(self.env_name, self.actions, fps=30)
+        self.controller = RecordedController(self.env_name, self.actions, fps=2)
 
     def _save_game_files(self):
 
@@ -222,6 +296,39 @@ class ChaserGameClass(GameClass):
         self._format_actions()
         self._create_controller()
 
+class ChaserGameClass_Smart(GameClass):
+    
+     def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_2_smart.format(immovable_opponent = "", free_mover_opponent = "", chaser_opponent = smart_racer_opponent_str), level_desc=dummy_maze):
+        self.actions = action_list
+        self.level = level_desc
+        self.game = game_desc
+        self._save_game_files()
+        self._register_environment(gamefile, levelfile)
+        self._format_actions()
+        self._create_controller()
+
+class RacerGameClass_Smart(GameClass):
+
+    def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_3_smart.format(immovable_opponent = "", free_mover_opponent = "", chaser_opponent = smart_racer_opponent_str), level_desc=dummy_maze):
+        self.actions = action_list
+        self.level = level_desc
+        self.game = game_desc
+        self._save_game_files()
+        self._register_environment(gamefile, levelfile)
+        self._format_actions()
+        self._create_controller()
+
+class GameClass_Smart(GameClass):
+    def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_1_smart.format(immovable_opponent = "", free_mover_opponent = "", chaser_opponent = smart_chaser_opponent_str), level_desc=dummy_maze):
+        self.actions = action_list
+        self.level = level_desc
+        self.game = game_desc
+        self._save_game_files()
+        self._register_environment(gamefile, levelfile)
+        self._format_actions()
+        self._create_controller()
+
+
 if __name__ == "__main__":
-    m = ChaserGameClass()
+    m = GameClass_Smart()
     print(m.play())
