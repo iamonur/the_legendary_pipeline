@@ -372,7 +372,7 @@ int CustomGetMap( int x, int y )
 	return map[y*MAX_LEN+x];
 }
 
-void put_map_2_memory(){
+void put_map_2_memory_portal_goal(){
     int i, j;
     for(i = 0; i < MAX_LEN; i++){
         for(j = 0; j < MAX_LEN; j++){
@@ -391,10 +391,138 @@ void put_map_2_memory(){
     }
 }
 
-void calculate_next_move(int xx, int yy, int* next_x, int* next_y){
-    put_map_2_memory();
+void put_map_2_memory_portal_goal_avatar_wall(){
+    int i, j;
+    for(i = 0; i < MAX_LEN; i++){
+        for(j = 0; j < MAX_LEN; j++){
+            switch (now.map[i].a[j])
+            {
+            case 1:
+            case 2:
+                map[MAX_LEN*i+j] = 9;
+                break;
+            case 3:
+                goalx = i;
+                goaly = j;            
+            default:
+                map[MAX_LEN*i+j] = 1;
+            }
+        }
+    }
+}
+
+void put_map_2_memory_avatar_goal(){
+    int i, j;
+    for(i = 0; i < MAX_LEN; i++){
+        for(j = 0; j < MAX_LEN; j++){
+            switch (now.map[i].a[j])
+            {
+            case 1:
+                map[MAX_LEN*i+j] = 9;
+                break;
+            case 2:
+                goalx = i;
+                goaly = j;            
+            default:
+                map[MAX_LEN*i+j] = 1;
+            }
+        }
+    }
+}
+
+void calculate_next_move_to_avatar(int xx, int yy, int xxx, int yyy, int* next_x, int* next_y){
+    put_map_2_memory_portal_goal();
     int x,y,i;
-    int *map_to_display;
+      
+  AStar_Node *Solution;
+  AStar_Node *NextInSolution;
+  AStar_Node *SolutionNavigator;
+  int NextInSolutionPos;
+  NodeDataMap *dataMap = (NodeDataMap*)malloc(sizeof(*dataMap) * MAX_LEN * MAX_LEN);
+  
+  for (i=0;i<MAX_LEN * MAX_LEN;i++)
+  {
+    dataMap[i].GScore   = 0.0;
+    dataMap[i].FScore   = 0.0;
+    dataMap[i].CameFrom = NULL;
+  }
+  int StartX = yy, StartY = xx, EndX = yyy, EndY = xxx;
+   
+  Solution = AStar_Find(MAX_LEN,MAX_LEN,StartX,StartY,EndX,EndY,CustomGetMap,dataMap);
+    
+ 
+
+  SolutionNavigator = NULL;
+  NextInSolution = Solution;
+  
+  // NextInSolution will actually refer to the next node from end to start (that is, we're going reverse from the target).
+  if (NextInSolution)
+  {
+    do
+    {
+      NextInSolutionPos = NextInSolution->X + (NextInSolution->Y * MAX_LEN);
+      NextInSolution->NextInSolvedPath = SolutionNavigator;
+      SolutionNavigator = NextInSolution;
+      NextInSolution = dataMap[NextInSolutionPos].CameFrom;
+    }
+    while ((SolutionNavigator->X != StartX) || (SolutionNavigator->Y != StartY));
+  }
+  *next_y = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->X;
+  *next_x = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->Y;
+  
+  
+  RemoveAllFromNodeList(&AllNodesGSet,1);
+  
+  free(dataMap);
+}
+
+void calculate_next_move_to_portal_avatar_blocks(int xx, int yy, int* next_x, int* next_y){
+    put_map_2_memory_portal_goal();
+    int x,y,i;
+      
+  AStar_Node *Solution;
+  AStar_Node *NextInSolution;
+  AStar_Node *SolutionNavigator;
+  int NextInSolutionPos;
+  NodeDataMap *dataMap = (NodeDataMap*)malloc(sizeof(*dataMap) * MAX_LEN * MAX_LEN);
+  
+  for (i=0;i<MAX_LEN * MAX_LEN;i++)
+  {
+    dataMap[i].GScore   = 0.0;
+    dataMap[i].FScore   = 0.0;
+    dataMap[i].CameFrom = NULL;
+  }
+  int StartX = yy, StartY = xx, EndX = goaly, EndY = goalx;
+   
+  Solution = AStar_Find(MAX_LEN,MAX_LEN,StartX,StartY,EndX,EndY,CustomGetMap,dataMap);
+    
+ 
+  SolutionNavigator = NULL;
+  NextInSolution = Solution;
+  //printf("a\n");
+  // NextInSolution will actually refer to the next node from end to start (that is, we're going reverse from the target).
+  if (NextInSolution)
+  {
+    do
+    {
+      NextInSolutionPos = NextInSolution->X + (NextInSolution->Y * MAX_LEN);
+      NextInSolution->NextInSolvedPath = SolutionNavigator;
+      SolutionNavigator = NextInSolution;
+      NextInSolution = dataMap[NextInSolutionPos].CameFrom;
+    }
+    while ((SolutionNavigator->X != StartX) || (SolutionNavigator->Y != StartY));
+  }
+  //printf("b\n");
+  *next_y = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->X;
+  *next_x = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->Y;
+  
+  RemoveAllFromNodeList(&AllNodesGSet,1);
+  free(dataMap);
+}
+
+void calculate_next_move_to_portal(int xx, int yy, int* next_x, int* next_y){
+    put_map_2_memory_portal_goal();
+    int x,y,i;
       
   AStar_Node *Solution;
   AStar_Node *NextInSolution;
@@ -429,9 +557,9 @@ void calculate_next_move(int xx, int yy, int* next_x, int* next_y){
     }
     while ((SolutionNavigator->X != StartX) || (SolutionNavigator->Y != StartY));
   }
+  
   *next_y = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->X;
   *next_x = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->Y;
-  
   
   RemoveAllFromNodeList(&AllNodesGSet,1);
   

@@ -1,7 +1,7 @@
 #ifndef PAN_H
 #define PAN_H
 
-#define SpinVersion	"Spin Version 6.4.6 -- 2 December 2016"
+#define SpinVersion	"Spin Version 6.4.9 -- 17 December 2018"
 #define PanSource	"../spin/temp.pml"
 
 #define G_long	8
@@ -123,6 +123,9 @@
 	#define HAS_NP	2
 	#define VERI	4	/* np_ */
 #endif
+#if defined(NOCLAIM) && defined(NP)
+	#undef NOCLAIM
+#endif
 #ifndef NOCLAIM
 	#define NCLAIMS	1
 	#ifndef NP
@@ -137,24 +140,24 @@ typedef struct S_F_MAP {
 } S_F_MAP;
 
 #define _nstates3	11	/* ltl_0 */
-#define minseq3	416
-#define maxseq3	425
+#define minseq3	428
+#define maxseq3	437
 #define _endstate3	10
 
-#define _nstates2	301	/* :init: */
-#define minseq2	116
-#define maxseq2	415
-#define _endstate2	300
+#define _nstates2	295	/* :init: */
+#define minseq2	134
+#define maxseq2	427
+#define _endstate2	294
 
-#define _nstates1	42	/* opponent_runner */
-#define minseq1	75
-#define maxseq1	115
-#define _endstate1	41
+#define _nstates1	45	/* opponent */
+#define minseq1	90
+#define maxseq1	133
+#define _endstate1	44
 
-#define _nstates0	76	/* avatar_chaser */
+#define _nstates0	91	/* avatar */
 #define minseq0	0
-#define maxseq0	74
-#define _endstate0	75
+#define maxseq0	89
+#define _endstate0	90
 
 extern short src_ln3[];
 extern short src_ln2[];
@@ -166,10 +169,10 @@ extern S_F_MAP src_file1[];
 extern S_F_MAP src_file0[];
 
 #define T_ID	unsigned short
-#define _T5	355
-#define _T2	356
+#define _T5	354
+#define _T2	355
 #define WS		8 /* word size in bytes */
-#define SYNC	0
+#define SYNC	3
 #define ASYNC	0
 
 #ifndef NCORE
@@ -195,7 +198,7 @@ typedef struct P3 { /* ltl_0 */
 } P3;
 #define Air3	(sizeof(P3) - 3)
 
-#define Pinit	((P2 *)this)
+#define Pinit	((P2 *)_this)
 typedef struct P2 { /* :init: */
 	unsigned _pid : 8;  /* 0..255 */
 	unsigned _t   : 4; /* proctype */
@@ -208,28 +211,36 @@ typedef struct P2 { /* :init: */
 } P2;
 #define Air2	(sizeof(P2) - Offsetof(P2, ii) - 1*sizeof(int))
 
-#define Popponent_runner	((P1 *)this)
-typedef struct P1 { /* opponent_runner */
+#define Popponent	((P1 *)_this)
+typedef struct P1 { /* opponent */
 	unsigned _pid : 8;  /* 0..255 */
 	unsigned _t   : 4; /* proctype */
 	unsigned _p   : 10; /* state    */
 #ifdef HAS_PRIORITY
 	unsigned _priority : 8; /* 0..255 */
 #endif
+	unsigned send : 1;
+	uchar w;
+	uchar a;
+	uchar s;
+	uchar d;
 	int x;
 	int y;
+	int xx;
+	int yy;
 	int foo;
 } P1;
 #define Air1	(sizeof(P1) - Offsetof(P1, foo) - 1*sizeof(int))
 
-#define Pavatar_chaser	((P0 *)this)
-typedef struct P0 { /* avatar_chaser */
+#define Pavatar	((P0 *)_this)
+typedef struct P0 { /* avatar */
 	unsigned _pid : 8;  /* 0..255 */
 	unsigned _t   : 4; /* proctype */
 	unsigned _p   : 10; /* state    */
 #ifdef HAS_PRIORITY
 	unsigned _priority : 8; /* 0..255 */
 #endif
+	unsigned foo : 1;
 	uchar w;
 	uchar a;
 	uchar s;
@@ -441,8 +452,9 @@ typedef struct State {
 #endif
 	unsigned win : 1;
 	unsigned dead : 1;
-	unsigned turn : 1;
-	unsigned lock : 1;
+	uchar avatar_turn;
+	uchar opponent_turn;
+	uchar opponent_turn2;
 	int next_x;
 	int next_y;
 	struct row map[26];
@@ -511,7 +523,29 @@ typedef struct TRIX_v6 {
 	#define MEMLIM	(2048)	/* need a default, using 2 GB */
 #endif
 #define PROG_LAB	0 /* progress labels */
-#define NQS	0
+#define NQS	3
+typedef struct Q3 {
+	uchar Qlen;	/* q_size */
+	uchar _t;	/* q_type */
+	struct {
+		uchar fld0;
+	} contents[1];
+} Q3;
+typedef struct Q2 {
+	uchar Qlen;	/* q_size */
+	uchar _t;	/* q_type */
+	struct {
+		uchar fld0;
+		uchar fld1;
+	} contents[1];
+} Q2;
+typedef struct Q1 {
+	uchar Qlen;	/* q_size */
+	uchar _t;	/* q_type */
+	struct {
+		uchar fld0;
+	} contents[1];
+} Q1;
 typedef struct Q0 {	/* generic q */
 	uchar Qlen;	/* q_size */
 	uchar _t;
@@ -826,7 +860,7 @@ typedef struct BFS_State {
 } BFS_State;
 #endif
 
-void qsend(int, int, int);
+void qsend(int, int, int, int, int);
 
 #define Addproc(x,y)	addproc(256, y, x, 0, 0)
 #define LOCAL	1
@@ -838,7 +872,8 @@ void qsend(int, int, int);
 #define GLOBAL	7
 #define BAD	8
 #define ALPHA_F	9
-#define NTRANS	357
+#define NTRANS	356
+unsigned char Is_Recv[438];
 #if defined(BFS_PAR) || NCORE>1
 	void e_critical(int);
 	void x_critical(int);

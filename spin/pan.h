@@ -1,7 +1,7 @@
 #ifndef PAN_H
 #define PAN_H
 
-#define SpinVersion	"Spin Version 6.4.6 -- 2 December 2016"
+#define SpinVersion	"Spin Version 6.4.9 -- 17 December 2018"
 #define PanSource	"temp.pml"
 
 #define G_long	8
@@ -123,6 +123,9 @@
 	#define HAS_NP	2
 	#define VERI	4	/* np_ */
 #endif
+#if defined(NOCLAIM) && defined(NP)
+	#undef NOCLAIM
+#endif
 #ifndef NOCLAIM
 	#define NCLAIMS	1
 	#ifndef NP
@@ -137,24 +140,24 @@ typedef struct S_F_MAP {
 } S_F_MAP;
 
 #define _nstates3	11	/* ltl_0 */
-#define minseq3	420
-#define maxseq3	429
+#define minseq3	411
+#define maxseq3	420
 #define _endstate3	10
 
-#define _nstates2	306	/* :init: */
-#define minseq2	115
-#define maxseq2	419
-#define _endstate2	305
+#define _nstates2	299	/* :init: */
+#define minseq2	113
+#define maxseq2	410
+#define _endstate2	298
 
-#define _nstates1	41	/* opponent_runner */
-#define minseq1	75
-#define maxseq1	114
-#define _endstate1	40
+#define _nstates1	38	/* opponent_same_goal */
+#define minseq1	76
+#define maxseq1	112
+#define _endstate1	37
 
-#define _nstates0	76	/* avatar_chaser */
+#define _nstates0	77	/* avatar_same_goal */
 #define minseq0	0
-#define maxseq0	74
-#define _endstate0	75
+#define maxseq0	75
+#define _endstate0	76
 
 extern short src_ln3[];
 extern short src_ln2[];
@@ -166,8 +169,8 @@ extern S_F_MAP src_file1[];
 extern S_F_MAP src_file0[];
 
 #define T_ID	unsigned short
-#define _T5	359
-#define _T2	360
+#define _T5	347
+#define _T2	348
 #define WS		8 /* word size in bytes */
 #define SYNC	0
 #define ASYNC	0
@@ -195,7 +198,7 @@ typedef struct P3 { /* ltl_0 */
 } P3;
 #define Air3	(sizeof(P3) - 3)
 
-#define Pinit	((P2 *)this)
+#define Pinit	((P2 *)_this)
 typedef struct P2 { /* :init: */
 	unsigned _pid : 8;  /* 0..255 */
 	unsigned _t   : 4; /* proctype */
@@ -208,8 +211,8 @@ typedef struct P2 { /* :init: */
 } P2;
 #define Air2	(sizeof(P2) - Offsetof(P2, ii) - 1*sizeof(int))
 
-#define Popponent_runner	((P1 *)this)
-typedef struct P1 { /* opponent_runner */
+#define Popponent_same_goal	((P1 *)_this)
+typedef struct P1 { /* opponent_same_goal */
 	unsigned _pid : 8;  /* 0..255 */
 	unsigned _t   : 4; /* proctype */
 	unsigned _p   : 10; /* state    */
@@ -218,18 +221,21 @@ typedef struct P1 { /* opponent_runner */
 #endif
 	int x;
 	int y;
+	int xx;
+	int yy;
 	int foo;
 } P1;
 #define Air1	(sizeof(P1) - Offsetof(P1, foo) - 1*sizeof(int))
 
-#define Pavatar_chaser	((P0 *)this)
-typedef struct P0 { /* avatar_chaser */
+#define Pavatar_same_goal	((P0 *)_this)
+typedef struct P0 { /* avatar_same_goal */
 	unsigned _pid : 8;  /* 0..255 */
 	unsigned _t   : 4; /* proctype */
 	unsigned _p   : 10; /* state    */
 #ifdef HAS_PRIORITY
 	unsigned _priority : 8; /* 0..255 */
 #endif
+	unsigned foo : 1;
 	uchar w;
 	uchar a;
 	uchar s;
@@ -828,7 +834,7 @@ typedef struct BFS_State {
 
 void qsend(int, int, int);
 
-#define Addproc(x,y)	addproc(256, y, x, 0, 0)
+#define Addproc(x,y)	addproc(256, y, x, 0, 0, 0, 0)
 #define LOCAL	1
 #define Q_FULL_F	2
 #define Q_EMPT_F	3
@@ -838,7 +844,7 @@ void qsend(int, int, int);
 #define GLOBAL	7
 #define BAD	8
 #define ALPHA_F	9
-#define NTRANS	361
+#define NTRANS	349
 #if defined(BFS_PAR) || NCORE>1
 	void e_critical(int);
 	void x_critical(int);
