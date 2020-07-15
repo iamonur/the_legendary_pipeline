@@ -1,7 +1,7 @@
 #ifndef PAN_H
 #define PAN_H
 
-#define SpinVersion	"Spin Version 6.4.9 -- 17 December 2018"
+#define SpinVersion	"Spin Version 6.4.6 -- 2 December 2016"
 #define PanSource	"../spin/temp.pml"
 
 #define G_long	8
@@ -123,9 +123,6 @@
 	#define HAS_NP	2
 	#define VERI	4	/* np_ */
 #endif
-#if defined(NOCLAIM) && defined(NP)
-	#undef NOCLAIM
-#endif
 #ifndef NOCLAIM
 	#define NCLAIMS	1
 	#ifndef NP
@@ -140,14 +137,14 @@ typedef struct S_F_MAP {
 } S_F_MAP;
 
 #define _nstates3	11	/* ltl_0 */
-#define minseq3	428
-#define maxseq3	437
+#define minseq3	431
+#define maxseq3	440
 #define _endstate3	10
 
-#define _nstates2	295	/* :init: */
+#define _nstates2	298	/* :init: */
 #define minseq2	134
-#define maxseq2	427
-#define _endstate2	294
+#define maxseq2	430
+#define _endstate2	297
 
 #define _nstates1	45	/* opponent */
 #define minseq1	90
@@ -169,8 +166,8 @@ extern S_F_MAP src_file1[];
 extern S_F_MAP src_file0[];
 
 #define T_ID	unsigned short
-#define _T5	354
-#define _T2	355
+#define _T5	357
+#define _T2	358
 #define WS		8 /* word size in bytes */
 #define SYNC	3
 #define ASYNC	0
@@ -198,7 +195,7 @@ typedef struct P3 { /* ltl_0 */
 } P3;
 #define Air3	(sizeof(P3) - 3)
 
-#define Pinit	((P2 *)_this)
+#define Pinit	((P2 *)this)
 typedef struct P2 { /* :init: */
 	unsigned _pid : 8;  /* 0..255 */
 	unsigned _t   : 4; /* proctype */
@@ -211,7 +208,7 @@ typedef struct P2 { /* :init: */
 } P2;
 #define Air2	(sizeof(P2) - Offsetof(P2, ii) - 1*sizeof(int))
 
-#define Popponent	((P1 *)_this)
+#define Popponent	((P1 *)this)
 typedef struct P1 { /* opponent */
 	unsigned _pid : 8;  /* 0..255 */
 	unsigned _t   : 4; /* proctype */
@@ -232,7 +229,7 @@ typedef struct P1 { /* opponent */
 } P1;
 #define Air1	(sizeof(P1) - Offsetof(P1, foo) - 1*sizeof(int))
 
-#define Pavatar	((P0 *)_this)
+#define Pavatar	((P0 *)this)
 typedef struct P0 { /* avatar */
 	unsigned _pid : 8;  /* 0..255 */
 	unsigned _t   : 4; /* proctype */
@@ -872,8 +869,8 @@ void qsend(int, int, int, int, int);
 #define GLOBAL	7
 #define BAD	8
 #define ALPHA_F	9
-#define NTRANS	356
-unsigned char Is_Recv[438];
+#define NTRANS	359
+unsigned char Is_Recv[441];
 #if defined(BFS_PAR) || NCORE>1
 	void e_critical(int);
 	void x_critical(int);
