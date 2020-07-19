@@ -239,11 +239,11 @@ class GameClass:
             elif action == 'Skip':
                 self.actions[i] = -1
 
-        print(self.actions)
+       # print(self.actions)
 
     def _create_controller(self):
         
-        self.controller = RecordedController(self.env_name, self.actions, fps=2)
+        self.controller = RecordedController(self.env_name, self.actions, fps=60)
 
     def _save_game_files(self):
 

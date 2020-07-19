@@ -146,6 +146,7 @@ class SimManager():
         rng = self.rng()
         totalExceptions = 0
         while(True):
+            print ("________________________________")
             rngtime = time.time()
             try:
                 line = rng.serve()
@@ -163,13 +164,14 @@ class SimManager():
                 print("asd")
                 totalExceptions += 1
                 continue
-            caPolisher.map_print(map_)
+            #caPolisher.map_print(map_)
             mind = self.spriter(map_)
             mind.perform()
             map_ = mind.getMap() #Throws, but if you get an exception at this point, there is something you need to fix. Thus I let it propagate.
-            caPolisher.map_print(map_)
+            #caPolisher.map_print(map_)
             mapgentime = time.time() - mapgentime
             modeltime = time.time()
+            print ("________________________________")
             modelChecker = self.spinner(map_)
             try:
                 modelChecker.perform() #Your output is at your filesystem now.
@@ -180,28 +182,32 @@ class SimManager():
             get_moves = self.parser()
             try:
                 avatar, opponent= get_moves.perform()
-                opponent = []
-                print(avatar)
+                #opponent = []
+                #print(avatar)
             except spinParser.cannotWinException:
                 totalExceptions += 1
                 continue # You created an unplayable level. Move on with a new one.
+            
+            print (opponent)
             modeltime = time.time() - modeltime
             ret = {"map": map_, 'avatar': avatar, 'opponent': opponent, 'timings': {"rng": rngtime, "map_gen": mapgentime, "modelling": modeltime}, "exceptions": totalExceptions}
 
             if self.isOK(ret) is False:
                 continue
-
+            print ("________________________________")
             game = self.game(action_list = avatar, level_desc = map_)
 
-
+            print ("________________________________")
             if game.play() == 1:
                 #def insertQ(self, line, linetime, ca, cap, sp, maptime, modeltime, game, seq, func_id, isOK):
                 #self.db.insertQ(line,rngtime,self.mapgen.__name__,self.mappolish.__name__,self.spriter.__name__,mapgentime,modeltime,"1",avatar,"1","1")
-                print (ret)
-                
+                print ("qqq")
+            
                 
 
             else: #We couldn't win while we think we will, best to fix this. Raise with all info.
+                print ("________________________________")
+                caPolisher.map_print(map_)
                 raise NameError("Nuncked up")
                 #raise ("Map: " + map_ + " avatar_moves: " + "".join(avatar) + " opponent_moves: " + "".join(opponent) + " failed.") #This can be reconstructed.
 
@@ -263,5 +269,5 @@ if __name__ == "__main__":
         #s = SimManager(isOKBasic, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner)
         #s.pipeline()
 
-        ss = SimManager(isOKDummy, cellularAutomata.elementary_cellular_automata, caPolisher.polisher, spritePlanner.reverseSpritePlanner, spin=spinner.SpinClass_smart, parser=spinParser.spinParser, player=player.GameClass_Smart)
+        ss = SimManager(isOKDummy, cellularAutomata.elementary_cellular_automata, caPolisher.polisher, spritePlanner.reverseSpritePlanner, spin=spinner.SpinClass_Game2_smart, parser=spinParser.spinParser, player=player.ChaserGameClass_Smart)
         ss.pipeline()

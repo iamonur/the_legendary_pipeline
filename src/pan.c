@@ -508,48 +508,48 @@ uchar reached3 [] = {
 uchar *loopstate3;
 
 short src_ln2 [] = {
-	  0, 186, 186, 189, 190, 186, 191, 191, 
-	191, 192, 191, 192, 192, 193, 194, 192, 
-	195, 195, 195, 197, 195, 197, 197, 198, 
-	198, 200, 198, 201, 201, 201, 202, 201, 
-	197, 202, 202, 202, 204, 202, 204, 205, 
-	206, 207, 208, 209, 210, 211, 212, 213, 
-	214, 215, 216, 217, 218, 219, 220, 221, 
-	222, 223, 224, 225, 226, 227, 228, 229, 
-	230, 231, 232, 233, 234, 235, 236, 237, 
-	238, 239, 240, 241, 242, 243, 244, 245, 
-	246, 247, 248, 249, 250, 251, 252, 253, 
-	254, 255, 256, 257, 258, 259, 260, 261, 
-	262, 263, 264, 265, 266, 267, 268, 269, 
-	270, 271, 272, 273, 274, 275, 276, 277, 
-	278, 279, 280, 281, 282, 283, 284, 285, 
-	286, 287, 288, 289, 290, 291, 292, 293, 
-	294, 295, 296, 297, 298, 299, 300, 301, 
-	302, 303, 304, 305, 306, 307, 308, 309, 
-	310, 311, 312, 313, 314, 315, 316, 317, 
-	318, 319, 320, 321, 322, 323, 324, 325, 
-	326, 327, 328, 329, 330, 331, 332, 333, 
-	334, 335, 336, 337, 338, 339, 340, 341, 
-	342, 343, 344, 345, 346, 347, 348, 349, 
-	350, 351, 352, 353, 354, 355, 356, 357, 
-	358, 359, 360, 361, 362, 363, 364, 365, 
-	366, 367, 368, 369, 370, 371, 372, 373, 
-	374, 375, 376, 377, 378, 379, 380, 381, 
-	382, 383, 384, 385, 386, 387, 388, 389, 
-	390, 391, 392, 393, 394, 395, 396, 397, 
-	398, 399, 400, 401, 402, 403, 404, 405, 
-	406, 407, 408, 409, 410, 411, 412, 413, 
-	414, 415, 416, 417, 418, 419, 420, 421, 
-	422, 423, 424, 425, 426, 427, 428, 429, 
-	430, 431, 432, 433, 434, 435, 436, 437, 
-	438, 439, 440, 441, 442, 443, 444, 445, 
-	446, 447, 448, 449, 450, 451, 452, 453, 
-	454, 455, 456, 457, 460, 461, 462, 464, 
-	465, 468,   0, };
+	  0, 158, 158, 160, 161, 158, 162, 162, 
+	162, 163, 162, 163, 163, 164, 165, 163, 
+	166, 166, 166, 167, 166, 167, 167, 168, 
+	168, 170, 168, 171, 171, 171, 172, 171, 
+	167, 172, 172, 172, 174, 172, 174, 175, 
+	176, 177, 178, 179, 180, 181, 182, 183, 
+	184, 185, 186, 187, 188, 189, 190, 191, 
+	192, 193, 194, 195, 196, 197, 198, 199, 
+	200, 201, 202, 203, 204, 205, 206, 207, 
+	208, 209, 210, 211, 212, 213, 214, 215, 
+	216, 217, 218, 219, 220, 221, 222, 223, 
+	224, 225, 226, 227, 228, 229, 230, 231, 
+	232, 233, 234, 235, 236, 237, 238, 239, 
+	240, 241, 242, 243, 244, 245, 246, 247, 
+	248, 249, 250, 251, 252, 253, 254, 255, 
+	256, 257, 258, 259, 260, 261, 262, 263, 
+	264, 265, 266, 267, 268, 269, 270, 271, 
+	272, 273, 274, 275, 276, 277, 278, 279, 
+	280, 281, 282, 283, 284, 285, 286, 287, 
+	288, 289, 290, 291, 292, 293, 294, 295, 
+	296, 297, 298, 299, 300, 301, 302, 303, 
+	304, 305, 306, 307, 308, 309, 310, 311, 
+	312, 313, 314, 315, 316, 317, 318, 319, 
+	320, 321, 322, 323, 324, 325, 326, 327, 
+	328, 329, 330, 331, 332, 333, 334, 335, 
+	336, 337, 338, 339, 340, 341, 342, 343, 
+	344, 345, 346, 347, 348, 349, 350, 351, 
+	352, 353, 354, 355, 356, 357, 358, 359, 
+	360, 361, 362, 363, 364, 365, 366, 367, 
+	368, 369, 370, 371, 372, 373, 374, 375, 
+	376, 377, 378, 379, 380, 381, 382, 383, 
+	384, 385, 386, 387, 388, 389, 390, 391, 
+	392, 393, 394, 395, 396, 397, 398, 399, 
+	400, 401, 402, 403, 404, 405, 406, 407, 
+	408, 409, 410, 411, 412, 413, 414, 415, 
+	416, 417, 418, 419, 420, 421, 422, 423, 
+	424, 425, 426, 427, 428, 429, 430, 431, 
+	434, 435, 436, 437,   0, };
 S_F_MAP src_file2 [] = {
 	{ "-", 0, 0 },
-	{ "../spin/temp.pml", 1, 297 },
-	{ "-", 298, 299 }
+	{ "../spin/temp.pml", 1, 299 },
+	{ "-", 300, 301 }
 };
 uchar reached2 [] = {
 	  0,   0,   1,   0,   0,   0,   1,   0, 
@@ -589,61 +589,57 @@ uchar reached2 [] = {
 	  0,   0,   0,   0,   0,   0,   0,   0, 
 	  0,   0,   0,   0,   0,   0,   0,   0, 
 	  0,   0,   0,   0,   0,   0,   0,   0, 
-	  0,   0,   0, };
+	  0,   0,   0,   0,   0, };
 uchar *loopstate2;
 
 short src_ln1 [] = {
-	  0, 144, 145, 145, 146, 146, 146, 146, 
-	147, 148, 149, 150, 152, 152, 153, 153, 
-	151, 155, 155, 156, 157, 158, 159, 161, 
-	162, 165, 166, 167, 168, 169, 170, 164, 
-	172, 172, 172, 148, 175, 148, 176, 177, 
-	178, 179, 175, 181, 181,   0, };
+	  0, 114, 118, 119, 121, 124, 124, 125, 
+	125, 123, 128, 128, 130, 131, 132, 134, 
+	135, 137, 137, 137, 138, 138, 138, 139, 
+	139, 136, 142, 142, 144, 144, 118, 147, 
+	118, 148, 148, 149, 149, 147, 152, 152, 
+	153,   0, };
 S_F_MAP src_file1 [] = {
 	{ "-", 0, 0 },
-	{ "../spin/temp.pml", 1, 44 },
-	{ "-", 45, 46 }
+	{ "../spin/temp.pml", 1, 40 },
+	{ "-", 41, 42 }
 };
 uchar reached1 [] = {
-	  0,   0,   0,   0,   0,   0,   0,   0, 
-	  0,   0,   1,   0,   1,   1,   1,   1, 
-	  0,   1,   0,   0,   0,   0,   0,   0, 
-	  0,   1,   0,   0,   1,   1,   0,   0, 
-	  1,   1,   1,   0,   1,   1,   1,   0, 
-	  1,   0,   0,   1,   0,   0, };
+	  0,   0,   0,   1,   0,   1,   1,   1, 
+	  1,   0,   1,   0,   0,   0,   0,   0, 
+	  0,   1,   0,   1,   1,   0,   1,   1, 
+	  1,   0,   1,   0,   1,   1,   0,   1, 
+	  1,   1,   0,   1,   0,   0,   1,   0, 
+	  0,   0, };
 uchar *loopstate1;
 
 short src_ln0 [] = {
-	  0,  37,  38,  38,  38,  39,  41,  42, 
-	 51,  54,  55,  56,  57,  57,  53,  60, 
-	 60,  61,  62,  63,  66,  66,  69,  70, 
-	 71,  72,  73,  74,  75,  76,  68,  79, 
-	 79,  79,  82,  83,  84,  85,  86,  87, 
-	 88,  89,  81,  92,  92,  92,  95,  96, 
-	 97,  98,  99, 100, 101, 102,  94, 105, 
-	105, 105, 108, 109, 110, 111, 112, 113, 
-	114, 115, 107, 118, 118, 118,  65, 121, 
-	122, 123, 124, 125, 126, 121, 129, 129, 
-	129,  41, 132,  41, 133, 133, 135, 135, 
-	132, 138, 138,   0, };
+	  0,  35,  36,  36,  36,  37,  38,  40, 
+	 43,  43,  44,  44,  42,  47,  47,  48, 
+	 49,  50,  53,  53,  56,  57,  58,  59, 
+	 60,  61,  55,  64,  64,  64,  67,  68, 
+	 69,  70,  71,  72,  66,  75,  75,  75, 
+	 78,  79,  80,  81,  82,  83,  77,  86, 
+	 86,  86,  89,  90,  91,  92,  93,  94, 
+	 88,  97,  97,  97,  52, 101, 101, 102, 
+	102,  37, 105,  37, 106, 106, 107, 107, 
+	105, 109, 109, 110,   0, };
 S_F_MAP src_file0 [] = {
 	{ "-", 0, 0 },
-	{ "../spin/temp.pml", 1, 90 },
-	{ "-", 91, 92 }
+	{ "../spin/temp.pml", 1, 75 },
+	{ "-", 76, 77 }
 };
 uchar reached0 [] = {
-	  0,   0,   0,   0,   0,   0,   0,   1, 
-	  0,   1,   0,   1,   1,   1,   0,   1, 
-	  0,   0,   0,   0,   1,   0,   1,   0, 
-	  0,   0,   1,   0,   1,   0,   0,   1, 
-	  1,   0,   1,   0,   0,   0,   1,   0, 
+	  0,   0,   0,   0,   0,   0,   1,   0, 
+	  1,   1,   1,   1,   0,   1,   0,   0, 
+	  0,   0,   1,   0,   1,   0,   0,   0, 
 	  1,   0,   0,   1,   1,   0,   1,   0, 
-	  0,   0,   1,   0,   1,   0,   0,   1, 
+	  0,   0,   1,   0,   0,   1,   1,   0, 
+	  1,   0,   0,   0,   1,   0,   0,   1, 
 	  1,   0,   1,   0,   0,   0,   1,   0, 
-	  1,   0,   0,   1,   1,   1,   0,   1, 
-	  1,   0,   1,   0,   0,   0,   1,   1, 
+	  0,   1,   1,   1,   0,   1,   0,   1, 
 	  1,   0,   1,   1,   1,   0,   1,   0, 
-	  0,   1,   0,   0, };
+	  0,   1,   0,   0,   0, };
 uchar *loopstate0;
 uchar reached4[3];  /* np_ */
 uchar *loopstate4;  /* np_ */
@@ -666,15 +662,23 @@ S_F_MAP *flref[] = {
 struct {
 	char *c; char *t;
 } code_lookup[] = {
-	{ "c_code2", "calculate_next_move_to_avatar(Popponent->x, Popponent->y, Popponent->xx, Popponent->yy, &(now.next_x), &(now.next_y));" },
+	{ "c_code10", "printf(\"Opponent - Dead\n\");" },
+	{ "c_code9", "printf(\"Opponent - Win\n\");" },
+	{ "c_code8", "calculate_next_move_to_portal(Popponent_runner->x, Popponent_runner->y, &(now.next_x), &(now.next_y));" },
+	{ "c_code7", "printf(\"Avatar - Dead\n\");" },
+	{ "c_code6", "printf(\"Avatar - Win\n\");" },
+	{ "c_code5", "printf(\"Avatar - D\n\");" },
+	{ "c_code4", "printf(\"Avatar - S\n\");" },
+	{ "c_code3", "printf(\"Avatar - A\n\");" },
+	{ "c_code2", "printf(\"Avatar - W\n\");" },
 	{ "c_code1", "#include \"../spin/bfs.c\"" },
 	{ (char *) 0, "" }
 };
 
 short Air[] = {  (short) Air0, (short) Air1, (short) Air2, (short) Air3, (short) Air4 };
 char *procname[] = {
-   "avatar",
-   "opponent",
+   "avatar_chaser",
+   "opponent_runner",
    ":init:",
    "ltl_0",
    ":np_:",
@@ -684,8 +688,8 @@ char *procname[] = {
 enum btypes { NONE=0, N_CLAIM=1, I_PROC=2, A_PROC=3, P_PROC=4, E_TRACE=5, N_TRACE=6 };
 
 int Btypes[] = {
-   4,	/* avatar */
-   4,	/* opponent */
+   4,	/* avatar_chaser */
+   4,	/* opponent_runner */
    2,	/* :init: */
    1,	/* ltl_0 */
    0	/* :np_: */
@@ -996,7 +1000,7 @@ addproc(int calling_pid, int priority, int n, int par0, int par1)
 		locinit2(h);
 #endif
 		break;
-	case 1:	/* opponent */
+	case 1:	/* opponent_runner */
 		((P1 *)pptr(h))->_t = 1;
 		((P1 *)pptr(h))->_p = 1;
 #ifdef HAS_PRIORITY
@@ -1007,31 +1011,17 @@ addproc(int calling_pid, int priority, int n, int par0, int par1)
 		((P1 *)pptr(h))->x = par0;
 		((P1 *)pptr(h))->y = par1;
 		/* locals: */
-		((P1 *)pptr(h))->xx = 0;
-		((P1 *)pptr(h))->yy = 0;
 		((P1 *)pptr(h))->foo = 0;
-		((P1 *)pptr(h))->w = 0;
-		((P1 *)pptr(h))->a = 0;
-		((P1 *)pptr(h))->s = 0;
-		((P1 *)pptr(h))->d = 0;
-		((P1 *)pptr(h))->send = 0;
 #ifdef VAR_RANGES
-		logval("opponent:send", ((P1 *)pptr(h))->send);
-		logval("opponent:w", ((P1 *)pptr(h))->w);
-		logval("opponent:a", ((P1 *)pptr(h))->a);
-		logval("opponent:s", ((P1 *)pptr(h))->s);
-		logval("opponent:d", ((P1 *)pptr(h))->d);
-		logval("opponent:x", ((P1 *)pptr(h))->x);
-		logval("opponent:y", ((P1 *)pptr(h))->y);
-		logval("opponent:xx", ((P1 *)pptr(h))->xx);
-		logval("opponent:yy", ((P1 *)pptr(h))->yy);
-		logval("opponent:foo", ((P1 *)pptr(h))->foo);
+		logval("opponent_runner:x", ((P1 *)pptr(h))->x);
+		logval("opponent_runner:y", ((P1 *)pptr(h))->y);
+		logval("opponent_runner:foo", ((P1 *)pptr(h))->foo);
 #endif
 #ifdef HAS_CODE
 		locinit1(h);
 #endif
 		break;
-	case 0:	/* avatar */
+	case 0:	/* avatar_chaser */
 		((P0 *)pptr(h))->_t = 0;
 		((P0 *)pptr(h))->_p = 1;
 #ifdef HAS_PRIORITY
@@ -1046,15 +1036,13 @@ addproc(int calling_pid, int priority, int n, int par0, int par1)
 		((P0 *)pptr(h))->a = 0;
 		((P0 *)pptr(h))->s = 0;
 		((P0 *)pptr(h))->d = 0;
-		((P0 *)pptr(h))->foo = 0;
 #ifdef VAR_RANGES
-		logval("avatar:foo", ((P0 *)pptr(h))->foo);
-		logval("avatar:w", ((P0 *)pptr(h))->w);
-		logval("avatar:a", ((P0 *)pptr(h))->a);
-		logval("avatar:s", ((P0 *)pptr(h))->s);
-		logval("avatar:d", ((P0 *)pptr(h))->d);
-		logval("avatar:x", ((P0 *)pptr(h))->x);
-		logval("avatar:y", ((P0 *)pptr(h))->y);
+		logval("avatar_chaser:w", ((P0 *)pptr(h))->w);
+		logval("avatar_chaser:a", ((P0 *)pptr(h))->a);
+		logval("avatar_chaser:s", ((P0 *)pptr(h))->s);
+		logval("avatar_chaser:d", ((P0 *)pptr(h))->d);
+		logval("avatar_chaser:x", ((P0 *)pptr(h))->x);
+		logval("avatar_chaser:y", ((P0 *)pptr(h))->y);
 #endif
 #ifdef HAS_CODE
 		locinit0(h);
@@ -1184,9 +1172,6 @@ run(void)
 	NrStates[4] = _nstates4;
 #endif
 
-	Maxbody = max(Maxbody, ((int) sizeof(Q1)));
-	Maxbody = max(Maxbody, ((int) sizeof(Q2)));
-	Maxbody = max(Maxbody, ((int) sizeof(Q3)));
 	Maxbody = max(Maxbody, sizeof(State)-VECTORSZ);
 	if ((Maxbody % WS) != 0)
 		Maxbody += WS - (Maxbody % WS);
@@ -12516,9 +12501,8 @@ iniglobals(int calling_pid)
 {
 		now.win = 0;
 		now.dead = 0;
-		now.avatar_turn = addqueue(calling_pid, 1, 1);
-		now.opponent_turn = addqueue(calling_pid, 2, 1);
-		now.opponent_turn2 = addqueue(calling_pid, 3, 1);
+		now.turn = 0;
+		now.lock = 0;
 		now.next_x = 0;
 		now.next_y = 0;
 	{	int l_in;
@@ -12680,6 +12664,8 @@ iniglobals(int calling_pid)
 #ifdef VAR_RANGES
 		logval("win", now.win);
 		logval("dead", now.dead);
+		logval("turn", now.turn);
+		logval("lock", now.lock);
 		logval("next_x", now.next_x);
 		logval("next_y", now.next_y);
 	{	int l_in;
@@ -12854,9 +12840,6 @@ addqueue(int calling_pid, int n, int is_rv)
 	printf("%4d: add queue %d\n", depth, i);
 #endif
 	switch (n) {
-	case 3: j = sizeof(Q3); q_flds[3] = 1; q_max[3] = 1; break;
-	case 2: j = sizeof(Q2); q_flds[2] = 2; q_max[2] = 1; break;
-	case 1: j = sizeof(Q1); q_flds[1] = 1; q_max[1] = 1; break;
 	default: Uerror("bad queue - addqueue");
 	}
 	#ifdef BFS_PAR
@@ -12934,9 +12917,6 @@ what_q_size(int t)
 {	int j;
 	switch (t) {
 	case 0: j = sizeof(Q0); break;
-	case 1: j = sizeof(Q1); break;
-	case 2: j = sizeof(Q2); break;
-	case 3: j = sizeof(Q3); break;
 	default: Uerror("bad qtype");
 	}
 	return j;
@@ -12945,7 +12925,7 @@ what_q_size(int t)
 
 #if NQS>0
 void
-qsend(int into, int sorted, int fld0, int fld1, int args_given)
+qsend(int into, int sorted, int args_given)
 {	int j; uchar *z;
 
 #ifdef HAS_SORTED
@@ -12971,49 +12951,6 @@ qsend(int into, int sorted, int fld0, int fld1, int args_given)
 	z = qptr(into);
 	j = ((Q0 *)qptr(into))->Qlen;
 	switch (((Q0 *)qptr(into))->_t) {
-	case 3: /* =rv= */
-		(trpt+2)->o_m = 0;
-#ifdef HAS_SORTED
-		(trpt+1)->ipt = j;
-#endif
-		((Q3 *)z)->Qlen = ((Q3 *)z)->Qlen + 1;
-		((Q3 *)z)->contents[j].fld0 = fld0;
-		if (args_given != 1)
-		{	if (args_given > 1)
-				uerror("too many parameters in send stmnt");
-			else
-				uerror("too few parameters in send stmnt");
-		}
-		break;
-	case 2: /* =rv= */
-		(trpt+2)->o_m = 0;
-#ifdef HAS_SORTED
-		(trpt+1)->ipt = j;
-#endif
-		((Q2 *)z)->Qlen = ((Q2 *)z)->Qlen + 1;
-		((Q2 *)z)->contents[j].fld0 = fld0;
-		((Q2 *)z)->contents[j].fld1 = fld1;
-		if (args_given != 2)
-		{	if (args_given > 2)
-				uerror("too many parameters in send stmnt");
-			else
-				uerror("too few parameters in send stmnt");
-		}
-		break;
-	case 1: /* =rv= */
-		(trpt+2)->o_m = 0;
-#ifdef HAS_SORTED
-		(trpt+1)->ipt = j;
-#endif
-		((Q1 *)z)->Qlen = ((Q1 *)z)->Qlen + 1;
-		((Q1 *)z)->contents[j].fld0 = fld0;
-		if (args_given != 1)
-		{	if (args_given > 1)
-				uerror("too many parameters in send stmnt");
-			else
-				uerror("too few parameters in send stmnt");
-		}
-		break;
 	case 0: printf("queue %d was deleted\n", into+1);
 	default: Uerror("bad queue - qsend");
 	}
@@ -13032,9 +12969,6 @@ q_zero(int from)
 		return 0;
 	}
 	switch(((Q0 *)qptr(from))->_t) {
-	case 3: return 1;
-	case 2: return 1;
-	case 1: return 1;
 	case 0: printf("queue %d was deleted\n", from+1);
 	}
 	Uerror("bad queue q-zero");
@@ -13136,9 +13070,6 @@ q_full(int from)
 {	if (!from--)
 	uerror("ref to uninitialized chan name (qfull)");
 	switch(((Q0 *)qptr(from))->_t) {
-	case 3: return (q_sz(from) == 1);
-	case 2: return (q_sz(from) == 1);
-	case 1: return (q_sz(from) == 1);
 	case 0: printf("queue %d was deleted\n", from+1);
 	}
 	Uerror("bad queue - q_full");
@@ -13181,41 +13112,6 @@ qrecv(int from, int slot, int fld, int done)
 		require('r', from);
 #endif
 	switch (((Q0 *)qptr(from))->_t) {
-	case 3: /* =rv= */
-		if (fld == 0) r = ((Q3 *)z)->contents[slot].fld0;
-		if (done)
-		{	j = ((Q3 *)z)->Qlen - 1;
-			((Q3 *)z)->Qlen = 0;
-			((Q3 *)z)->contents[j].fld0 = 0;
-			if (fld+1 != 1)
-				uerror("missing pars in receive");
-		}
-		break;
-	case 2: /* =rv= */
-		switch (fld) {
-		case 0: r = ((Q2 *)z)->contents[slot].fld0; break;
-		case 1: r = ((Q2 *)z)->contents[slot].fld1; break;
-		default: Uerror("too many fields in recv");
-		}
-		if (done)
-		{	j = ((Q2 *)z)->Qlen - 1;
-			((Q2 *)z)->Qlen = 0;
-			((Q2 *)z)->contents[j].fld0 = 0;
-			((Q2 *)z)->contents[j].fld1 = 0;
-			if (fld+1 != 2)
-				uerror("missing pars in receive");
-		}
-		break;
-	case 1: /* =rv= */
-		if (fld == 0) r = ((Q1 *)z)->contents[slot].fld0;
-		if (done)
-		{	j = ((Q1 *)z)->Qlen - 1;
-			((Q1 *)z)->Qlen = 0;
-			((Q1 *)z)->contents[j].fld0 = 0;
-			if (fld+1 != 1)
-				uerror("missing pars in receive");
-		}
-		break;
 	case 0: printf("queue %d was deleted\n", from+1);
 	default: Uerror("bad queue - qrecv");
 	}
@@ -13231,9 +13127,6 @@ col_q(int i, char *z)
 	char *x, *y;
 	Q0 *ptr = (Q0 *) qptr(i);
 	switch (ptr->_t) {
-	case 3: j = sizeof(Q3); break;
-	case 2: j = sizeof(Q2); break;
-	case 1: j = sizeof(Q1); break;
 	default: Uerror("bad qtype - collapse");
 	}
 	if (z) x = z; else x = scratch;
@@ -13285,25 +13178,6 @@ unsend(int into)
 	j = ((Q0 *)z)->Qlen;
 	((Q0 *)z)->Qlen = --j;
 	switch (((Q0 *)qptr(into))->_t) {
-	case 3:
-		((Q3 *)z)->contents[j].fld0 = 0;
-		_m = (trpt+1)->o_m;
-		if (_m) (trpt-1)->o_pm |= 1;
-		UnBlock;
-		break;
-	case 2:
-		((Q2 *)z)->contents[j].fld0 = 0;
-		((Q2 *)z)->contents[j].fld1 = 0;
-		_m = (trpt+1)->o_m;
-		if (_m) (trpt-1)->o_pm |= 1;
-		UnBlock;
-		break;
-	case 1:
-		((Q1 *)z)->contents[j].fld0 = 0;
-		_m = (trpt+1)->o_m;
-		if (_m) (trpt-1)->o_pm |= 1;
-		UnBlock;
-		break;
 	default: Uerror("bad queue - unsend");
 	}
 	return _m;
@@ -13333,31 +13207,6 @@ unrecv(int from, int slot, int fld, int fldvar, int strt)
 	j = ((Q0 *)z)->Qlen;
 	if (strt) ((Q0 *)z)->Qlen = j+1;
 	switch (((Q0 *)qptr(from))->_t) {
-	case 3:
-		if (strt) boq = from+1;
-		if (strt) {
-			((Q3 *)z)->contents[slot].fld0 = 0;
-		}
-		if (fld == 0) ((Q3 *)z)->contents[slot].fld0 = fldvar;
-		break;
-	case 2:
-		if (strt) boq = from+1;
-		if (strt) {
-			((Q2 *)z)->contents[slot].fld0 = 0;
-			((Q2 *)z)->contents[slot].fld1 = 0;
-		}
-		switch (fld) {
-		case 0:	((Q2 *)z)->contents[slot].fld0 = fldvar; break;
-		case 1:	((Q2 *)z)->contents[slot].fld1 = fldvar; break;
-		}
-		break;
-	case 1:
-		if (strt) boq = from+1;
-		if (strt) {
-			((Q1 *)z)->contents[slot].fld0 = 0;
-		}
-		if (fld == 0) ((Q1 *)z)->contents[slot].fld0 = fldvar;
-		break;
 	default: Uerror("bad queue - qrecv");
 	}
 }
@@ -13374,21 +13223,6 @@ q_cond(short II, Trans *t)
 #endif
 		switch (t->qu[i]) {
 		case 0: break;
-		case 1: if (	(t->ty[i] == Q_FULL_F && ( q_full((int) ( now.avatar_turn) )))
-			 || 	(t->ty[i] == Q_FULL_T && (!q_full((int) ( now.avatar_turn) )))
-			 || 	(t->ty[i] == Q_EMPT_F && ( !q_len((int) ( now.avatar_turn) )))
-			 || 	(t->ty[i] == Q_EMPT_T && (  q_len((int) ( now.avatar_turn) )))
-			    ) return 0; break;
-		case 2: if (	(t->ty[i] == Q_FULL_F && ( q_full((int) ( now.opponent_turn) )))
-			 || 	(t->ty[i] == Q_FULL_T && (!q_full((int) ( now.opponent_turn) )))
-			 || 	(t->ty[i] == Q_EMPT_F && ( !q_len((int) ( now.opponent_turn) )))
-			 || 	(t->ty[i] == Q_EMPT_T && (  q_len((int) ( now.opponent_turn) )))
-			    ) return 0; break;
-		case 3: if (	(t->ty[i] == Q_FULL_F && ( q_full((int) ( now.opponent_turn2) )))
-			 || 	(t->ty[i] == Q_FULL_T && (!q_full((int) ( now.opponent_turn2) )))
-			 || 	(t->ty[i] == Q_EMPT_F && ( !q_len((int) ( now.opponent_turn2) )))
-			 || 	(t->ty[i] == Q_EMPT_T && (  q_len((int) ( now.opponent_turn2) )))
-			    ) return 0; break;
 		default: Uerror("unknown qid - q_cond");
 				return 0;
 		}
@@ -14685,18 +14519,13 @@ r_xpoint(void)
 }
 #endif
 void
-set_recvs(void)
-{
-	Is_Recv[107] = 1;
-	Is_Recv[100] = 1;
-	Is_Recv[7] = 1;
-}
-void
 c_globals(void)
 {	/* int i; */
 	printf("global vars:\n");
 	printf("	bit    win:	%d\n", now.win);
 	printf("	bit    dead:	%d\n", now.dead);
+	printf("	bit    turn:	%d\n", now.turn);
+	printf("	bit    lock:	%d\n", now.lock);
 		printf("	(struct map)\n");
 	{	int l_in;
 		for (l_in = 0; l_in < 26; l_in++)
@@ -14856,12 +14685,6 @@ c_globals(void)
 	}
 	printf("	int    next_x:	%d\n", now.next_x);
 	printf("	int    next_y:	%d\n", now.next_y);
-	printf("	chan avatar_turn (=%d):	len %d:\t", now.avatar_turn, q_len(now.avatar_turn));
-	c_chandump(now.avatar_turn);
-	printf("	chan opponent_turn (=%d):	len %d:\t", now.opponent_turn, q_len(now.opponent_turn));
-	c_chandump(now.opponent_turn);
-	printf("	chan opponent_turn2 (=%d):	len %d:\t", now.opponent_turn2, q_len(now.opponent_turn2));
-	c_chandump(now.opponent_turn2);
 }
 void
 c_locals(int pid, int tp)
@@ -14876,27 +14699,19 @@ c_locals(int pid, int tp)
 	printf("	int    ii:	%d\n", ((P2 *)pptr(pid))->ii);
 		break;
 	case 1:
-		printf("local vars proc %d (opponent):\n", pid);
+		printf("local vars proc %d (opponent_runner):\n", pid);
 	printf("	int    x:	%d\n", ((P1 *)pptr(pid))->x);
 	printf("	int    y:	%d\n", ((P1 *)pptr(pid))->y);
-	printf("	int    xx:	%d\n", ((P1 *)pptr(pid))->xx);
-	printf("	int    yy:	%d\n", ((P1 *)pptr(pid))->yy);
 	printf("	int    foo:	%d\n", ((P1 *)pptr(pid))->foo);
-	printf("	byte   w:	%d\n", ((P1 *)pptr(pid))->w);
-	printf("	byte   a:	%d\n", ((P1 *)pptr(pid))->a);
-	printf("	byte   s:	%d\n", ((P1 *)pptr(pid))->s);
-	printf("	byte   d:	%d\n", ((P1 *)pptr(pid))->d);
-	printf("	bit    send:	%d\n", ((P1 *)pptr(pid))->send);
 		break;
 	case 0:
-		printf("local vars proc %d (avatar):\n", pid);
+		printf("local vars proc %d (avatar_chaser):\n", pid);
 	printf("	int    x:	%d\n", ((P0 *)pptr(pid))->x);
 	printf("	int    y:	%d\n", ((P0 *)pptr(pid))->y);
 	printf("	byte   w:	%d\n", ((P0 *)pptr(pid))->w);
 	printf("	byte   a:	%d\n", ((P0 *)pptr(pid))->a);
 	printf("	byte   s:	%d\n", ((P0 *)pptr(pid))->s);
 	printf("	byte   d:	%d\n", ((P0 *)pptr(pid))->d);
-	printf("	bit    foo:	%d\n", ((P0 *)pptr(pid))->foo);
 		break;
 	}
 }
@@ -14908,42 +14723,11 @@ printm(int x)
 	}
 }
 void
-c_chandump(int from)
-{	uchar *z; int slot;
-	from--;
-	if (from >= (int) now._nr_qs || from < 0)
-	{	printf("pan: bad qid %d\n", from+1);
-		return;
-	}
-	z = qptr(from);
-	switch (((Q0 *)z)->_t) {
-	case 3:
-		for (slot = 0; slot < ((Q3 *)z)->Qlen; slot++)
-		{	printf(" [");
-			printf("%d,", ((Q3 *)z)->contents[slot].fld0);
-			printf("],");
-		}
-		break;
-	case 2:
-		for (slot = 0; slot < ((Q2 *)z)->Qlen; slot++)
-		{	printf(" [");
-			printf("%d,", ((Q2 *)z)->contents[slot].fld0);
-			printf("%d,", ((Q2 *)z)->contents[slot].fld1);
-			printf("],");
-		}
-		break;
-	case 1:
-		for (slot = 0; slot < ((Q1 *)z)->Qlen; slot++)
-		{	printf(" [");
-			printf("%d,", ((Q1 *)z)->contents[slot].fld0);
-			printf("],");
-		}
-		break;
-	}
-	printf("\n");
+c_chandump(int unused)
+{	unused++; /* avoid complaints */
 }
 
-Trans *t_id_lkup[441];
+Trans *t_id_lkup[424];
 
 
 #ifdef BFS_PAR

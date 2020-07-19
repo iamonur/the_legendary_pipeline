@@ -470,7 +470,7 @@ void calculate_next_move_to_avatar(int xx, int yy, int xxx, int yyy, int* next_x
   *next_y = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->X;
   *next_x = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->Y;
   
-  
+  printf("Opponent - [%d,%d]\n", (*next_y-yy), (*next_x-xx));
   RemoveAllFromNodeList(&AllNodesGSet,1);
   
   free(dataMap);
@@ -515,13 +515,16 @@ void calculate_next_move_to_portal_avatar_blocks(int xx, int yy, int* next_x, in
   //printf("b\n");
   *next_y = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->X;
   *next_x = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->Y;
-  
+  printf("Opponent - [%d,%d]\n", (*next_y-yy), (*next_x-xx));
   RemoveAllFromNodeList(&AllNodesGSet,1);
   free(dataMap);
 }
 
-void calculate_next_move_to_portal(int xx, int yy, int* next_x, int* next_y){
+
+
+int _calculate_next_move_to_portal(int xx, int yy){
     put_map_2_memory_portal_goal();
+    //if(map[MAX_LEN*xx+yy]==1) return 10000;
     int x,y,i;
       
   AStar_Node *Solution;
@@ -544,12 +547,14 @@ void calculate_next_move_to_portal(int xx, int yy, int* next_x, int* next_y){
 
   SolutionNavigator = NULL;
   NextInSolution = Solution;
-  
+  int asd = 0;
   // NextInSolution will actually refer to the next node from end to start (that is, we're going reverse from the target).
   if (NextInSolution)
   {
+    
     do
     {
+      asd++;
       NextInSolutionPos = NextInSolution->X + (NextInSolution->Y * MAX_LEN);
       NextInSolution->NextInSolvedPath = SolutionNavigator;
       SolutionNavigator = NextInSolution;
@@ -557,15 +562,55 @@ void calculate_next_move_to_portal(int xx, int yy, int* next_x, int* next_y){
     }
     while ((SolutionNavigator->X != StartX) || (SolutionNavigator->Y != StartY));
   }
-  
+  /*printf("%d\n",asd);
   *next_y = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->X;
-  *next_x = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->Y;
+  *next_x = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->Y;*/
+
+  //printf("Opponent - [%d,%d]\n", (*next_y-yy), (*next_x-xx));
   
   RemoveAllFromNodeList(&AllNodesGSet,1);
   
   free(dataMap);
+  //printf("%d\n",asd);
+  if(asd == 0) return 10000;
+  return asd;
 }
 
+void calculate_next_move_to_portal(int xx, int yy, int* next_x, int* next_y){
+  int base = _calculate_next_move_to_portal(xx, yy);
+  //fprintf(stderr,"%d\n",base);
+  if(_calculate_next_move_to_portal(xx, yy + 1) < base){
+    *next_y = yy+1;
+    *next_x = xx;
+    base = _calculate_next_move_to_portal(xx, yy + 1);
+        printf("Opponent - [1,0]\n");
+  }
+  if(_calculate_next_move_to_portal(xx + 1, yy) < base){
+    *next_x = xx+1;
+    *next_y = yy;
+    base = _calculate_next_move_to_portal(xx + 1, yy);
+        printf("Opponent - [0,1]\n");
+
+  }
+  
+  
+  
+  if(_calculate_next_move_to_portal(xx, yy - 1) < base){
+    *next_y = yy -1;
+    *next_x = xx;
+    base = _calculate_next_move_to_portal(xx, yy - 1);
+        printf("Opponent - [-1,0]\n");
+  }
+  if(_calculate_next_move_to_portal(xx - 1, yy) < base){
+    base = _calculate_next_move_to_portal(xx, yy - 1);
+    *next_x = xx-1;
+    *next_y=yy;
+    printf("Opponent - [0,-1]\n");
+  }
+  //fprintf(stderr,"%d\n",base);
+  //fprintf(stderr,"-------------------\n");
+  //printf("%d %d\n", *next_x, *next_y);
+}
 void calculate_next_move2(int x, int y, int* next_x, int* next_y){
     int min = 9999;
     char cmd[50];
