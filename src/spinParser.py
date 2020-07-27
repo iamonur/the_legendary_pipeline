@@ -90,8 +90,10 @@ class spinParser:
 
         self.__get_trail_output()
         avatar, opponent = self.__parse_moves(self.__parse_trail_output())
+        
         if avatar is None:
             raise cannotWinException("Avatar cannot win the game!")
+        avatar.append("Skip")
         return avatar, opponent
 
 class mctsParser:

@@ -146,7 +146,7 @@ class SimManager():
         rng = self.rng()
         totalExceptions = 0
         while(True):
-            print ("________________________________")
+            #print ("________________________________")
             rngtime = time.time()
             try:
                 line = rng.serve()
@@ -171,7 +171,7 @@ class SimManager():
             #caPolisher.map_print(map_)
             mapgentime = time.time() - mapgentime
             modeltime = time.time()
-            print ("________________________________")
+            #print ("________________________________")
             modelChecker = self.spinner(map_)
             try:
                 modelChecker.perform() #Your output is at your filesystem now.
@@ -194,10 +194,10 @@ class SimManager():
 
             if self.isOK(ret) is False:
                 continue
-            print ("________________________________")
+            #print ("________________________________")
             game = self.game(action_list = avatar, level_desc = map_)
 
-            print ("________________________________")
+            #print ("________________________________")
             if game.play() == 1:
                 #def insertQ(self, line, linetime, ca, cap, sp, maptime, modeltime, game, seq, func_id, isOK):
                 #self.db.insertQ(line,rngtime,self.mapgen.__name__,self.mappolish.__name__,self.spriter.__name__,mapgentime,modeltime,"1",avatar,"1","1")
@@ -206,8 +206,12 @@ class SimManager():
                 
 
             else: #We couldn't win while we think we will, best to fix this. Raise with all info.
-                print ("________________________________")
+                #print ("________________________________")
                 caPolisher.map_print(map_)
+                print("OP_LEN:")
+                print(len(opponent))
+                print("AV_LEN:")
+                print(len(avatar))
                 raise NameError("Nuncked up")
                 #raise ("Map: " + map_ + " avatar_moves: " + "".join(avatar) + " opponent_moves: " + "".join(opponent) + " failed.") #This can be reconstructed.
 

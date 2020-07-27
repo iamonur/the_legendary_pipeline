@@ -238,7 +238,7 @@ proctype avatar_chaser(int x; int y){
                win = 1
            fi
  
-       :: true -> skip
+       :: true -> c_code{printf("Avatar- Skip\\n");};//skip
        fi;
        //c_code{printf("1\\n");};
        //c_code{map_print2();}
@@ -318,7 +318,7 @@ proctype avatar_chaser(int x; int y){
 				win = 1
 			fi
 
-		:: true -> skip
+		:: true -> c_code{printf("Avatar- Skip\\n");};//
     fi;
 		lock = 0;
   :: else ->	break
@@ -397,7 +397,7 @@ proctype avatar_same_goal(int x; int y){
 				win = 1
 			fi
 
-		:: true -> skip
+		:: true -> c_code{printf("Avatar- Skip\\n");};//
     fi;
 		lock = 0;
   :: else ->	break
@@ -477,7 +477,7 @@ proctype avatar_same_goal(int x; int y){
 				win = 1
 			fi
 
-		:: true -> skip
+		:: true -> c_code{printf("Avatar- Skip\\n");};//
     fi;
 		lock = 0;
   :: else ->	break
@@ -573,7 +573,7 @@ proctype avatar(int x; int y){
 				dead = 1
 			fi
 
-		:: true -> skip
+		:: true -> c_code{printf("Avatar- Skip\\n");};//
     fi
 
     if

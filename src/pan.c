@@ -545,11 +545,14 @@ short src_ln2 [] = {
 	408, 409, 410, 411, 412, 413, 414, 415, 
 	416, 417, 418, 419, 420, 421, 422, 423, 
 	424, 425, 426, 427, 428, 429, 430, 431, 
-	434, 435, 436, 437,   0, };
+	432, 433, 434, 435, 436, 437, 438, 439, 
+	440, 441, 442, 443, 444, 445, 446, 447, 
+	448, 449, 450, 451, 452, 453, 454, 455, 
+	458, 459, 460, 461,   0, };
 S_F_MAP src_file2 [] = {
 	{ "-", 0, 0 },
-	{ "../spin/temp.pml", 1, 299 },
-	{ "-", 300, 301 }
+	{ "../spin/temp.pml", 1, 323 },
+	{ "-", 324, 325 }
 };
 uchar reached2 [] = {
 	  0,   0,   1,   0,   0,   0,   1,   0, 
@@ -557,6 +560,9 @@ uchar reached2 [] = {
 	  1,   0,   0,   1,   1,   0,   1,   0, 
 	  1,   0,   0,   1,   0,   0,   1,   1, 
 	  0,   1,   1,   0,   1,   1,   0,   0, 
+	  0,   0,   0,   0,   0,   0,   0,   0, 
+	  0,   0,   0,   0,   0,   0,   0,   0, 
+	  0,   0,   0,   0,   0,   0,   0,   0, 
 	  0,   0,   0,   0,   0,   0,   0,   0, 
 	  0,   0,   0,   0,   0,   0,   0,   0, 
 	  0,   0,   0,   0,   0,   0,   0,   0, 
@@ -637,7 +643,7 @@ uchar reached0 [] = {
 	  0,   0,   1,   0,   0,   1,   1,   0, 
 	  1,   0,   0,   0,   1,   0,   0,   1, 
 	  1,   0,   1,   0,   0,   0,   1,   0, 
-	  0,   1,   1,   1,   0,   1,   0,   1, 
+	  0,   1,   1,   0,   0,   1,   0,   1, 
 	  1,   0,   1,   1,   1,   0,   1,   0, 
 	  0,   1,   0,   0,   0, };
 uchar *loopstate0;
@@ -662,11 +668,12 @@ S_F_MAP *flref[] = {
 struct {
 	char *c; char *t;
 } code_lookup[] = {
-	{ "c_code10", "printf(\"Opponent - Dead\n\");" },
-	{ "c_code9", "printf(\"Opponent - Win\n\");" },
-	{ "c_code8", "calculate_next_move_to_portal(Popponent_runner->x, Popponent_runner->y, &(now.next_x), &(now.next_y));" },
-	{ "c_code7", "printf(\"Avatar - Dead\n\");" },
-	{ "c_code6", "printf(\"Avatar - Win\n\");" },
+	{ "c_code11", "printf(\"Opponent - Dead\n\");" },
+	{ "c_code10", "printf(\"Opponent - Win\n\");" },
+	{ "c_code9", "calculate_next_move_to_portal(Popponent_runner->x, Popponent_runner->y, &(now.next_x), &(now.next_y));" },
+	{ "c_code8", "printf(\"Avatar - Dead\n\");" },
+	{ "c_code7", "printf(\"Avatar - Win\n\");" },
+	{ "c_code6", "printf(\"Avatar- Skip\n\");" },
 	{ "c_code5", "printf(\"Avatar - D\n\");" },
 	{ "c_code4", "printf(\"Avatar - S\n\");" },
 	{ "c_code3", "printf(\"Avatar - A\n\");" },
@@ -14727,7 +14734,7 @@ c_chandump(int unused)
 {	unused++; /* avoid complaints */
 }
 
-Trans *t_id_lkup[424];
+Trans *t_id_lkup[448];
 
 
 #ifdef BFS_PAR
