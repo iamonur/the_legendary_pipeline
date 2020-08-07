@@ -122,6 +122,147 @@ class dummyFeeder():
         self.count += 1
         return "000000000001000000000000"
 
+
+class experiment_on_time():#Default is game 4, the base game.
+    def __init__(self, mapGenerator=cellularAutomata.elementary_cellular_automata, mapPolisher=caPolisher.polisher, sprPlanner=spritePlanner.dualSpritePlanner, spin=spinner.SpinClass_Game4, parser=spinParser.spinParser, player=player.MazeGameClass, feed=startFeeder, mcts=player.MCTS_Runner_Timed):
+        self.mapgen = mapGenerator
+        self.mappolish = mapPolisher
+        self.spriter = sprPlanner
+        self.spinner = spin
+        self.parser = parser
+        self.game = player
+        self.rng = startFeeder
+        self.mcts = mcts
+
+    def pipeline(self):
+        rng = self.rng()
+        totalExceptions = 0
+        while True:
+            ##############################################################
+            rngtime = time.time()
+            try:
+                line = rng.serve()
+            except FeederException:
+                totalExceptions += 1
+                return None
+            rngtime = time.time() - rngtime
+            ##############################################################
+            mapgentime = time.time()
+            try:
+                map_ = self.mappolish(ca=self.mapgen(size=24, limit=24, start=line)).perform()
+            except:
+                totalExceptions += 1
+                continue
+            mind = self.spriter(map_)
+            mind.perform()
+            map_ = mind.getMap()
+            #caPolisher.map_print(map_)
+            mapgentime = time.time() - mapgentime
+            ##############################################################
+            modeltime = time.time()
+            modelChecker = self.spinner(map_)
+            try:
+                modelChecker.perform()
+            except spinner.spinCompileException:
+                totalExceptions += 1
+                continue
+            get_moves = self.parser()
+            try:
+                avatar, opponent = get_moves.perform()
+                opponent = []
+            except spinParser.cannotWinException:
+                totalExceptions += 1
+                continue
+            modeltime = time.time() - modeltime
+            if len(avatar) < 5:
+                continue
+            game = self.game(action_list = avatar, level_desc = map_)
+            spin_reward = game.play()
+            ##############################################################
+            mcts_object = self.mcts(max_d=100000,seconds=modeltime,game_desc=player.skeleton_game_4,level_desc=player.stringify_list_level(map_),render=False)
+            mcts_result = mcts_object.run()
+            avatar_mcts = mcts_result[0][0]
+            game2 = self.game(action_list=avatar_mcts, level_desc=map_)
+            mcts_reward = game2.play()
+            ##############################################################
+            if mcts_reward > spin_reward:
+                print("  __  __  _____ _______ _____  __          ______  _   _ \n |  \/  |/ ____|__   __/ ____| \ \        / / __ \| \ | |\n | \  / | |       | | | (___    \ \  /\  / / |  | |  \| |\n | |\/| | |       | |  \___ \    \ \/  \/ /| |  | | . ` |\n | |  | | |____   | |  ____) |    \  /\  / | |__| | |\  |\n |_|  |_|\_____|  |_| |_____/      \/  \/   \____/|_| \_|\n                                                       ")
+            else:
+                print("   _____ _____ _____ _   _  __          ______  _   _ \n  / ____|  __ \_   _| \ | | \ \        / / __ \| \ | |\n | (___ | |__) || | |  \| |  \ \  /\  / / |  | |  \| |\n  \___ \|  ___/ | | | . ` |   \ \/  \/ /| |  | | . ` |\n  ____) | |    _| |_| |\  |    \  /\  / | |__| | |\  |\n |_____/|_|   |_____|_| \_|     \/  \/   \____/|_| \_|\n                                                      ")
+            print("MCTS' reward: " + str(mcts_reward) + " SPIN's reward: " + str(spin_reward))
+
+class experiment_on_reward():
+    def __init__(self, goal_ratio=10,mapGenerator=cellularAutomata.elementary_cellular_automata, mapPolisher=caPolisher.polisher, sprPlanner=spritePlanner.dualSpritePlanner, spin=spinner.SpinClass_Game4, parser=spinParser.spinParser, player=player.MazeGameClass, feed=startFeeder, mcts=player.MCTS_Runner_Reward):
+        self.mapgen = mapGenerator
+        self.mappolish = mapPolisher
+        self.spriter = sprPlanner
+        self.spinner = spin
+        self.parser = parser
+        self.game = player
+        self.rng = startFeeder
+        self.mcts = mcts
+        self.ratio = 10
+
+    def pipeline(self):
+        rng = self.rng()
+        totalExceptions = 0
+        while True:
+            ##############################################################
+            rngtime = time.time()
+            try:
+                line = rng.serve()
+            except FeederException:
+                totalExceptions += 1
+                return None
+            rngtime = time.time() - rngtime
+            ##############################################################
+            mapgentime = time.time()
+            try:
+                map_ = self.mappolish(ca=self.mapgen(size=24, limit=24, start=line)).perform()
+            except:
+                totalExceptions += 1
+                continue
+            mind = self.spriter(map_)
+            mind.perform()
+            map_ = mind.getMap()
+            #caPolisher.map_print(map_)
+            mapgentime = time.time() - mapgentime
+            ##############################################################
+            modeltime = time.time()
+            modelChecker = self.spinner(map_)
+            try:
+                modelChecker.perform()
+            except spinner.spinCompileException:
+                totalExceptions += 1
+                continue
+            get_moves = self.parser()
+            try:
+                avatar, opponent = get_moves.perform()
+                opponent = []
+            except spinParser.cannotWinException:
+                totalExceptions += 1
+                continue
+            modeltime = time.time() - modeltime
+            if len(avatar) < 5:
+                continue
+            game = self.game(action_list = avatar, level_desc = map_)
+            spin_reward = game.play()
+            ##############################################################
+            mctstime = time.time()
+            mcts_object = self.mcts(max_d=1000,reward_goal=(spin_reward*20),game_desc=player.skeleton_game_4,level_desc=player.stringify_list_level(map_),render=False)
+            mcts_result = mcts_object.run()
+            mctstime = time.time() - mctstime
+            avatar_mcts = mcts_result[0][0]
+            game2 = self.game(action_list=avatar_mcts, level_desc=map_)
+            mcts_reward = game2.play()
+            ##############################################################
+            #if mcts_reward > spin_reward:
+            #    print("  __  __  _____ _______ _____  __          ______  _   _ \n |  \/  |/ ____|__   __/ ____| \ \        / / __ \| \ | |\n | \  / | |       | | | (___    \ \  /\  / / |  | |  \| |\n | |\/| | |       | |  \___ \    \ \/  \/ /| |  | | . ` |\n | |  | | |____   | |  ____) |    \  /\  / | |__| | |\  |\n |_|  |_|\_____|  |_| |_____/      \/  \/   \____/|_| \_|\n                                                       ")
+            #else:
+            #   print("   _____ _____ _____ _   _  __          ______  _   _ \n  / ____|  __ \_   _| \ | | \ \        / / __ \| \ | |\n | (___ | |__) || | |  \| |  \ \  /\  / / |  | |  \| |\n  \___ \|  ___/ | | | . ` |   \ \/  \/ /| |  | | . ` |\n  ____) | |    _| |_| |\  |    \  /\  / | |__| | |\  |\n |_____/|_|   |_____|_| \_|     \/  \/   \____/|_| \_|\n                                                      ")
+            print("MCTS' reward: " + str(mcts_reward) + ". MCTS' time to finish: " + str(modeltime) + "\nSPIN's reward: " + str(spin_reward) + ". SPIN's time to finish: "+str(mctstime))
+
+
 class SimManager():
     #@classmethod
     #def createSimManager(mapgenclass, polisherclass, plannerclass, spinnerclass=SpinClass, parserclass=spinParser, playerclass=GameClass, startFeed)
@@ -269,9 +410,5 @@ class SimManager_woParser:
 
 if __name__ == "__main__":
     
-    while (True):
-        #s = SimManager(isOKBasic, cellularAutomata.elementary_cellular_automata, caPolisher.CApolisher, spritePlanner.spritePlanner)
-        #s.pipeline()
-
-        ss = SimManager(isOKDummy, cellularAutomata.elementary_cellular_automata, caPolisher.polisher, spritePlanner.reverseSpritePlanner, spin=spinner.SpinClass_Game2_smart, parser=spinParser.spinParser, player=player.ChaserGameClass_Smart)
-        ss.pipeline()
+    ss = experiment_on_reward()
+    ss.pipeline()

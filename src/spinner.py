@@ -1705,7 +1705,7 @@ class SpinClass_Game4():
     (out, err) = proc.communicate()
     if out != b'':
       raise spinCompileException("Cannot compile with gcc.")
-    os.system("../spin/temp.out -a -I >/dev/null")
+    os.system("../spin/temp.out -a -i >/dev/null")
 
 class SpinClass_Game2():
 

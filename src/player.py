@@ -3,22 +3,26 @@ import copy #For deep and shallow copies
 import os #For openning, saving etc. files and system commands
 from vgdl.core import Action #To use actions
 from vgdl.util.humanplay.human import RecordedController #Controller to be fed with a sequence of actions
-import vgdl.interfaces.gym #Gym interface is used for auto-plays
+import vgdl.interfaces.gym as cim #Gym interface is used for auto-plays
 import gym #Gym is for to be used by the gym interface
 import vgdl.ai
+import time
+from math import sqrt, log
+from numpy import inf
 skeleton_game_4 = """
 BasicGame
     SpriteSet
         goalportal > Immovable color=GREEN
         wall > Immovable color=BLACK
         floor > Immovable color=BROWN
-        players > MovingAvatar
+        players > MazeAvatar
             avatar > alternate_keys=True
     TerminationSet
         SpriteCounter stype=goalportal limit=0 win=True
     InteractionSet
-        avatar wall > stepBack
-        goalportal avatar > killSprite scoreChange=1
+        avatar wall > stepBack scoreChange=-1
+        floor avatar > NullEffect scoreChange=-1
+        goalportal avatar > killSprite scoreChange=10
     LevelMapping
         1 > wall
         G > goalportal
@@ -171,15 +175,23 @@ BasicGame
         A > avatar floor
         0 > floor
 """
-dummy_maze = """11111111\n1A000E01\n10000001\n11110001\n10000001\n10000001\n100000G1\n11111111\n"""
+dummy_maze = """11111111\n1A000001\n10000001\n11110001\n10000001\n10000001\n100000G1\n11111111\n"""
+
 
 def stringify_list_level(level):
     ret = ""
+    width = len(level[0])+2
+    for _ in range(width):
+        ret += "w"
+    ret+="\n"
     for line in level:
-        ret += "".join(line)
+        ret += ("w"+"".join(line)+"w")
         ret += "\n"
-
+    for _ in range(width):
+        ret += "w"
+    ret+="\n"
     return ret
+
 
 
 dummy_actions = ['D', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip']
@@ -194,6 +206,423 @@ free_mover_str="\n            opponent > color=DARKBLUE"
 
 gamefile = "tempgame.txt"
 levelfile = "tempgame_levl0.txt"
+
+
+def combinations(space):
+    if isinstance(space, gym.spaces.Discrete):
+        return range(space.n)
+    elif isinstance(space, gym.spaces.Tuple):
+        return itertools.product(*[combinations(s) for s in space.spaces])
+    else:
+        raise NotImplementedError
+
+
+class MCTS_Node:
+    def __init__(self, parent=None, action=None):
+        self.parent = parent
+        self.action = action
+        self.children = []
+        self.explored_children = 0
+        self.visits = 0
+        self.value = 0
+
+def ucb(node):
+    return node.value / node.visits + sqrt(log(node.parent.visits)/node.visits)
+
+def moving_average(v, n):
+    n = min(len(v), n)
+    ret = [.0] * (len(v) - n + 1)
+    ret[0] = float(sum(v[:n])) / n
+    for i in range(len(v) - n):
+        ret[i + 1] = ret[i] + float(v[n + i] - v[i]) / n
+    return ret
+
+class MCTS_Runner_Reward:
+    def __init__(self, max_d=500, reward_goal=-2000, game_desc=skeleton_game_4, level_desc=dummy_maze, observer=None, render=False):
+        self.max_depth = max_d
+        self.aim = reward_goal
+        self.game = game_desc
+        self.level = level_desc
+        self.render = render
+        self._save_game_files()
+
+    def _save_game_files(self):
+        game_fh = open(gamefile,'w')
+        game_fh.write(self.game)
+        game_fh.close()
+
+        level_fh = open(levelfile,'w')
+        level_fh.write(self.level)
+        level_fh.close()
+
+    def run(self):
+        toret = []
+        best_rewards = []
+        env = cim.VGDLEnv(game_file = gamefile, level_file = levelfile, obs_type='features', block_size=24)#gym.make(self.env_name)
+        print("My goal is " + str(self.aim))
+        #for loop in range(self.loops):
+        while True:
+            env.reset()
+            root = MCTS_Node()
+            best_actions = []
+            best_reward = float(-inf)
+
+            #for num_playout in range(self.playouts):
+            while best_reward < self.aim:
+                state = copy.deepcopy(env)
+                state.observer.game = env.observer.game
+                sum_reward = 0
+                node = root
+                terminal = False
+                actions = []
+
+                # Selection
+                while node.children:
+
+                    if node.explored_children < len(node.children):
+
+                        child = node.children[node.explored_children]
+                        node.explored_children += 1
+                        node = child
+
+                    else:
+
+                        node = max(node.children, key=ucb)
+                    _, reward, terminal, _ = state.step(node.action)
+                    sum_reward += reward
+                    actions.append(node.action)
+
+                # Expansion
+                if not terminal:
+
+                    node.children = [MCTS_Node(node, a) for a in combinations(state.action_space)]
+                    random.shuffle(node.children)
+                
+                # Playout
+
+                while not terminal:
+
+                    action = state.action_space.sample()
+
+                    if self.render:
+
+                        state.render()
+
+                    _, reward, terminal, _ = state.step(action)
+                    sum_reward += reward
+                    actions.append(action)
+
+                    if len(actions) > self.max_depth:
+
+                        sum_reward -= 100
+                        break
+
+                # Remember the best
+                
+                if best_reward < sum_reward:
+
+                    best_reward = sum_reward
+                    best_actions = actions
+
+                    print(best_reward)
+
+                # Back-propagate
+
+                while node:
+
+                    node.visits += 1
+                    node.value += sum_reward
+                    node = node.parent
+            
+
+            sum_reward = 0
+            
+            for action in best_actions:
+
+                if self.render:
+
+                    env.render()
+    
+                _, reward, terminal, _ = env.step(action)
+                sum_reward += reward
+
+                if terminal:
+
+                    break
+
+            toret.append([best_actions,sum_reward])
+            best_rewards.append(sum_reward)
+            score = max(moving_average(best_rewards, 100))
+            return toret
+
+class MCTS_Runner_Timed:
+    def __init__(self, max_d=500, seconds=60, game_desc=skeleton_game_4, level_desc=dummy_maze, observer=None, render=True):
+        self.max_depth = max_d
+        self.seconds = seconds
+        self.game = game_desc
+        self.level = level_desc
+        self.render = render
+        self._save_game_files()
+
+    def _save_game_files(self):
+
+        game_fh = open(gamefile,'w')
+        game_fh.write(self.game)
+        game_fh.close()
+
+        level_fh = open(levelfile,'w')
+        level_fh.write(self.level)
+        level_fh.close()
+
+    def run(self):
+        finish_at = time.time() + self.seconds
+        toret = []
+        best_rewards = []
+        env = cim.VGDLEnv(game_file = gamefile, level_file = levelfile, obs_type = 'features', block_size=24)
+
+        while True:
+
+            env.reset()
+            root = MCTS_Node()
+            best_actions = []
+            best_reward = float(-inf)
+
+            while True:
+
+                if time.time() > finish_at:
+            
+                    break
+
+                state = copy.deepcopy(env)
+                state.observer.game = env.observer.game
+                sum_reward = 0
+                node = root
+                terminal = False
+                actions = []
+
+                # Selection
+
+                while node.children:
+
+                    if node.explored_children < len(node.children):
+
+                        child = node.children[node.explored_children]
+                        node.explored_children += 1
+                        node = child
+
+                    else:
+
+                        node = max(node.children, key = ucb)
+
+                    _, reward, terminal, _ = state.step(node.action)
+                    sum_reward += reward
+                    actions.append(node.action)
+
+                # Expansion
+
+                if not terminal:
+
+                    node.children = [MCTS_Node(node, a) for a in combinations(state.action_space)]
+                    random.shuffle(node.children)
+
+                # Playout
+
+                while not terminal:
+
+                    action = state.action_space.sample()
+
+                    if self.render:
+
+                        state.render()
+
+                    _, reward, terminal, _ = state.step(action)
+                    sum_reward += reward
+                    actions.append(action)
+
+                    if len(actions) > self.max_depth:
+
+                        sum_reward -= 100
+                        break
+
+                # Remember the best
+                
+                if best_reward < sum_reward:
+
+                    best_reward = sum_reward
+                    best_actions = actions
+
+                # Back-propagate
+
+                while node:
+
+                    node.visits += 1
+                    node.value += sum_reward
+                    node = node.parent
+
+            sum_reward = 0
+            
+            for action in best_actions:
+
+                if self.render:
+
+                    env.render()
+    
+                _, reward, terminal, _ = env.step(action)
+                sum_reward += reward
+
+                if terminal:
+
+                    break
+
+            toret.append([best_actions,sum_reward])
+            best_rewards.append(sum_reward)
+            score = max(moving_average(best_rewards, 100))
+            return toret
+
+
+
+class MCTS_Runner_Regular:
+    def __init__(self,nloops=1,max_d=500,n_playouts=200, game_desc=skeleton_game_4, level_desc=dummy_maze, observer=None, render=True):
+
+        self.loops = nloops
+        self.max_depth = max_d
+        self.playouts = n_playouts
+        self.render = render
+        
+        #from gym.envs.registration import register, registry
+        
+        self.game =game_desc
+        self.level =level_desc
+        self._save_game_files()
+
+        #level_name = '.'.join(os.path.basename(levelfile).split('.')[:-1])
+        #self.env_name = 'vgdl_{}-{}-v0'.format(random.random(),level_name)
+
+        #register(id = self.env_name, entry_point = 'vgdl.interfaces.gym:VGDLEnv', kwargs = {'game_file':gamefile, 'level_file':levelfile, 'block_size':24, 'obs_type':'features',},nondeterministic=True)
+
+    def _save_game_files(self):
+
+        game_fh = open(gamefile,'w')
+        game_fh.write(self.game)
+        game_fh.close()
+
+        level_fh = open(levelfile,'w')
+        level_fh.write(self.level)
+        level_fh.close()
+
+    def run(self):
+
+        toret = []
+        best_rewards = []
+        env = cim.VGDLEnv(game_file = gamefile, level_file = levelfile, obs_type='features', block_size=24)#gym.make(self.env_name)
+
+        for loop in range(self.loops):
+
+            env.reset()
+            root = MCTS_Node()
+            best_actions = []
+            best_reward = float(-inf)
+
+            for num_playout in range(self.playouts):
+
+                state = copy.deepcopy(env)
+                state.observer.game = env.observer.game
+                sum_reward = 0
+                node = root
+                terminal = False
+                actions = []
+
+                # Selection
+                while node.children:
+
+                    if node.explored_children < len(node.children):
+
+                        child = node.children[node.explored_children]
+                        node.explored_children += 1
+                        node = child
+
+                    else:
+
+                        node = max(node.children, key=ucb)
+                    _, reward, terminal, _ = state.step(node.action)
+                    sum_reward += reward
+                    actions.append(node.action)
+
+                # Expansion
+                if not terminal:
+
+                    node.children = [MCTS_Node(node, a) for a in combinations(state.action_space)]
+                    random.shuffle(node.children)
+                
+                # Playout
+
+                while not terminal:
+
+                    action = state.action_space.sample()
+
+                    if self.render:
+
+                        state.render()
+
+                    _, reward, terminal, _ = state.step(action)
+                    sum_reward += reward
+                    actions.append(action)
+
+                    if len(actions) > self.max_depth:
+
+                        sum_reward -= 100
+                        break
+
+                # Remember the best
+                
+                if best_reward < sum_reward:
+
+                    best_reward = sum_reward
+                    best_actions = actions
+
+                # Back-propagate
+
+                while node:
+
+                    node.visits += 1
+                    node.value += sum_reward
+                    node = node.parent
+
+            sum_reward = 0
+            
+            for action in best_actions:
+
+                if self.render:
+
+                    env.render()
+    
+                _, reward, terminal, _ = env.step(action)
+                sum_reward += reward
+
+                if terminal:
+
+                    break
+
+            toret.append([best_actions,sum_reward])
+            best_rewards.append(sum_reward)
+            score = max(moving_average(best_rewards, 100))
+            return toret
+
+
+def run_mcts():
+    if not os.path.exists('mcts_new'):
+        os.makedirs('mcts_new')
+        next_dir = 0
+    else:
+        next_dir = max([int(f) for f in os.listdir('mcts_new') + ["0"] if f.isdigit()]) + 1
+    rec_dir = 'mcts_new/' + str(next_dir)
+    os.makedirs(rec_dir)
+    print(MCTS_Runner_Regular(render=False).run())
+
+def run_timed_mcts():
+    print(MCTS_Runner_Timed(seconds=1,render=False).run())
+
+
 
 class GameClass:
     def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_1.format(immovable_opponent="",free_mover_opponent="",chaser_opponent=chaser_opponent_str), level_desc=dummy_maze):
