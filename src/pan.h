@@ -121,12 +121,12 @@
 #endif
 #ifdef NP
 	#define HAS_NP	2
-	#define VERI	4	/* np_ */
+	#define VERI	3	/* np_ */
 #endif
 #ifndef NOCLAIM
 	#define NCLAIMS	1
 	#ifndef NP
-		#define VERI	3
+		#define VERI	2
 	#endif
 #endif
 
@@ -136,40 +136,33 @@ typedef struct S_F_MAP {
 	int upto;
 } S_F_MAP;
 
-#define _nstates3	11	/* ltl_0 */
-#define minseq3	431
-#define maxseq3	440
-#define _endstate3	10
+#define _nstates2	11	/* ltl_0 */
+#define minseq2	674
+#define maxseq2	683
+#define _endstate2	10
 
-#define _nstates2	298	/* :init: */
-#define minseq2	134
-#define maxseq2	430
-#define _endstate2	297
+#define _nstates1	615	/* :init: */
+#define minseq1	60
+#define maxseq1	673
+#define _endstate1	614
 
-#define _nstates1	45	/* opponent */
-#define minseq1	90
-#define maxseq1	133
-#define _endstate1	44
-
-#define _nstates0	91	/* avatar */
+#define _nstates0	61	/* avatar_mazesolver */
 #define minseq0	0
-#define maxseq0	89
-#define _endstate0	90
+#define maxseq0	59
+#define _endstate0	60
 
-extern short src_ln3[];
 extern short src_ln2[];
 extern short src_ln1[];
 extern short src_ln0[];
-extern S_F_MAP src_file3[];
 extern S_F_MAP src_file2[];
 extern S_F_MAP src_file1[];
 extern S_F_MAP src_file0[];
 
 #define T_ID	unsigned short
-#define _T5	357
-#define _T2	358
+#define _T5	635
+#define _T2	636
 #define WS		8 /* word size in bytes */
-#define SYNC	3
+#define SYNC	0
 #define ASYNC	0
 
 #ifndef NCORE
@@ -185,55 +178,34 @@ extern S_F_MAP src_file0[];
 struct row { /* user defined type */
 	uchar a[26];
 };
-typedef struct P3 { /* ltl_0 */
+typedef struct P2 { /* ltl_0 */
 	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 4; /* proctype */
-	unsigned _p   : 10; /* state    */
+	unsigned _t   : 3; /* proctype */
+	unsigned _p   : 11; /* state    */
 #ifdef HAS_PRIORITY
 	unsigned _priority : 8; /* 0..255 */
 #endif
-} P3;
-#define Air3	(sizeof(P3) - 3)
+} P2;
+#define Air2	(sizeof(P2) - 3)
 
-#define Pinit	((P2 *)this)
-typedef struct P2 { /* :init: */
+#define Pinit	((P1 *)this)
+typedef struct P1 { /* :init: */
 	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 4; /* proctype */
-	unsigned _p   : 10; /* state    */
+	unsigned _t   : 3; /* proctype */
+	unsigned _p   : 11; /* state    */
 #ifdef HAS_PRIORITY
 	unsigned _priority : 8; /* 0..255 */
 #endif
 	int i;
 	int ii;
-} P2;
-#define Air2	(sizeof(P2) - Offsetof(P2, ii) - 1*sizeof(int))
-
-#define Popponent	((P1 *)this)
-typedef struct P1 { /* opponent */
-	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 4; /* proctype */
-	unsigned _p   : 10; /* state    */
-#ifdef HAS_PRIORITY
-	unsigned _priority : 8; /* 0..255 */
-#endif
-	unsigned send : 1;
-	uchar w;
-	uchar a;
-	uchar s;
-	uchar d;
-	int x;
-	int y;
-	int xx;
-	int yy;
-	int foo;
 } P1;
-#define Air1	(sizeof(P1) - Offsetof(P1, foo) - 1*sizeof(int))
+#define Air1	(sizeof(P1) - Offsetof(P1, ii) - 1*sizeof(int))
 
-#define Pavatar	((P0 *)this)
-typedef struct P0 { /* avatar */
+#define Pavatar_mazesolver	((P0 *)this)
+typedef struct P0 { /* avatar_mazesolver */
 	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 4; /* proctype */
-	unsigned _p   : 10; /* state    */
+	unsigned _t   : 3; /* proctype */
+	unsigned _p   : 11; /* state    */
 #ifdef HAS_PRIORITY
 	unsigned _priority : 8; /* 0..255 */
 #endif
@@ -247,15 +219,15 @@ typedef struct P0 { /* avatar */
 } P0;
 #define Air0	(sizeof(P0) - Offsetof(P0, y) - 1*sizeof(int))
 
-typedef struct P4 { /* np_ */
+typedef struct P3 { /* np_ */
 	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 4; /* proctype */
-	unsigned _p   : 10; /* state    */
+	unsigned _t   : 3; /* proctype */
+	unsigned _p   : 11; /* state    */
 #ifdef HAS_PRIORITY
 	unsigned _priority : 8; /* 0..255 */
 #endif
-} P4;
-#define Air4	(sizeof(P4) - 3)
+} P3;
+#define Air3	(sizeof(P3) - 3)
 
 #define Pclaim	P0
 #ifndef NCLAIMS
@@ -448,12 +420,6 @@ typedef struct State {
 	#endif
 #endif
 	unsigned win : 1;
-	unsigned dead : 1;
-	uchar avatar_turn;
-	uchar opponent_turn;
-	uchar opponent_turn2;
-	int next_x;
-	int next_y;
 	struct row map[26];
 #ifdef TRIX
 	/* room for 512 proc+chan ptrs, + safety margin */
@@ -476,16 +442,18 @@ typedef struct TRIX_v6 {
 #endif
 
 #define HAS_TRACK	0
+/* hidden variable: */	uchar dead;
+/* hidden variable: */	uchar turn;
+/* hidden variable: */	uchar lock;
 #define FORWARD_MOVES	"pan.m"
 #define BACKWARD_MOVES	"pan.b"
 #define TRANSITIONS	"pan.t"
-#define _NP_	4
-#define _nstates4	3 /* np_ */
-#define _endstate4	2 /* np_ */
+#define _NP_	3
+#define _nstates3	3 /* np_ */
+#define _endstate3	2 /* np_ */
 
-#define _start4	0 /* np_ */
-#define _start3	6
-#define _start2	1
+#define _start3	0 /* np_ */
+#define _start2	6
 #define _start1	1
 #define _start0	1
 #ifdef NP
@@ -520,29 +488,7 @@ typedef struct TRIX_v6 {
 	#define MEMLIM	(2048)	/* need a default, using 2 GB */
 #endif
 #define PROG_LAB	0 /* progress labels */
-#define NQS	3
-typedef struct Q3 {
-	uchar Qlen;	/* q_size */
-	uchar _t;	/* q_type */
-	struct {
-		uchar fld0;
-	} contents[1];
-} Q3;
-typedef struct Q2 {
-	uchar Qlen;	/* q_size */
-	uchar _t;	/* q_type */
-	struct {
-		uchar fld0;
-		uchar fld1;
-	} contents[1];
-} Q2;
-typedef struct Q1 {
-	uchar Qlen;	/* q_size */
-	uchar _t;	/* q_type */
-	struct {
-		uchar fld0;
-	} contents[1];
-} Q1;
+#define NQS	0
 typedef struct Q0 {	/* generic q */
 	uchar Qlen;	/* q_size */
 	uchar _t;
@@ -857,7 +803,7 @@ typedef struct BFS_State {
 } BFS_State;
 #endif
 
-void qsend(int, int, int, int, int);
+void qsend(int, int, int);
 
 #define Addproc(x,y)	addproc(256, y, x, 0, 0)
 #define LOCAL	1
@@ -869,8 +815,7 @@ void qsend(int, int, int, int, int);
 #define GLOBAL	7
 #define BAD	8
 #define ALPHA_F	9
-#define NTRANS	359
-unsigned char Is_Recv[441];
+#define NTRANS	637
 #if defined(BFS_PAR) || NCORE>1
 	void e_critical(int);
 	void x_critical(int);
