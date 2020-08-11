@@ -111,6 +111,71 @@ class startFeeder: #You can build rules, purely random or just serve a list. Thi
         self.count += 1
         return "".join(ret)
 
+class startFeederEight:
+    def __init__(self):
+        self.count = 0
+
+    def serve(self):
+        if self.count > 10:
+            raise FeederException("Cannot succeed to create a level by this definition, feeder is depleted.")
+        ret = []
+        for i in range(0,8):
+            ret.append(str(random.randint(0,1)))
+        self.count += 1
+        return "".join(ret)
+
+class startFeederTen:
+    def __init__(self):
+        self.count = 0
+
+    def serve(self):
+        if self.count > 10:
+            raise FeederException("Cannot succeed to create a level by this definition, feeder is depleted.")
+        ret = []
+        for i in range(0,10):
+            ret.append(str(random.randint(0,1)))
+        self.count += 1
+        return "".join(ret)
+
+class startFeederTwelve:
+    def __init__(self):
+        self.count = 0
+
+    def serve(self):
+        if self.count > 10:
+            raise FeederException("Cannot succeed to create a level by this definition, feeder is depleted.")
+        ret = []
+        for i in range(0,12):
+            ret.append(str(random.randint(0,1)))
+        self.count += 1
+        return "".join(ret)
+
+class startFeederFourteen:
+    def __init__(self):
+        self.count = 0
+
+    def serve(self):
+        if self.count > 10:
+            raise FeederException("Cannot succeed to create a level by this definition, feeder is depleted.")
+        ret = []
+        for i in range(0,14):
+            ret.append(str(random.randint(0,1)))
+        self.count += 1
+        return "".join(ret)
+
+class startFeederSixteen:
+    def __init__(self):
+        self.count = 0
+
+    def serve(self):
+        if self.count > 10:
+            raise FeederException("Cannot succeed to create a level by this definition, feeder is depleted.")
+        ret = []
+        for i in range(0,16):
+            ret.append(str(random.randint(0,1)))
+        self.count += 1
+        return "".join(ret)
+
 class dummyFeeder:
     def __init__(self):
         self.count = 0
@@ -124,14 +189,14 @@ class dummyFeeder:
 
 
 class experiment_on_time:#Default is game 4, the base game.
-    def __init__(self, mapGenerator=cellularAutomata.elementary_cellular_automata, mapPolisher=caPolisher.polisher, sprPlanner=spritePlanner.dualSpritePlanner, spin=spinner.SpinClass_Game4, parser=spinParser.spinParser, player=player.MazeGameClass, feed=startFeeder, mcts=player.MCTS_Runner_Timed):
+    def __init__(self, mapGenerator=cellularAutomata.elementary_cellular_automata, mapPolisher=caPolisher.polisher, sprPlanner=spritePlanner.dualSpritePlanner, spin=spinner.SpinClass_Game4, parser=spinParser.spinParser, player=player.MazeGameClass, feed=startFeederSixteen, mcts=player.MCTS_Runner_Timed):
         self.mapgen = mapGenerator
         self.mappolish = mapPolisher
         self.spriter = sprPlanner
         self.spinner = spin
         self.parser = parser
         self.game = player
-        self.rng = startFeeder
+        self.rng = feed
         self.mcts = mcts
 
     def pipeline(self):
@@ -149,7 +214,7 @@ class experiment_on_time:#Default is game 4, the base game.
             ##############################################################
             mapgentime = time.time()
             try:
-                map_ = self.mappolish(ca=self.mapgen(size=24, limit=24, start=line)).perform()
+                map_ = self.mappolish(ca=self.mapgen(size=16, limit=16, start=line)).perform()
             except:
                 totalExceptions += 1
                 continue
@@ -179,7 +244,7 @@ class experiment_on_time:#Default is game 4, the base game.
             game = self.game(action_list = avatar, level_desc = map_)
             spin_reward = game.play()
             ##############################################################
-            mcts_object = self.mcts(max_d=100000,seconds=modeltime,game_desc=player.skeleton_game_4,level_desc=player.stringify_list_level(map_),render=False)
+            mcts_object = self.mcts(max_d=8000,seconds=modeltime*10,game_desc=player.skeleton_game_4,level_desc=player.stringify_list_level(map_),render=False)
             mcts_result = mcts_object.run()
             avatar_mcts = mcts_result[0][0]
             game2 = self.game(action_list=avatar_mcts, level_desc=map_)
@@ -190,6 +255,7 @@ class experiment_on_time:#Default is game 4, the base game.
             else:
                 print("   _____ _____ _____ _   _  __          ______  _   _ \n  / ____|  __ \_   _| \ | | \ \        / / __ \| \ | |\n | (___ | |__) || | |  \| |  \ \  /\  / / |  | |  \| |\n  \___ \|  ___/ | | | . ` |   \ \/  \/ /| |  | | . ` |\n  ____) | |    _| |_| |\  |    \  /\  / | |__| | |\  |\n |_____/|_|   |_____|_| \_|     \/  \/   \____/|_| \_|\n                                                      ")
             print("MCTS' reward: " + str(mcts_reward) + " SPIN's reward: " + str(spin_reward))
+            print("The time: " + str(modeltime))
 
 class experiment_on_reward:
     def __init__(self, goal_ratio=10,mapGenerator=cellularAutomata.elementary_cellular_automata, mapPolisher=caPolisher.polisher, sprPlanner=spritePlanner.dualSpritePlanner, spin=spinner.SpinClass_Game4, parser=spinParser.spinParser, player=player.MazeGameClass, feed=startFeeder, mcts=player.MCTS_Runner_Reward):
@@ -263,14 +329,14 @@ class experiment_on_reward:
             print("MCTS' reward: " + str(mcts_reward) + ". MCTS' time to finish: " + str(modeltime) + "\nSPIN's reward: " + str(spin_reward) + ". SPIN's time to finish: "+str(mctstime))
 
 class experiment_on_both:
-    def __init__(self, goal_ratio=25, to_ratio=1000, mapGenerator=cellularAutomata.elementary_cellular_automata, mapPolisher=caPolisher.polisher, sprPlanner=spritePlanner.dualSpritePlanner, spin=spinner.SpinClass_Game4, parser=spinParser.spinParser, player=player.MazeGameClass, feed=startFeeder, mcts=player.MCTS_Runner_Reward_Timeout):
+    def __init__(self, goal_ratio=25, to_ratio=1000, mapGenerator=cellularAutomata.elementary_cellular_automata, mapPolisher=caPolisher.polisher, sprPlanner=spritePlanner.dualSpritePlanner, spin=spinner.SpinClass_Game4, parser=spinParser.spinParser, player=player.MazeGameClass, feed=startFeederEight, mcts=player.MCTS_Runner_Reward_Timeout):
         self.mapgen = mapGenerator
         self.mappolish = mapPolisher
         self.spriter = sprPlanner
         self.spinner = spin
         self.parser = parser
         self.game = player
-        self.rng = startFeeder
+        self.rng = feed
         self.mcts = mcts
         self.ratio = goal_ratio
         self.ratio2= to_ratio
@@ -283,6 +349,7 @@ class experiment_on_both:
             rngtime = time.time()
             try:
                 line = rng.serve()
+                print(line)
             except FeederException:
                 totalExceptions += 1
                 return None
@@ -290,14 +357,15 @@ class experiment_on_both:
             ##############################################################
             mapgentime = time.time()
             try:
-                map_ = self.mappolish(ca=self.mapgen(size=24, limit=24, start=line)).perform()
+                map_ = self.mappolish(ca=self.mapgen(size=8, limit=8, start=line)).perform()
             except:
                 totalExceptions += 1
+                print("a")
                 continue
             mind = self.spriter(map_)
             mind.perform()
             map_ = mind.getMap()
-            #caPolisher.map_print(map_)
+            caPolisher.map_print(map_)
             mapgentime = time.time() - mapgentime
             ##############################################################
             modeltime = time.time()
@@ -483,5 +551,5 @@ class SimManager_woParser:
 
 if __name__ == "__main__":
     
-    ss = experiment_on_both()
+    ss = experiment_on_time()
     ss.pipeline()

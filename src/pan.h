@@ -137,14 +137,14 @@ typedef struct S_F_MAP {
 } S_F_MAP;
 
 #define _nstates2	11	/* ltl_0 */
-#define minseq2	674
-#define maxseq2	683
+#define minseq2	215
+#define maxseq2	224
 #define _endstate2	10
 
-#define _nstates1	615	/* :init: */
+#define _nstates1	156	/* :init: */
 #define minseq1	60
-#define maxseq1	673
-#define _endstate1	614
+#define maxseq1	214
+#define _endstate1	155
 
 #define _nstates0	61	/* avatar_mazesolver */
 #define minseq0	0
@@ -158,9 +158,9 @@ extern S_F_MAP src_file2[];
 extern S_F_MAP src_file1[];
 extern S_F_MAP src_file0[];
 
-#define T_ID	unsigned short
-#define _T5	635
-#define _T2	636
+#define T_ID	unsigned char
+#define _T5	176
+#define _T2	177
 #define WS		8 /* word size in bytes */
 #define SYNC	0
 #define ASYNC	0
@@ -176,12 +176,12 @@ extern S_F_MAP src_file0[];
 #endif
 
 struct row { /* user defined type */
-	uchar a[26];
+	uchar a[18];
 };
 typedef struct P2 { /* ltl_0 */
 	unsigned _pid : 8;  /* 0..255 */
 	unsigned _t   : 3; /* proctype */
-	unsigned _p   : 11; /* state    */
+	unsigned _p   : 9; /* state    */
 #ifdef HAS_PRIORITY
 	unsigned _priority : 8; /* 0..255 */
 #endif
@@ -192,7 +192,7 @@ typedef struct P2 { /* ltl_0 */
 typedef struct P1 { /* :init: */
 	unsigned _pid : 8;  /* 0..255 */
 	unsigned _t   : 3; /* proctype */
-	unsigned _p   : 11; /* state    */
+	unsigned _p   : 9; /* state    */
 #ifdef HAS_PRIORITY
 	unsigned _priority : 8; /* 0..255 */
 #endif
@@ -205,7 +205,7 @@ typedef struct P1 { /* :init: */
 typedef struct P0 { /* avatar_mazesolver */
 	unsigned _pid : 8;  /* 0..255 */
 	unsigned _t   : 3; /* proctype */
-	unsigned _p   : 11; /* state    */
+	unsigned _p   : 9; /* state    */
 #ifdef HAS_PRIORITY
 	unsigned _priority : 8; /* 0..255 */
 #endif
@@ -222,7 +222,7 @@ typedef struct P0 { /* avatar_mazesolver */
 typedef struct P3 { /* np_ */
 	unsigned _pid : 8;  /* 0..255 */
 	unsigned _t   : 3; /* proctype */
-	unsigned _p   : 11; /* state    */
+	unsigned _p   : 9; /* state    */
 #ifdef HAS_PRIORITY
 	unsigned _priority : 8; /* 0..255 */
 #endif
@@ -420,7 +420,7 @@ typedef struct State {
 	#endif
 #endif
 	unsigned win : 1;
-	struct row map[26];
+	struct row map[18];
 #ifdef TRIX
 	/* room for 512 proc+chan ptrs, + safety margin */
 	char *_ids_[MAXPROC+MAXQ+4];
@@ -815,7 +815,7 @@ void qsend(int, int, int);
 #define GLOBAL	7
 #define BAD	8
 #define ALPHA_F	9
-#define NTRANS	637
+#define NTRANS	178
 #if defined(BFS_PAR) || NCORE>1
 	void e_critical(int);
 	void x_critical(int);
