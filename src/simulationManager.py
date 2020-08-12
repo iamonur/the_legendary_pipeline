@@ -7,7 +7,6 @@ import player           #my module
 import spinner          #my module
 import spinParser       #my module
 import random           #used in the example feeder
-import mcts_bm
 import time
 import dbWrapper
 
@@ -189,7 +188,7 @@ class dummyFeeder:
 
 
 class experiment_on_time:#Default is game 4, the base game.
-    def __init__(self, mapGenerator=cellularAutomata.elementary_cellular_automata, mapPolisher=caPolisher.polisher, sprPlanner=spritePlanner.dualSpritePlanner, spin=spinner.SpinClass_Game4, parser=spinParser.spinParser, player=player.MazeGameClass, feed=startFeederSixteen, mcts=player.MCTS_Runner_Timed):
+    def __init__(self, mapGenerator=cellularAutomata.elementary_cellular_automata, mapPolisher=caPolisher.polisher, sprPlanner=spritePlanner.dualSpritePlanner, spin=spinner.SpinClass_Game4, parser=spinParser.spinParser, player=player.MazeGameClass, feed=startFeederEight, mcts=player.MCTS_Runner_Timed):
         self.mapgen = mapGenerator
         self.mappolish = mapPolisher
         self.spriter = sprPlanner
@@ -198,7 +197,7 @@ class experiment_on_time:#Default is game 4, the base game.
         self.game = player
         self.rng = feed
         self.mcts = mcts
-
+    @profile
     def pipeline(self):
         rng = self.rng()
         totalExceptions = 0
@@ -214,7 +213,7 @@ class experiment_on_time:#Default is game 4, the base game.
             ##############################################################
             mapgentime = time.time()
             try:
-                map_ = self.mappolish(ca=self.mapgen(size=16, limit=16, start=line)).perform()
+                map_ = self.mappolish(ca=self.mapgen(size=8, limit=8, start=line)).perform()
             except:
                 totalExceptions += 1
                 continue
@@ -244,7 +243,7 @@ class experiment_on_time:#Default is game 4, the base game.
             game = self.game(action_list = avatar, level_desc = map_)
             spin_reward = game.play()
             ##############################################################
-            mcts_object = self.mcts(max_d=8000,seconds=modeltime*10,game_desc=player.skeleton_game_4,level_desc=player.stringify_list_level(map_),render=False)
+            mcts_object = self.mcts(max_d=1000,seconds=modeltime*100,game_desc=player.skeleton_game_4,level_desc=player.stringify_list_level(map_),render=False)
             mcts_result = mcts_object.run()
             avatar_mcts = mcts_result[0][0]
             game2 = self.game(action_list=avatar_mcts, level_desc=map_)
@@ -256,6 +255,7 @@ class experiment_on_time:#Default is game 4, the base game.
                 print("   _____ _____ _____ _   _  __          ______  _   _ \n  / ____|  __ \_   _| \ | | \ \        / / __ \| \ | |\n | (___ | |__) || | |  \| |  \ \  /\  / / |  | |  \| |\n  \___ \|  ___/ | | | . ` |   \ \/  \/ /| |  | | . ` |\n  ____) | |    _| |_| |\  |    \  /\  / | |__| | |\  |\n |_____/|_|   |_____|_| \_|     \/  \/   \____/|_| \_|\n                                                      ")
             print("MCTS' reward: " + str(mcts_reward) + " SPIN's reward: " + str(spin_reward))
             print("The time: " + str(modeltime))
+            return
 
 class experiment_on_reward:
     def __init__(self, goal_ratio=10,mapGenerator=cellularAutomata.elementary_cellular_automata, mapPolisher=caPolisher.polisher, sprPlanner=spritePlanner.dualSpritePlanner, spin=spinner.SpinClass_Game4, parser=spinParser.spinParser, player=player.MazeGameClass, feed=startFeeder, mcts=player.MCTS_Runner_Reward):

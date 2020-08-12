@@ -22,7 +22,7 @@ BasicGame
     InteractionSet
         avatar wall > stepBack scoreChange=-1
         floor avatar > NullEffect scoreChange=-1
-        goalportal avatar > killSprite scoreChange=10000
+        goalportal avatar > killSprite scoreChange=1
     LevelMapping
         1 > wall
         G > goalportal
@@ -591,6 +591,8 @@ class MCTS_Runner_Reward_Timeout:
                     node.value += sum_reward
                     node = node.parent
 
+                del(state._monitor)
+
             sum_reward = 0
             
             for action in best_actions:
@@ -890,5 +892,4 @@ class GameClass_Smart(GameClass):
 
 
 if __name__ == "__main__":
-    m = GameClass_Smart()
-    print(m.play())
+    run_timed_mcts()

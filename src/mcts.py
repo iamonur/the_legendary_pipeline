@@ -4,12 +4,29 @@ MCTS
 References
 [1] http://www.csse.uwa.edu.au/cig08/Proceedings/papers/8057.pdf
 """
+#Adding lots of comments first to understand more.
 from random import randint
 from sys import float_info
 import math
 
+import vgdl.interfaces.gym as cim
+from copy import deepcopy
+gamefile="tempgame.txt"
+levelfile="tempgame_levl0.txt"
 
-class MCTSData:
+"""
+Information about state:
+- is clonable(I can replace this with a deepcopy maybe)
+- has a method named save()-> It is used after getting an instance with clone()
+"""
+"""
+Information about MCTSData:
+- is a MCTS_Node like class. Has information of action, visits, score, and parent like mine.
+- also has information of state, terminality info, depth info.
+XXX: It is pretty much possible to port into MCTSData for me.
+"""
+
+class MCTSData: 
     def __init__(self, *, state, action=None, visit=0, score=0, depth=0, is_terminal=False, parent=None):
         """
         Holds the mcts data, will be used during MCTS algorithm
@@ -21,8 +38,11 @@ class MCTSData:
         :param is_terminal: is this is a terminal state
         :param parent: parent mcts data
         """
-        self.state = state.clone()
-        self.state.save()
+        #XXX: clone is not implemented on VGDLEnv
+        #self.state = state.clone()
+        #self.state.save()
+        self.state = deepcopy(state)
+        self.state.observer.game = state.observer.game
         if action:
             self.actions = [action]
         else:
@@ -86,19 +106,24 @@ class MCTS:
         construct a MCTS instance
         :param state: state object that can be simulated
         """
-        self.state = state.clone()
-        self.state.save()
-
+        #XXX: clone is not implemented on VGDLEnv
+        #self.state = state.clone()
+        #self.state.save()
+        self.state = deepcopy(state)
+        self.state.observer.game = state.game
+        self.state.reset()
+        
         self.criteria = criteria
         self.remaining_moves = remaining_moves
 
-        from mcts import MCTSParameters
+        from parameters import MCTSParameters
         self.parameters = MCTSParameters()
         self.total_visits = 0
         self.hash_mcts_data = prev_graph  # key is hash, value is mcts data
         self.ucb_children = set()
         self.state_action_hash = {}
-        self.avatar = self.state.game_state.avatar
+        #XXX: self.avatar is used for getting game actions. We do it on VGDLEnv.action_space, so we may discard it.
+        #self.avatar = self.state.game_state.avatar
 
     def run(self, *, parameters=None):
         """
@@ -121,7 +146,10 @@ class MCTS:
                 break
 
         mcts_score, best_child, score = self.__get_highest_child()
-        a_idx = self.state.game_state.avatar.get_action_index(best_child)
+        for ai, a in enumerate(self.state._action_set):
+            if action == a:
+                a_idx = ai
+
         return best_child, a_idx, score, counter
 
     def __init(self):
@@ -143,9 +171,9 @@ class MCTS:
         Get the highest scoring child node in the simulations
         :return: highest scoring state
         """
-        available_actions = self.avatar.get_actions()
+        available_actions = self.state._action_set#self.avatar.get_actions()
         scores_actions = []
-        for action in available_actions:
+        for ac,action in enumerate(available_actions):
             score, state_hash = self.__cache_state_action_score(state=self.state, action=action)
             mcts_data = self.hash_mcts_data.get(state_hash, None)
 
@@ -158,8 +186,7 @@ class MCTS:
             return scores_actions[0]
         else:
             # edge case MCTS not ran even once
-            r_int = randint(0, self.avatar.action_count() - 1)
-            return -1, self.avatar.get_action(r_int), -1
+            return -1, self.state.action_space.sample(), -1
 
     def __tree_policy(self):
         """
@@ -243,7 +270,7 @@ class MCTS:
         rollout_length = self.__calculate_rollout_length(mcts_data)
         gamma = self.parameters.gamma
 
-        available_actions = self.avatar.get_actions()
+        available_actions = self.state.action_space#self.avatar.get_actions()
         # sample random actions
         # TODO use a distribution for better randomness
         actions = [available_actions[randint(0, len(available_actions) - 1)]
@@ -273,20 +300,20 @@ class MCTS:
         rollout_length = self.__calculate_rollout_length(mcts_data)
         gamma = self.parameters.gamma
 
-        available_actions = self.state.game_state.avatar.get_actions()
-        actions = [available_actions[randint(0, len(available_actions) - 1)]
-                   for i in range(rollout_length)]
+        available_actions = self.state.action_space#self.state.game_state.avatar.get_actions()
+        actions = [available_actions.sample() for i in range(rollout_length)]
         # insert the child index as it can have immediate reward
-        state = mcts_data.state.clone()
+        state = deepcopy(mcts_data.state)#mcts_data.state.clone()
+        state.observer.game = mcts_data.state.observer.game
         total_reward = 0
         discount = 1
         for action in actions:
             score = self.__calculate_state_action_score(action, state)
             total_reward += discount * score
             discount *= gamma
-            if state.is_game_over():
+            if state.game.ended:#is_game_over():
                 break
-        state.load()
+        #state.load()
         return total_reward
 
     def __calculate_rollout_length(self, mcts_data):
@@ -294,12 +321,14 @@ class MCTS:
         return rollout_length
 
     def __calculate_criteria(self, state):
-        f_t = self.parameters.fulfilment_threshold
-        goal_val = self.parameters.goal_value
-        status, completion = state.feature_tracker.check_criteria(self.criteria, f_t)
+        
+        return 0
+        #f_t = self.parameters.fulfilment_threshold
+        #goal_val = self.parameters.goal_value
+        #status, completion = state.feature_tracker.check_criteria(self.criteria, f_t)
 
-        curr_goal_reward = pow(goal_val, completion)
-        return curr_goal_reward
+        #curr_goal_reward = pow(goal_val, completion)
+        #return curr_goal_reward
 
     def __back_propagate(self, mcts_data, score, child_mcts_data=None, action_taken=None):
         """
@@ -335,23 +364,23 @@ class MCTS:
         :param state_clone: state
         :return: score calculated from taking an action
         """
-        prev_goal_reward = self.__calculate_criteria(state_clone)
-        feature_list, fulfilment = self.state.feature_tracker.calculate()
-        rewards, f_ids, ints = state_clone.process(action_taken, return_interactions=True)
+        #prev_goal_reward = self.__calculate_criteria(state_clone)
+        #feature_list, fulfilment = self.state.feature_tracker.calculate()
+        #rewards, f_ids, ints = state_clone.process(action_taken, return_interactions=True)
         # print([(i.hash(),f) for i, f in zip(ints, f_ids)])
-        f_idx_list = [f.feature_idx for f in feature_list]
-        f_hashes = [f.hash() for f in feature_list]
-        curr_goal_reward = self.__calculate_criteria(state_clone)
-        crit_reward = self.criteria.reward(f_ids=f_ids,
-                                           rewards=rewards,
-                                           rew_mult=self.parameters.reward_multiplier,
-                                           k_rew=self.parameters.over_rep_reward,
-                                           u_rew=self.parameters.unknown_feature_reward,
-                                           f_idx_list=f_idx_list,
-                                           f_hashes=f_hashes,
-                                           fulfilments=fulfilment)
-
-        return crit_reward + (curr_goal_reward - prev_goal_reward)
+        #f_idx_list = [f.feature_idx for f in feature_list]
+        #f_hashes = [f.hash() for f in feature_list]
+        #curr_goal_reward = self.__calculate_criteria(state_clone)
+        #crit_reward = self.criteria.reward(f_ids=f_ids,
+        #                                   rewards=rewards,
+        #                                   rew_mult=self.parameters.reward_multiplier,
+        #                                   k_rew=self.parameters.over_rep_reward,
+        #                                   u_rew=self.parameters.unknown_feature_reward,
+        #                                   f_idx_list=f_idx_list,
+        #                                   f_hashes=f_hashes,
+        #                                   fulfilments=fulfilment)
+        return state_clone.score_last
+        #return crit_reward + (curr_goal_reward - prev_goal_reward)
 
     def __cache_state_action_score(self, *, state, action):
         """
@@ -361,8 +390,11 @@ class MCTS:
         :param action: action
         :return: score, hash of state after taking the action
         """
-        s = self.state_action_hash.get(state.hash(), None)
-        a_idx = self.avatar.get_action_index(action)
+        s = self.state_action_hash.get(state.game.__hash__(), None)
+        for ai, a in enumerate(self.state._action_set):
+            if action == a:
+                a_idx = ai
+        #a_idx = self.avatar.get_action_index(action)
         if s:
             score, state_hash = s.get(a_idx, (None, None))
             if score and state_hash:
@@ -373,7 +405,7 @@ class MCTS:
                 s[a_idx] = (score, state_hash)
                 return score, state_hash
         else:
-            init_hash = state.hash()
+            init_hash = state.game.__hash__()
             score, state_hash = self.__state_action_score_hash(action, state)
             self.state_action_hash[init_hash] = {a_idx: (score, state_hash)}
             return score, state_hash
@@ -386,8 +418,8 @@ class MCTS:
         :return: score, state_hash
         """
         score = self.__calculate_state_action_score(action_taken=action, state_clone=state)
-        state_hash = state.hash()
-        state.load()
+        state_hash = state.game.__hash__()
+        #state.load()
         return score, state_hash
 
     def __tree_add(self, state, *, action=None, parent_mcts_data=None):
@@ -399,7 +431,7 @@ class MCTS:
         :param parent_mcts_data: parent_mcts_data state
         :return: created mcts_data
         """
-        state_hash = state.hash()
+        state_hash = state.game.__hash__()
         if parent_mcts_data:
             parent_depth = parent_mcts_data.depth
         else:
@@ -416,7 +448,7 @@ class MCTS:
                                                        action=action,
                                                        visit=0, score=0,
                                                        depth=parent_depth + 1,
-                                                       is_terminal=state.is_game_over(),
+                                                       is_terminal=state.game.ended,
                                                        parent=parent_mcts_data)
 
         if state_hash not in self.ucb_children:
@@ -433,18 +465,18 @@ class MCTS:
         :param mcts_data: where children come from, parent
         :return: a child state most probably
         """
-        available_actions = self.avatar.get_actions()
+        available_actions = self.state._action_set#self.avatar.get_actions()
         child_mcts_data = None  # start with None and update this when we find an available child
 
         children = []
-        for action in available_actions:
+        for anumber,action in enumerate(available_actions):
             state = mcts_data.state
-            state.process(action)
+            state.step(anumber)
 
-            if state.hash() not in self.ucb_children:
+            if state.game.__hash__() not in self.ucb_children:
                 cand_mcts_data = self.__tree_add(state, action=action, parent_mcts_data=mcts_data)
                 child_mcts_data = cand_mcts_data
-            state.load()
+            #state.load()
 
         if child_mcts_data:
             return child_mcts_data
@@ -506,3 +538,7 @@ class MCTS:
         self.hash_mcts_data = {}
         self.ucb_children = set()
         self.state_action_hash = {}
+
+if __name__ == "__main__":
+    env = cim.VGDLEnv(game_file=gamefile,level_file=levelfile,obs_type='features', block_size=8)
+    MCTS(state=env,prev_graph={},criteria=None, remaining_moves=200).run()
