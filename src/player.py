@@ -21,8 +21,28 @@ BasicGame
         SpriteCounter stype=goalportal limit=0 win=True
     InteractionSet
         avatar wall > stepBack scoreChange=-1
-        floor avatar > NullEffect scoreChange=-1
-        goalportal avatar > killSprite scoreChange=1
+        avatar floor > NullEffect scoreChange=-1
+        goalportal avatar > killSprite scoreChange=101
+    LevelMapping
+        1 > wall
+        G > goalportal
+        A > avatar floor
+        0 > floor
+"""
+skeleton_game_4_backup = """
+BasicGame
+    SpriteSet
+        goalportal > Immovable color=GREEN
+        wall > Immovable color=BLACK
+        floor > Immovable color=BROWN
+        players > MazeAvatar
+            avatar > alternate_keys=True
+    TerminationSet
+        SpriteCounter stype=goalportal limit=0 win=True
+    InteractionSet
+        avatar wall > stepBack scoreChange=-1000
+        floor avatar > NullEffect scoreChange=-1000
+        goalportal avatar > killSprite scoreChange=1000000
     LevelMapping
         1 > wall
         G > goalportal
@@ -217,12 +237,15 @@ def combinations(space):
 
 class MCTS_Node:
     def __init__(self, parent=None, action=None):
+        print("New node")
         self.parent = parent
         self.action = action
         self.children = []
         self.explored_children = 0
         self.visits = 0
         self.value = 0
+
+
 
 def ucb(node):
     return node.value / node.visits + sqrt(log(node.parent.visits)/node.visits)
@@ -269,6 +292,7 @@ class MCTS_Runner_Reward:
             while best_reward < self.aim:
                 state = copy.deepcopy(env)
                 state.observer.game = env.observer.game
+                state.reset()
                 sum_reward = 0
                 node = root
                 terminal = False
@@ -347,7 +371,7 @@ class MCTS_Runner_Reward:
                 if terminal:
 
                     break
-
+            env.monitor.close()
             toret.append([best_actions,sum_reward])
             best_rewards.append(sum_reward)
             score = max(moving_average(best_rewards, 100))
@@ -361,6 +385,8 @@ class MCTS_Runner_Timed:
         self.level = level_desc
         self.render = render
         self._save_game_files()
+        self.discount_factor = 0.9
+        self.nodes = {}
 
     def _save_game_files(self):
 
@@ -371,6 +397,10 @@ class MCTS_Runner_Timed:
         level_fh = open(levelfile,'w')
         level_fh.write(self.level)
         level_fh.close()
+
+    def _new_MCTS_Node(self, node, a):
+
+        return MCTS_Node(node, a)
 
     def run(self):
         finish_at = time.time() + self.seconds
@@ -386,13 +416,13 @@ class MCTS_Runner_Timed:
             best_reward = float(-inf)
 
             while True:
-
                 if time.time() > finish_at:
             
                     break
 
                 state = copy.deepcopy(env)
                 state.observer.game = env.observer.game
+                #state.reset()
                 sum_reward = 0
                 node = root
                 terminal = False
@@ -409,7 +439,6 @@ class MCTS_Runner_Timed:
                         node = child
 
                     else:
-
                         node = max(node.children, key = ucb)
 
                     _, reward, terminal, _ = state.step(node.action)
@@ -420,7 +449,7 @@ class MCTS_Runner_Timed:
 
                 if not terminal:
 
-                    node.children = [MCTS_Node(node, a) for a in combinations(state.action_space)]
+                    node.children = [self._new_MCTS_Node(node, a) for a in combinations(state.action_space)]
                     random.shuffle(node.children)
 
                 # Playout
@@ -438,14 +467,14 @@ class MCTS_Runner_Timed:
                     actions.append(action)
 
                     if len(actions) > self.max_depth:
-
-                        sum_reward -= 100
+                        sum_reward -= 1000
                         break
 
                 # Remember the best
                 
-                if best_reward < sum_reward:
-
+                if best_reward < sum_reward and terminal:
+                    print(sum_reward)
+                    print("asd")
                     best_reward = sum_reward
                     best_actions = actions
 
@@ -456,6 +485,9 @@ class MCTS_Runner_Timed:
                     node.visits += 1
                     node.value += sum_reward
                     node = node.parent
+                    sum_reward = sum_reward*self.discount_factor
+
+                del state
 
             sum_reward = 0
             
@@ -471,10 +503,10 @@ class MCTS_Runner_Timed:
                 if terminal:
 
                     break
-
+            del env
             toret.append([best_actions,sum_reward])
             best_rewards.append(sum_reward)
-            score = max(moving_average(best_rewards, 100))
+            #score = max(moving_average(best_rewards, 100))
             return toret
 
 class MCTS_Runner_Reward_Timeout:
@@ -615,23 +647,15 @@ class MCTS_Runner_Reward_Timeout:
 
 
 class MCTS_Runner_Regular:
-    def __init__(self,nloops=1,max_d=500,n_playouts=200, game_desc=skeleton_game_4, level_desc=dummy_maze, observer=None, render=True):
-
+    def __init__(self,nloops=1,max_d=512,n_playouts=512, game_desc=skeleton_game_4, level_desc=dummy_maze, observer=None, render=True):
         self.loops = nloops
         self.max_depth = max_d
         self.playouts = n_playouts
-        self.render = render
-        
-        #from gym.envs.registration import register, registry
-        
+        self.render = render        
         self.game =game_desc
         self.level =level_desc
         self._save_game_files()
-
-        #level_name = '.'.join(os.path.basename(levelfile).split('.')[:-1])
-        #self.env_name = 'vgdl_{}-{}-v0'.format(random.random(),level_name)
-
-        #register(id = self.env_name, entry_point = 'vgdl.interfaces.gym:VGDLEnv', kwargs = {'game_file':gamefile, 'level_file':levelfile, 'block_size':24, 'obs_type':'features',},nondeterministic=True)
+        self.df = 0.7
 
     def _save_game_files(self):
 
@@ -650,14 +674,13 @@ class MCTS_Runner_Regular:
         env = cim.VGDLEnv(game_file = gamefile, level_file = levelfile, obs_type='features', block_size=24)#gym.make(self.env_name)
 
         for loop in range(self.loops):
-
             env.reset()
             root = MCTS_Node()
             best_actions = []
             best_reward = float(-inf)
 
             for num_playout in range(self.playouts):
-
+                print(num_playout)
                 state = copy.deepcopy(env)
                 state.observer.game = env.observer.game
                 sum_reward = 0
@@ -679,6 +702,8 @@ class MCTS_Runner_Regular:
                         node = max(node.children, key=ucb)
                     _, reward, terminal, _ = state.step(node.action)
                     sum_reward += reward
+                    if reward > 0:
+                        print("Got a positive reward")
                     actions.append(node.action)
 
                 # Expansion
@@ -709,7 +734,7 @@ class MCTS_Runner_Regular:
                 # Remember the best
                 
                 if best_reward < sum_reward:
-
+                    print(sum_reward)
                     best_reward = sum_reward
                     best_actions = actions
 
@@ -720,8 +745,10 @@ class MCTS_Runner_Regular:
                     node.visits += 1
                     node.value += sum_reward
                     node = node.parent
+                    sum_reward = sum_reward*self.df
 
             sum_reward = 0
+            del state
             
             for action in best_actions:
 
@@ -737,9 +764,10 @@ class MCTS_Runner_Regular:
                     break
 
             toret.append([best_actions,sum_reward])
-            best_rewards.append(sum_reward)
-            score = max(moving_average(best_rewards, 100))
-            return toret
+        
+        print(toret)
+        print(total)
+        return toret
 
 
 def run_mcts():
@@ -892,4 +920,4 @@ class GameClass_Smart(GameClass):
 
 
 if __name__ == "__main__":
-    run_timed_mcts()
+    run_mcts()
