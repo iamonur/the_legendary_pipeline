@@ -15,14 +15,16 @@ BasicGame
         goalportal > Immovable color=GREEN
         wall > Immovable color=BLACK
         floor > Immovable color=BROWN
+        floor2> Immovable color=BLUE
         players > MazeAvatar
-            avatar > alternate_keys=True
+            avatar > alternate_keys=True color=WHITE
     TerminationSet
         SpriteCounter stype=goalportal limit=0 win=True
     InteractionSet
-        avatar wall > stepBack scoreChange=-1
-        avatar floor > NullEffect scoreChange=-1
-        goalportal avatar > killSprite scoreChange=101
+        avatar wall > stepBack scoreChange=-1000
+        avatar floor2> NullEffect scoreChange=-1000
+        floor avatar > transformTo stype=floor2 scoreChange=-1
+        goalportal avatar > killSprite scoreChange=9
     LevelMapping
         1 > wall
         G > goalportal
@@ -41,8 +43,8 @@ BasicGame
         SpriteCounter stype=goalportal limit=0 win=True
     InteractionSet
         avatar wall > stepBack scoreChange=-1000
-        floor avatar > NullEffect scoreChange=-1000
-        goalportal avatar > killSprite scoreChange=1000000
+        floor avatar > NullEffect scoreChange=-1
+        goalportal avatar > killSprite scoreChange=9
     LevelMapping
         1 > wall
         G > goalportal
@@ -237,15 +239,13 @@ def combinations(space):
 
 class MCTS_Node:
     def __init__(self, parent=None, action=None):
-        print("New node")
+        #print("New node")
         self.parent = parent
         self.action = action
         self.children = []
         self.explored_children = 0
         self.visits = 0
         self.value = 0
-
-
 
 def ucb(node):
     return node.value / node.visits + sqrt(log(node.parent.visits)/node.visits)
@@ -647,7 +647,7 @@ class MCTS_Runner_Reward_Timeout:
 
 
 class MCTS_Runner_Regular:
-    def __init__(self,nloops=1,max_d=512,n_playouts=512, game_desc=skeleton_game_4, level_desc=dummy_maze, observer=None, render=True):
+    def __init__(self,nloops=1,max_d=18,n_playouts=2048, game_desc=skeleton_game_4, level_desc=dummy_maze, observer=None, render=True, maximum_score=0):
         self.loops = nloops
         self.max_depth = max_d
         self.playouts = n_playouts
@@ -656,6 +656,7 @@ class MCTS_Runner_Regular:
         self.level =level_desc
         self._save_game_files()
         self.df = 0.7
+        self.goal = 0
 
     def _save_game_files(self):
 
@@ -680,7 +681,7 @@ class MCTS_Runner_Regular:
             best_reward = float(-inf)
 
             for num_playout in range(self.playouts):
-                print(num_playout)
+                #print(num_playout)
                 state = copy.deepcopy(env)
                 state.observer.game = env.observer.game
                 sum_reward = 0
@@ -702,8 +703,6 @@ class MCTS_Runner_Regular:
                         node = max(node.children, key=ucb)
                     _, reward, terminal, _ = state.step(node.action)
                     sum_reward += reward
-                    if reward > 0:
-                        print("Got a positive reward")
                     actions.append(node.action)
 
                 # Expansion
@@ -727,16 +726,18 @@ class MCTS_Runner_Regular:
                     actions.append(action)
 
                     if len(actions) > self.max_depth:
-
-                        sum_reward -= 100
                         break
 
                 # Remember the best
                 
                 if best_reward < sum_reward:
-                    print(sum_reward)
                     best_reward = sum_reward
                     best_actions = actions
+
+                # If this is your goal, end it.
+                if best_reward >= self.goal:
+                    toret.append([best_actions, sum_reward])
+                    return toret
 
                 # Back-propagate
 
@@ -745,7 +746,6 @@ class MCTS_Runner_Regular:
                     node.visits += 1
                     node.value += sum_reward
                     node = node.parent
-                    sum_reward = sum_reward*self.df
 
             sum_reward = 0
             del state
@@ -765,10 +765,7 @@ class MCTS_Runner_Regular:
 
             toret.append([best_actions,sum_reward])
         
-        print(toret)
-        print(total)
         return toret
-
 
 def run_mcts():
     if not os.path.exists('mcts_new'):
@@ -778,7 +775,7 @@ def run_mcts():
         next_dir = max([int(f) for f in os.listdir('mcts_new') + ["0"] if f.isdigit()]) + 1
     rec_dir = 'mcts_new/' + str(next_dir)
     os.makedirs(rec_dir)
-    print(MCTS_Runner_Regular(render=False).run())
+    return(MCTS_Runner_Regular(render=False).run()[0])
 
 def run_timed_mcts():
     print(MCTS_Runner_Timed(seconds=1,render=False).run())
@@ -920,4 +917,32 @@ class GameClass_Smart(GameClass):
 
 
 if __name__ == "__main__":
-    run_mcts()
+    total_goal_reached = 0
+    total_aced = 0
+    total_wrong_1 = 0
+    total_wrong_2 = 0
+    number_of_runs = 50
+
+    for a in range(0,number_of_runs):
+        asd = run_mcts()
+        res = -asd[1]
+        moves = asd[0]
+        print(res)
+        print(moves)
+        wrong_1 = res%1000
+        wrong_2 = res//1000
+        if(wrong_1 + wrong_2) > 19:
+            print("Run number {} failed to achieve the goal".format(a))
+        elif (wrong_1+wrong_2) == 0:
+            print("MCTS aced run #{}".format(a))
+            total_goal_reached += 1
+            total_aced += 1
+        else:
+            print("Run Number: {}   Type-1_Wrongs:{}   Type-2_Wrongs{}".format(a,wrong_1,wrong_2))
+            total_goal_reached += 1
+            total_wrong_1 += wrong_1
+            total_wrong_2 += wrong_2
+
+    print("In {} runs, {} of them achieved to find the goal within 20 mistakes, a total success rate of {}".format(number_of_runs, total_goal_reached, total_goal_reached/number_of_runs))
+    print("In {} runs that is succesful, the type-1 mistake average is {}, and the type-2 mistake average is {}".format(total_goal_reached ,total_wrong_1/total_goal_reached, total_wrong_2/total_goal_reached))
+    print("{} of the {} runs were an ace, that is {} in one game".format(total_aced, number_of_runs, total_aced/number_of_runs))
