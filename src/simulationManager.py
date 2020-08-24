@@ -96,7 +96,7 @@ def isOKDummy(dict):
 
 class FeederException(Exception):
     pass
-
+"""
 class startFeeder: #You can build rules, purely random or just serve a list. This basic guy just returns 10 different randoms, than raises. Remember to raise on yours. 
     def __init__(self):
         self.count = 0
@@ -109,7 +109,22 @@ class startFeeder: #You can build rules, purely random or just serve a list. Thi
             ret.append(str(random.randint(0,1)))
         self.count += 1
         return "".join(ret)
+"""
+class randomFeeder_Generic:
+    def __init__(self, size=24):
+        self.count = 0
+        self.size = size
 
+    def serve(self):
+        if self.count == 10:
+            raise FeederException("Your feeder is depleted.")
+        ret = []
+        for i in range(0,size):
+            ret.append(str(random.randint(0,1)))
+
+        self.count += 1
+        return "".join(ret)
+"""
 class startFeederEight:
     def __init__(self):
         self.count = 0
@@ -174,7 +189,7 @@ class startFeederSixteen:
             ret.append(str(random.randint(0,1)))
         self.count += 1
         return "".join(ret)
-
+"""
 class dummyFeeder:
     def __init__(self):
         self.count = 0
@@ -186,9 +201,8 @@ class dummyFeeder:
         self.count += 1
         return "000000000001000000000000"
 
-
 class experiment_on_time:#Default is game 4, the base game.
-    def __init__(self, mapGenerator=cellularAutomata.elementary_cellular_automata, mapPolisher=caPolisher.polisher, sprPlanner=spritePlanner.dualSpritePlanner, spin=spinner.SpinClass_Game4, parser=spinParser.spinParser, player=player.MazeGameClass, feed=startFeederEight, mcts=player.MCTS_Runner_Regular):
+    def __init__(self, size=24, limit=24, mapGenerator=cellularAutomata.elementary_cellular_automata, mapPolisher=caPolisher.polisher, sprPlanner=spritePlanner.dualSpritePlanner, spin=spinner.SpinClass_Game4, parser=spinParser.spinParser, player=player.MazeGameClass, feed=startFeederEight, mcts=player.MCTS_Runner_Regular):
         self.mapgen = mapGenerator
         self.mappolish = mapPolisher
         self.spriter = sprPlanner
@@ -197,6 +211,8 @@ class experiment_on_time:#Default is game 4, the base game.
         self.game = player
         self.rng = feed
         self.mcts = mcts
+        self.size = size
+        self.limit = limit
     #@profile
     def pipeline(self):
         rng = self.rng()
@@ -495,57 +511,6 @@ class SimManager:
                 print(len(avatar))
                 raise NameError("Nuncked up")
                 #raise ("Map: " + map_ + " avatar_moves: " + "".join(avatar) + " opponent_moves: " + "".join(opponent) + " failed.") #This can be reconstructed.
-
-class SimManager_woParser:
-    def __init__(self, isOK, mapGenerator, mapPolisher, sprPlanner, mcts, player=player.GameClass, feed=startFeeder, json_args=None):
-        self.isOK = isOK
-        self.mapgen = mapGenerator
-        self.mappolish = mapPolisher
-        self.spriter = sprPlanner
-        self.mcts = mcts
-        self.game = player
-        self.rng = startFeeder
-        self.db = dbWrapper.DBWrapper()
-
-    def pipeline(self):
-
-        rng = self.rng()
-        totalExceptions = 0
-        while(True):
-            rngtime = time.time()
-            try:
-                line = rng.serve()
-            except FeederException:
-                totalExceptions += 1
-                return None
-            rngtime = time.time() - rngtime
-
-            mapgentime = time.time()
-            try:
-                map_ = self.mappolish(ca=self.mapgen(start=line)).perform()
-            except:
-                totalExceptions += 1
-                continue
-            caPolisher.map_print(map_)
-            mind = self.spriter(map_)
-            mind.perform()
-            map_ = mind.getMap()
-            mapgentime = time.time() - mapgentime
-
-            mctstime = time.time()
-            mcts = self.mcts(map_)
-            av_moves = mcts.perform()
-            mctstime = time.time() - mctstime
-
-            ret = {"map":map_, "avatar":avatar, "opponent":[], "timings": {"rng":rngtime, "map_gen":mapgentime, "modelling":mctstime}, "exceptions":totalExceptions}
-
-            if self.isOK(ret) is False:
-                continue
-
-            game = self.game(action_list=avatar, level_desc=map_)
-            if game.play() == 1:
-                print (ret)
-
 
 
 if __name__ == "__main__":

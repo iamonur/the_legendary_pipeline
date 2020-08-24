@@ -42,9 +42,9 @@ BasicGame
     TerminationSet
         SpriteCounter stype=goalportal limit=0 win=True
     InteractionSet
-        avatar wall > stepBack scoreChange=-1000
+        avatar wall > stepBack scoreChange=-100
         floor avatar > NullEffect scoreChange=-1
-        goalportal avatar > killSprite scoreChange=9
+        goalportal avatar > killSprite scoreChange=1000000
     LevelMapping
         1 > wall
         G > goalportal
@@ -197,7 +197,7 @@ BasicGame
         A > avatar floor
         0 > floor
 """
-dummy_maze = """11111111\n1A000001\n10000001\n11110001\n10000001\n10000001\n100000G1\n11111111\n"""
+dummy_maze = """11111111\n1G000001\n10000001\n11110001\n10000001\n10000001\n100000A1\n11111111\n"""
 
 
 def stringify_list_level(level):
@@ -238,8 +238,10 @@ def combinations(space):
         raise NotImplementedError
 
 class MCTS_Node:
-    def __init__(self, parent=None, action=None):
+    def __init__(self, position_1=0, position_2=0, parent=None, action=None):
         #print("New node")
+        self.first = position_1
+        self.second = position_2
         self.parent = parent
         self.action = action
         self.children = []
@@ -645,9 +647,8 @@ class MCTS_Runner_Reward_Timeout:
             score = max(moving_average(best_rewards, 100))
             return toret
 
-
 class MCTS_Runner_Regular:
-    def __init__(self,nloops=1,max_d=18,n_playouts=2048, game_desc=skeleton_game_4, level_desc=dummy_maze, observer=None, render=True, maximum_score=0):
+    def __init__(self,nloops=1,max_d=18,n_playouts=2048, game_desc=skeleton_game_4_backup, level_desc=dummy_maze, observer=None, render=True, maximum_score=0):
         self.loops = nloops
         self.max_depth = max_d
         self.playouts = n_playouts
@@ -657,6 +658,22 @@ class MCTS_Runner_Regular:
         self._save_game_files()
         self.df = 0.7
         self.goal = 0
+        self.width = 8
+        self.height = 8
+
+    def init_my_second_level(self):
+        self.second_level = []
+        
+        for i in range(0,self.height):
+
+            temp = []
+
+            for i in range(0, self.width):
+
+                temp.append(0)
+
+            self.second_level.append(copy.deepcopy(temp))
+
 
     def _save_game_files(self):
 
@@ -676,24 +693,40 @@ class MCTS_Runner_Regular:
 
         for loop in range(self.loops):
             env.reset()
-            root = MCTS_Node()
+            temp = self.level.split('\n')
+            
+            self.init_my_second_level()
+            for a in range(0,self.height):
+                temp[a] = list(temp[a])
+
+
+            for a in range(self.height):
+                for b in range(self.width):
+
+                    if temp[a][b] == 'A':
+                        p1 = a
+                        p2 = b
+                        self.second_level[a][b] += 1
+
+
+            root = MCTS_Node(p1, p2)
             best_actions = []
             best_reward = float(-inf)
 
             for num_playout in range(self.playouts):
-                #print(num_playout)
+                #print(self.second_level)
                 state = copy.deepcopy(env)
                 state.observer.game = env.observer.game
                 sum_reward = 0
+                sum_reward2= 0
                 node = root
                 terminal = False
                 actions = []
-
                 # Selection
+
                 while node.children:
 
                     if node.explored_children < len(node.children):
-
                         child = node.children[node.explored_children]
                         node.explored_children += 1
                         node = child
@@ -701,14 +734,39 @@ class MCTS_Runner_Regular:
                     else:
 
                         node = max(node.children, key=ucb)
-                    _, reward, terminal, _ = state.step(node.action)
-                    sum_reward += reward
+                        
+                    _, reward, terminal, _ = state.step(node.action) #This is where
+                    self.second_level[node.first][node.second] += 1
+                    sum_reward += reward * self.second_level[node.first][node.second]
+                    sum_reward2+= reward
                     actions.append(node.action)
 
                 # Expansion
                 if not terminal:
 
-                    node.children = [MCTS_Node(node, a) for a in combinations(state.action_space)]
+                    node.children = []
+                    if temp[node.first-1][node.second] == '1':
+                        node.children.append(MCTS_Node(node.first,node.second,node,0))#UP
+                    else:
+                        node.children.append(MCTS_Node(node.first-1,node.second,node,0))#UP
+
+                    if temp[node.first+1][node.second] == '1':
+                        node.children.append(MCTS_Node(node.first,node.second,node,2))#DOWN
+                    else:
+                        node.children.append(MCTS_Node(node.first+1,node.second,node,2))#DOWN
+                    
+                    if temp[node.first][node.second-1] == '1':
+                        node.children.append(MCTS_Node(node.first,node.second,node,1))#LEFT
+                    else:
+                        node.children.append(MCTS_Node(node.first,node.second-1,node,1))#LEFT
+                    
+                    
+                    
+                    if temp[node.first][node.second+1] == '1':
+                        node.children.append(MCTS_Node(node.first,node.second,node,3))#RIGHT
+                    else:
+                        node.children.append(MCTS_Node(node.first,node.second+1,node,3))#RIGHT
+
                     random.shuffle(node.children)
                 
                 # Playout
@@ -721,8 +779,9 @@ class MCTS_Runner_Regular:
 
                         state.render()
 
-                    _, reward, terminal, _ = state.step(action)
+                    _, reward, terminal, _ = state.step(action) #And where
                     sum_reward += reward
+                    sum_reward2+= reward
                     actions.append(action)
 
                     if len(actions) > self.max_depth:
@@ -758,13 +817,14 @@ class MCTS_Runner_Regular:
     
                 _, reward, terminal, _ = env.step(action)
                 sum_reward += reward
-
+                sum_reward2+= reward
                 if terminal:
 
                     break
 
-            toret.append([best_actions,sum_reward])
-        
+            toret.append([best_actions,sum_reward2])
+        for a in self.second_level:
+            print(a)
         return toret
 
 def run_mcts():
