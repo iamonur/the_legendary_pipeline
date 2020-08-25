@@ -1106,24 +1106,22 @@ def main_func():
     print("{} of the {} runs were an ace, that is {} in one game".format(total_aced, number_of_runs, total_aced/number_of_runs))
 
 class mcts_tryout:
-    def __init__(self, MCTS_Class, numTry=1, max_reward=1000000, spin_out_len=100, max_state_changes=10000, render_while_running=False, verbose=True, level=dummy_maze):
+    def __init__(self, MCTS_Class, numTry=1, max_reward=1000000, spin_out_len=10, max_state_changes=10000, render_while_running=False, verbose=True, level=dummy_maze):
         self.myMCTS = MCTS_Class
         self.tries = numTry
         self.goal = max_reward
         self.verbose = verbose
         self.render = render_while_running
-        self.max_depth = spin_out_len*2
+        self.max_depth = spin_out_len
         self.num_playouts = 10000//self.max_depth
         self.my_rules = self.__getRules(spin_out_len)
         self.level = level
         self.outputs = []
-
     def __getRules(self, spin_len):
         wallRew = "-1000"
         floorRew = "-1"
         portalRew = str( self.goal -( (spin_len-1) * int(floorRew) ) )
         return skeleton_game_4_modifiable.format(WallReward=wallRew, FloorReward=floorRew, PortalReward=portalRew)
-
     def run(self):
         output = []
         for q in range(self.tries):
@@ -1134,7 +1132,6 @@ class mcts_tryout:
             my_score = MazeGameClass(action_list=moves, game_desc=self.my_rules, level_desc=self.level).play()
             output.append([moves, my_score, self.__analyze_score(my_score),runtime])
         return output
-
     def __analyze_score(self, score):
         if score > 0:
             win = True
@@ -1158,6 +1155,81 @@ def mcts_exp(n_runs):
         score = game.play()
 
         print("I got score:" + str(score))
+
+class spin_tryout:
+    def __init__(self, SPIN_Class, Parser_Class, numTry=1, verbose=True, level=dummy_maze):
+        self.mySpin = SPIN_Class
+        self.myParser = Parser_Class
+        self.tries = numTry
+        self.verbose = verbose
+        self.level = level
+        self.my_rules = skeleton_game_4_backup
+        self.output = []
+    def run(self):
+        output = []
+        for q in range(self.tries):
+            print(q)
+            runtime = time.time()
+            spinning = self.mySpin(self.level).perform()
+            parser = self.myParser()
+            moves, _ = parser.perform()
+            runtime = time.time() - runtime
+            my_score = MazeGameClass(action_list=moves, game_desc=self.my_rules, level_desc=self.level).play()
+            output.append([moves,my_score, self.__analyze_score(my_score),runtime])
+        return output
+    def __analyze_score(self, score):
+        if score > 0:
+            win = True
+        else:
+            win = False
+
+        if win:
+            score = -(score - self.goal)
+        else:
+            score = -score
+
+        walls = score//1000
+        displacements = score%1000
+
+        return [win,displacements,walls]
+
+    
+
+def spin_performance_check(spin_type,parser_type,tryouts):
+    results = spin_tryout(spin_type,parser_type,numTry=tryouts).run()
+    total_wins = 0
+    total_displacements = 0
+    total_hits = 0
+    total_perfects = 0
+    min_time = float(inf)
+    max_time = float(-inf)
+    total_time = 0
+    for result in results:
+        
+        if result[3] > max_time:
+            max_time = result[3]
+        
+        if result[3] < min_time:
+            min_time = result[3]
+
+        total_time += result[3]
+
+        if result[2][0] == False: #Lost
+            continue
+        else: #Won
+            total_wins += 1
+            if result[2][1] == 0 and result[2][2] == 0: #Perfect run
+                total_perfects += 1
+                continue
+            total_displacements += result[2][1]
+            total_hits += result[2][2]
+
+    result_string = "{} win rate, {} displacement rate in wins, {} hit rate in wins.".format((total_wins/tryouts), (total_displacements/total_wins), (total_hits/total_wins))
+    result_string +="\nPerfect ratio is {} from all games, and {} from games that are won.".format((total_perfects/tryouts),(total_perfects/total_wins))
+    result_string +="\nMinimum time cost is {}, maximum time cost is {}, and average time cost is {}".format(min_time, max_time, total_time/tryouts)
+
+    return result_string
+
 
 def mcts_performance_check(mcts_type,tryouts):
     results = mcts_tryout(mcts_type, numTry=tryouts).run()

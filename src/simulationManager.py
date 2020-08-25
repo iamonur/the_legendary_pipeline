@@ -512,6 +512,8 @@ class SimManager:
                 raise NameError("Nuncked up")
                 #raise ("Map: " + map_ + " avatar_moves: " + "".join(avatar) + " opponent_moves: " + "".join(opponent) + " failed.") #This can be reconstructed.
 
+class spin_tryout:
+    def __init__(self, is_absolute):
 
 if __name__ == "__main__":
     
