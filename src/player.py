@@ -31,6 +31,26 @@ BasicGame
         A > avatar floor
         0 > floor
 """
+skeleton_game_4_modifiable = """
+BasicGame
+    SpriteSet
+        goalportal > Immovable color=GREEN
+        wall > Immovable color=BLACK
+        floor > Immovable color=BROWN
+        players > MazeAvatar
+            avatar > alternate_keys=True
+    TerminationSet
+        SpriteCounter stype=goalportal limit=0 win=True
+    InteractionSet
+        avatar wall > stepBack scoreChange={WallReward}
+        floor avatar > NullEffect scoreChange={FloorReward}
+        goalportal avatar > killSprite scoreChange={PortalReward}
+    LevelMapping
+        1 > wall
+        G > goalportal
+        A > avatar floor
+        0 > floor
+"""
 skeleton_game_4_backup = """
 BasicGame
     SpriteSet
@@ -44,7 +64,7 @@ BasicGame
     InteractionSet
         avatar wall > stepBack scoreChange=-100
         floor avatar > NullEffect scoreChange=-1
-        goalportal avatar > killSprite scoreChange=1000000
+        goalportal avatar > killSprite scoreChange=1000009
     LevelMapping
         1 > wall
         G > goalportal
@@ -197,7 +217,7 @@ BasicGame
         A > avatar floor
         0 > floor
 """
-dummy_maze = """11111111\n1G000001\n10000001\n11110001\n10000001\n10000001\n100000A1\n11111111\n"""
+dummy_maze = """11111111\n1A000001\n10000001\n11110001\n10000001\n10000001\n100000G1\n11111111\n"""
 
 
 def stringify_list_level(level):
@@ -647,8 +667,96 @@ class MCTS_Runner_Reward_Timeout:
             score = max(moving_average(best_rewards, 100))
             return toret
 
+class MCTS_Runner_Regular_Old:
+    def __init__(self,nloops=1,max_d=40,n_playouts=1024, game_desc=skeleton_game_4_backup, level_desc=dummy_maze, observer=None, render=True):
+        self.loops = nloops
+        self.max_depth = max_d
+        self.playouts = n_playouts
+        self.render = render
+        
+        #from gym.envs.registration import register, registry
+        
+        self.game =game_desc
+        self.level =level_desc
+        self._save_game_files()
+        #level_name = '.'.join(os.path.basename(levelfile).split('.')[:-1])
+        #self.env_name = 'vgdl_{}-{}-v0'.format(random.random(),level_name)
+        #register(id = self.env_name, entry_point = 'vgdl.interfaces.gym:VGDLEnv', kwargs = {'game_file':gamefile, 'level_file':levelfile, 'block_size':24, 'obs_type':'features',},nondeterministic=True)
+    def _save_game_files(self):
+        game_fh = open(gamefile,'w')
+        game_fh.write(self.game)
+        game_fh.close()
+        level_fh = open(levelfile,'w')
+        level_fh.write(self.level)
+        level_fh.close()
+    def run(self):
+        toret = []
+        best_rewards = []
+        env = cim.VGDLEnv(game_file = gamefile, level_file = levelfile, obs_type='features', block_size=24)#gym.make(self.env_name)
+        for loop in range(self.loops):
+            env.reset()
+            root = MCTS_Node()
+            best_actions = []
+            best_reward = float(-inf)
+            for num_playout in range(self.playouts):
+                state = copy.deepcopy(env)
+                state.observer.game = env.observer.game
+                sum_reward = 0
+                node = root
+                terminal = False
+                actions = []
+                # Selection
+                while node.children:
+                    if node.explored_children < len(node.children):
+                        child = node.children[node.explored_children]
+                        node.explored_children += 1
+                        node = child
+                    else:
+                        node = max(node.children, key=ucb)
+                    _, reward, terminal, _ = state.step(node.action)
+                    sum_reward += reward
+                    actions.append(node.action)
+                # Expansion
+                if not terminal:
+                    node.children = [MCTS_Node(parent=node, action=a) for a in combinations(state.action_space)]
+                    random.shuffle(node.children)
+                
+                # Playout
+                while not terminal:
+                    action = state.action_space.sample()
+                    if self.render:
+                        state.render()
+                    _, reward, terminal, _ = state.step(action)
+                    sum_reward += reward
+                    actions.append(action)
+                    if len(actions) > self.max_depth:
+                        sum_reward -= 100
+                        break
+                # Remember the best
+                
+                if best_reward < sum_reward:
+                    best_reward = sum_reward
+                    best_actions = actions
+                # Back-propagate
+                while node:
+                    node.visits += 1
+                    node.value += sum_reward
+                    node = node.parent
+            sum_reward = 0
+            
+            for action in best_actions:
+                if self.render:
+                    env.render()
+    
+                _, reward, terminal, _ = env.step(action)
+                sum_reward += reward
+                if terminal:
+                    break
+            toret.append([best_actions,sum_reward])
+        return toret
+
 class MCTS_Runner_Regular:
-    def __init__(self,nloops=1,max_d=18,n_playouts=2048, game_desc=skeleton_game_4_backup, level_desc=dummy_maze, observer=None, render=True, maximum_score=0):
+    def __init__(self,nloops=1,max_d=40,n_playouts=1024, game_desc=skeleton_game_4_backup, level_desc=dummy_maze, observer=None, render=True):
         self.loops = nloops
         self.max_depth = max_d
         self.playouts = n_playouts
@@ -657,7 +765,6 @@ class MCTS_Runner_Regular:
         self.level =level_desc
         self._save_game_files()
         self.df = 0.7
-        self.goal = 0
         self.width = 8
         self.height = 8
 
@@ -793,10 +900,6 @@ class MCTS_Runner_Regular:
                     best_reward = sum_reward
                     best_actions = actions
 
-                # If this is your goal, end it.
-                if best_reward >= self.goal:
-                    toret.append([best_actions, sum_reward])
-                    return toret
 
                 # Back-propagate
 
@@ -817,14 +920,12 @@ class MCTS_Runner_Regular:
     
                 _, reward, terminal, _ = env.step(action)
                 sum_reward += reward
-                sum_reward2+= reward
+                #sum_reward2+= reward
                 if terminal:
 
                     break
 
-            toret.append([best_actions,sum_reward2])
-        for a in self.second_level:
-            print(a)
+            toret.append([best_actions,sum_reward])
         return toret
 
 def run_mcts():
@@ -839,8 +940,6 @@ def run_mcts():
 
 def run_timed_mcts():
     print(MCTS_Runner_Timed(seconds=1,render=False).run())
-
-
 
 class GameClass:
     def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_1.format(immovable_opponent="",free_mover_opponent="",chaser_opponent=chaser_opponent_str), level_desc=dummy_maze):
@@ -890,7 +989,7 @@ class GameClass:
 
     def _create_controller(self):
         
-        self.controller = RecordedController(self.env_name, self.actions, fps=60)
+        self.controller = RecordedController(self.env_name, self.actions, fps=5)
 
     def _save_game_files(self):
 
@@ -975,8 +1074,7 @@ class GameClass_Smart(GameClass):
         self._format_actions()
         self._create_controller()
 
-
-if __name__ == "__main__":
+def main_func():
     total_goal_reached = 0
     total_aced = 0
     total_wrong_1 = 0
@@ -1006,3 +1104,99 @@ if __name__ == "__main__":
     print("In {} runs, {} of them achieved to find the goal within 20 mistakes, a total success rate of {}".format(number_of_runs, total_goal_reached, total_goal_reached/number_of_runs))
     print("In {} runs that is succesful, the type-1 mistake average is {}, and the type-2 mistake average is {}".format(total_goal_reached ,total_wrong_1/total_goal_reached, total_wrong_2/total_goal_reached))
     print("{} of the {} runs were an ace, that is {} in one game".format(total_aced, number_of_runs, total_aced/number_of_runs))
+
+class mcts_tryout:
+    def __init__(self, MCTS_Class, numTry=1, max_reward=1000000, spin_out_len=100, max_state_changes=10000, render_while_running=False, verbose=True, level=dummy_maze):
+        self.myMCTS = MCTS_Class
+        self.tries = numTry
+        self.goal = max_reward
+        self.verbose = verbose
+        self.render = render_while_running
+        self.max_depth = spin_out_len*2
+        self.num_playouts = 10000//self.max_depth
+        self.my_rules = self.__getRules(spin_out_len)
+        self.level = level
+        self.outputs = []
+
+    def __getRules(self, spin_len):
+        wallRew = "-1000"
+        floorRew = "-1"
+        portalRew = str( self.goal -( (spin_len-1) * int(floorRew) ) )
+        return skeleton_game_4_modifiable.format(WallReward=wallRew, FloorReward=floorRew, PortalReward=portalRew)
+
+    def run(self):
+        output = []
+        for q in range(self.tries):
+            print(q)
+            runtime = time.time()
+            moves = self.myMCTS(max_d=self.max_depth, n_playouts=self.num_playouts, game_desc=self.my_rules, level_desc=self.level, render=self.render).run()[0][0]
+            runtime = time.time() - runtime
+            my_score = MazeGameClass(action_list=moves, game_desc=self.my_rules, level_desc=self.level).play()
+            output.append([moves, my_score, self.__analyze_score(my_score),runtime])
+        return output
+
+    def __analyze_score(self, score):
+        if score > 0:
+            win = True
+        else:
+            win = False
+
+        if win:
+            score = -(score - self.goal)
+        else:
+            score = -score
+
+        walls = score//1000
+        displacements = score%1000
+
+        return [win,displacements,walls]
+
+def mcts_exp(n_runs):
+    for _ in range(n_runs):
+        moves = MCTS_Runner_Regular(render=False).run()[0][0]
+        game = MazeGameClass(action_list=moves, game_desc=skeleton_game_4_backup)
+        score = game.play()
+
+        print("I got score:" + str(score))
+
+def mcts_performance_check(mcts_type,tryouts):
+    results = mcts_tryout(mcts_type, numTry=tryouts).run()
+    total_wins = 0
+    total_displacements = 0
+    total_hits = 0
+    total_perfects = 0
+    min_time = float(inf)
+    max_time = float(-inf)
+    total_time = 0
+    for result in results:
+        
+        if result[3] > max_time:
+            max_time = result[3]
+        
+        if result[3] < min_time:
+            min_time = result[3]
+
+        total_time += result[3]
+
+        if result[2][0] == False: #Lost
+            continue
+        else: #Won
+            total_wins += 1
+            if result[2][1] == 0 and result[2][2] == 0: #Perfect run
+                total_perfects += 1
+                continue
+            total_displacements += result[2][1]
+            total_hits += result[2][2]
+
+    result_string = "{} win rate, {} displacement rate in wins, {} hit rate in wins.".format((total_wins/tryouts), (total_displacements/total_wins), (total_hits/total_wins))
+    result_string +="\nPerfect ratio is {} from all games, and {} from games that are won.".format((total_perfects/tryouts),(total_perfects/total_wins))
+    result_string +="\nMinimum time cost is {}, maximum time cost is {}, and average time cost is {}".format(min_time, max_time, total_time/tryouts)
+    result_string +="\nMaximum depth allowed was: 100, so there was 100 playouts per tryout."
+
+    return result_string
+
+if __name__=="__main__":
+    print("New MCTS:")
+    print(mcts_performance_check(MCTS_Runner_Regular,100))
+    print("Old MCTS:")
+    print(mcts_performance_check(MCTS_Runner_Regular_Old,100))
