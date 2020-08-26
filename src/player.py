@@ -1157,20 +1157,29 @@ def mcts_exp(n_runs):
         print("I got score:" + str(score))
 
 class spin_tryout:
-    def __init__(self, SPIN_Class, Parser_Class, numTry=1, verbose=True, level=dummy_maze):
+    def __init__(self, SPIN_Class, Parser_Class, numTry=1, verbose=True, level=dummy_maze, goal=1000000):
         self.mySpin = SPIN_Class
         self.myParser = Parser_Class
         self.tries = numTry
         self.verbose = verbose
         self.level = level
+        self.formatted_level = self.format_level(level)
         self.my_rules = skeleton_game_4_backup
         self.output = []
+        self.goal = goal
+
+    def format_level(self, level):
+        ret = level.split("\n")[:-1]
+        for a,b in enumerate(ret):
+            ret[a] = list(b)
+        return ret
+
     def run(self):
         output = []
         for q in range(self.tries):
             print(q)
             runtime = time.time()
-            spinning = self.mySpin(self.level).perform()
+            spinning = self.mySpin(self.formatted_level).perform()
             parser = self.myParser()
             moves, _ = parser.perform()
             runtime = time.time() - runtime
@@ -1223,7 +1232,7 @@ def spin_performance_check(spin_type,parser_type,tryouts):
                 continue
             total_displacements += result[2][1]
             total_hits += result[2][2]
-
+    result_string = ""
     result_string = "{} win rate, {} displacement rate in wins, {} hit rate in wins.".format((total_wins/tryouts), (total_displacements/total_wins), (total_hits/total_wins))
     result_string +="\nPerfect ratio is {} from all games, and {} from games that are won.".format((total_perfects/tryouts),(total_perfects/total_wins))
     result_string +="\nMinimum time cost is {}, maximum time cost is {}, and average time cost is {}".format(min_time, max_time, total_time/tryouts)
@@ -1268,7 +1277,10 @@ def mcts_performance_check(mcts_type,tryouts):
     return result_string
 
 if __name__=="__main__":
-    print("New MCTS:")
+    import spinner
+    import spinParser
+    print(spin_performance_check(spinner.SpinClass_Game4_Parameter_Capital_I, spinParser.spinParser, 100))
+    """print("New MCTS:")
     print(mcts_performance_check(MCTS_Runner_Regular,100))
     print("Old MCTS:")
-    print(mcts_performance_check(MCTS_Runner_Regular_Old,100))
+    print(mcts_performance_check(MCTS_Runner_Regular_Old,100))"""
