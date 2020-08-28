@@ -756,7 +756,7 @@ class MCTS_Runner_Regular_Old:
         return toret
 
 class MCTS_Runner_Regular:
-    def __init__(self,nloops=1,max_d=40,n_playouts=1024, game_desc=skeleton_game_4_backup, level_desc=dummy_maze, observer=None, render=True):
+    def __init__(self,nloops=1,max_d=20,n_playouts=500, game_desc=skeleton_game_4_backup, level_desc=dummy_maze, observer=None, render=True):
         self.loops = nloops
         self.max_depth = max_d
         self.playouts = n_playouts
@@ -989,7 +989,7 @@ class GameClass:
 
     def _create_controller(self):
         
-        self.controller = RecordedController(self.env_name, self.actions, fps=5)
+        self.controller = RecordedController(self.env_name, self.actions, fps=60)
 
     def _save_game_files(self):
 
@@ -1007,7 +1007,7 @@ class GameClass:
     def play(self):
 
         self.controller.play()
-        return self.controller.cummulative_reward
+        return self.controller.cummulative_reward, self.controller.terminal
 
 class RacerGameClass(GameClass):
 
