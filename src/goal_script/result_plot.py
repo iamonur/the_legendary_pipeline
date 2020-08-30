@@ -8,6 +8,7 @@ def get_file_list():
     for file in files_here:
         if ".py" not in file:
             directory = file
+            break
     os.chdir(directory)
     files_here = os.listdir()
     csv_files = []
@@ -23,7 +24,7 @@ def get_file_list():
     return csv_files
 
 def parse_csv_file(file_structure):
-    file = open(file_structure[0], "r")
+    file = open(file_structure[0].split("/")[1], "r")
     lines = file.readlines()
     file.close()
     results = []
@@ -31,7 +32,10 @@ def parse_csv_file(file_structure):
         list_line = line.split(',')
         moves = list_line[0].split("*")
         score = int(list_line[1])
-        terminal = bool(list_line[2])
+        if list_line[2] == "True":
+            terminal = True
+        else:
+            terminal = False
         timing = float(list_line[3])
         results.append([moves, score, terminal, timing])
     return results
@@ -43,6 +47,7 @@ def compute_on_results(results):
     best_game = results[0]
     worst_game = results[0]
     count = 0 #I could use a .len for this, but this will save few clocks.
+    
     for result in results:
         count += 1
         avg_cost += result[3]
@@ -62,7 +67,9 @@ def compute_on_results(results):
 
 
 def fitness(win_rate, reward, max_reward):
-    return (win_rate)*(reward/max_reward) #1 is a perfect game.
+    if reward == max_reward:
+        return float(99999999)
+    return win_rate*abs(max_reward/(max_reward-reward))
 
 def compute_on_all():
     file_list = get_file_list()
@@ -72,7 +79,7 @@ def compute_on_all():
         temp_dict = {
             "wall":item[1],
             "floor":item[2],
-            "portal":item[3]
+            "portal":item[3],
             "time":result[0],
             "reward":result[1],
             "win_rating":result[2],
@@ -84,60 +91,46 @@ def compute_on_all():
 def group_on_portal_reward(all_results):
     ret_dict = {1:[],5:[],25:[],125:[],625:[],3125:[],15625:[],78125:[],390625:[],1953125:[]}
     for result in all_results:
-        ret_dict[result[portal]].append(result)
+        ret_dict[result["portal"]].append(result)
     return ret_dict
 
-def get_numpy_array_from_list(li, to_be_plotted="fitness"):
+def get_numpy_array_from_list(li, to_be_plotted="time"):
     #Group them around wall first
-    dictionary = {-1:[],-2:[],-4:[],-8:[],-16:[],-32:[],-64:[],-128:[],-256:[],-512:[],-1024:[],-2048:[],-4096:[],-8192:[],-16384:[],-32768:[],-65536:[],-131072:[],-262144:[],-524288:[]}
+
+    dictionary = {-1:[],-4:[],-16:[],-64:[],-256:[],-1024:[],-4096:[]}
     for item in li:
         dictionary[item["wall"]].append([item["floor"],item[to_be_plotted]])
 
-    dict_list = [
-    [-1,dictionary[-1]],
-    [-2,dictionary[-2]],
-    [-4,dictionary[-4]],
-    [-8,dictionary[-8]],
-    [-16,dictionary[-16]],
-    [-32,dictionary[-32]],
-    [-64,dictionary[-64]],
-    [-128,dictionary[-128]],
-    [-256,dictionary[-256]],
-    [-512,dictionary[-512]],
-    [-1024,dictionary[-1024]],
-    [-2048,dictionary[-2048]],
-    [-4096,dictionary[-4096]],
-    [-8192,dictionary[-8192]],
-    [-16384,dictionary[-16384]],
-    [-32768,dictionary[-32768]],
-    [-65536,dictionary[-65536]],
-    [-131072,dictionary[-131072]],
-    [-262144,dictionary[-262144]],
-    [-524288,dictionary[-524288]]
-    ]
 
-    for elem in dict_list:
-        dict_list[1] = sorted(dict_list, key=lambda lili: lili[0])
+    dict_list = [ [-4096,dictionary[-4096]], [-1024,dictionary[-1024]], [-256,dictionary[-256]], [-64,dictionary[-64]], [-16,dictionary[-16]], [-4,dictionary[-4]], [-1,dictionary[-1]]]
+
+
+    for elnum,elem in enumerate(dict_list):
+        dict_list[elnum][1] = sorted(elem[1], key=lambda lili: lili[0])
 
     #Now both are sorted.
 
-    ret = np.array((20,20))
+    ret = np.empty((7,7),dtype=np.float64)
+    
     for n1,item1 in enumerate(dict_list):
-        for n2,item2 in enumerate(item1):
+        for n2,item2 in enumerate(item1[1]):
             ret[n1][n2] = item2[1]
-
+            
     return ret
 
 def save_np_array_heatmap(arr, name):
-    ax = sns.heatmap(arr, linewidth=0.5)
-    ax.savefig(name+".png")
+    ax = sns.heatmap(arr, linewidth=0, xticklabels=[-4096,-1024,-256,-64,-16,-4,-1], yticklabels=[-4096,-1024,-256,-64,-16,-4,-1], cmap="YlOrRd", annot=True)
+    plt.title(name)
+    plt.ylabel("Wall Hit Reward")
+    plt.xlabel("Floor Hit Reward")
+    ax.figure.savefig(name+".png")
 
     
 
 if __name__ == "__main__":
-
     to_be_plotted_portal_reward = 5
     portal_dict = group_on_portal_reward(compute_on_all())
-    portal_rewards = [1,5,25,125,625,3125,15625,78125,390625,1953125]
+    portal_rewards = [1,25,625,15625,390625]
     for rew in portal_rewards:
         save_np_array_heatmap(get_numpy_array_from_list(portal_dict[rew]),"Portal_reward:"+str(rew))
+        plt.clf()

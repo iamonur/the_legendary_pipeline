@@ -6,9 +6,9 @@ from player import MCTS_Runner_Regular as MCTS
 from player import MazeGameClass as get_score
 from player import skeleton_game_4_modifiable as custom_game
 
-wall_punishments = [-1,-2,-4,-8,-16,-32,-64,-128,-256,-512,-1024,-2048,-4096,-8192,-16384,-32768,-65536,-131072,-262144,-524288]
-floor_punishments = [-1,-2,-4,-8,-16,-32,-64,-128,-256,-512,-1024,-2048,-4096,-8192,-16384,-32768,-65536,-131072,-262144,-524288]
-portal_rewards = [1,5,25,125,625,3125,15625,78125,390625,1953125]
+wall_punishments = [-1,-4,-16,-64,-256,-1024,-4096]
+floor_punishments = [-1,-4,-16,-64,-256,-1024,-4096]
+portal_rewards = [1,25,625,15625,390625]
 
 def set_rules(wall, floor, portal):
     return custom_game.format(WallReward=wall, FloorReward=floor, PortalReward=portal)
@@ -35,7 +35,6 @@ def simulate_all(repetitions=1):
     folder_name = str(time.time())
     os.mkdir(folder_name)
     os.chdir(folder_name)
-    #20*20*10 = 4000 simulations in a batch. Make it repeat 50 times, and you've got 200k plays.
     for portal in portal_rewards:
         for floor in floor_punishments:
             for wall in wall_punishments:
@@ -47,7 +46,8 @@ def simulate_all(repetitions=1):
                         result[0][i] = str(move)
                     csv_line = "*".join(result[0]) + "," + str(result[1]) + "," + str(result[2]) + "," + str(result[3])
                     file.writelines([csv_line])
+                    file.writelines("\n")
                 file.close()
 
 if __name__ == "__main__":
-    simulate_all()
+    simulate_all(50)
