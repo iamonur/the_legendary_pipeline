@@ -6,9 +6,9 @@ from player import MCTS_Runner_Regular as MCTS
 from player import MazeGameClass as get_score
 from player import skeleton_game_4_modifiable as custom_game
 
-wall_punishments = [-1,-4,-16,-64,-256,-1024,-4096]
-floor_punishments = [-1,-4,-16,-64,-256,-1024,-4096]
-portal_rewards = [1,25,625,15625,390625]
+wall_punishments = [0,-2,-8,-32,-128,-2048]
+floor_punishments = [0,-2,-8,-32,-128,-2048]
+portal_rewards = [625,15625,390625]
 
 def set_rules(wall, floor, portal):
     return custom_game.format(WallReward=wall, FloorReward=floor, PortalReward=portal)

@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from mpl_toolkits.mplot3d import Axes3D
 
 def get_file_list():
     files_here = os.listdir()
@@ -9,6 +10,8 @@ def get_file_list():
         if ".py" not in file:
             directory = file
             break
+    directory="dataset_best"
+    
     os.chdir(directory)
     files_here = os.listdir()
     csv_files = []
@@ -65,7 +68,6 @@ def compute_on_results(results):
 
     return [avg_cost, avg_reward, win_rating], best_game, worst_game
 
-
 def fitness(win_rate, reward, max_reward):
     if reward == max_reward:
         return float(99999999)
@@ -89,7 +91,7 @@ def compute_on_all():
     return all_results
 
 def group_on_portal_reward(all_results):
-    ret_dict = {1:[],5:[],25:[],125:[],625:[],3125:[],15625:[],78125:[],390625:[],1953125:[]}
+    ret_dict = {1:[],5:[],25:[],125:[],625:[],3125:[],15625:[],78125:[],390625:[]}
     for result in all_results:
         ret_dict[result["portal"]].append(result)
     return ret_dict
@@ -125,12 +127,140 @@ def save_np_array_heatmap(arr, name):
     plt.xlabel("Floor Hit Reward")
     ax.figure.savefig(name+".png")
 
+def save_alternate_graph(whole_data):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    portal_rewards=[625,15625,390625]
+    wall_rewards=[-2048,-128,-32,-8,-2,0]
+    floor_rewards=[-2048,-128,-32,-8,-2,0]
+    dp_count = len(whole_data)*len(whole_data[0])*len(whole_data[0][0])
+    
+    portal_reward = np.random.standard_normal(dp_count)
+    wall_reward = np.random.standard_normal(dp_count)
+    floor_reward = np.random.standard_normal(dp_count)
+    data_points = np.random.standard_normal(dp_count)
+    index = 0
+    for pn,portal in enumerate(whole_data):
+        for wn,wall in enumerate(portal):
+           for fn, value in enumerate(wall):
+               portal_reward[index] = portal_rewards[pn]
+               wall_reward[index] = wall_rewards[wn]
+               floor_reward[index] = floor_rewards[fn]
+               data_points[index] = value
+               index += 1
     
 
-if __name__ == "__main__":
-    to_be_plotted_portal_reward = 5
+    img = ax.scatter(portal_reward, wall_reward, floor_reward, c=data_points, cmap=plt.hot(), s=200)
+    ax.set_xlabel("Portal Reward")
+    ax.set_ylabel("Wall Reward")
+    ax.set_zlabel("Floor Reward")
+    plt.title("Graph")
+    fig.colorbar(img)
+    plt.show()
+
+def save_another_type_graph(whole_data):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    portal_rewards=[1,25,625,15625,390625]
+    wall_rewards=[-4096,-1024,-256,-64,-16,-4,-1]
+    floor_rewards=[-4096,-1024,-256,-64,-16,-4,-1]
+    dp_count = len(whole_data)*len(whole_data[0])*len(whole_data[0][0])
+    
+    portal_reward = np.random.standard_normal(dp_count)
+    wall_reward = np.random.standard_normal(dp_count)
+    floor_reward = np.random.standard_normal(dp_count)
+    data_points = np.random.standard_normal(dp_count)
+    index = 0
+    for pn,portal in enumerate(whole_data):
+        for wn,wall in enumerate(portal):
+           for fn, value in enumerate(wall):
+               portal_reward[index] = portal_rewards[pn]
+               wall_reward[index] = wall_rewards[wn]
+               floor_reward[index] = floor_rewards[fn]
+               data_points[index] = value
+               index += 1
+    
+
+    img = ax.scatter(portal_reward, wall_reward, floor_reward, c=data_points, cmap=plt.hot(), s=200)
+    ax.set_xlabel("Portal Reward")
+    ax.set_ylabel("Wall Reward")
+    ax.set_zlabel("Floor Reward")
+    plt.title("Graph")
+    fig.colorbar(img)
+    plt.show()
+
+
+
+#if __name__ == "__main__":
+def main_1():
     portal_dict = group_on_portal_reward(compute_on_all())
     portal_rewards = [1,25,625,15625,390625]
     for rew in portal_rewards:
         save_np_array_heatmap(get_numpy_array_from_list(portal_dict[rew]),"Portal_reward:"+str(rew))
         plt.clf()
+
+def get_listoflist_alt(lili, to_be_plotted="win_rating"):
+        #Group them around wall first
+
+    dictionary = {0:[],-2:[],-8:[],-32:[],-128:[],-2048:[]}
+    for item in lili:
+        dictionary[item["wall"]].append([item["floor"],item[to_be_plotted]])
+
+
+    dict_list = [ [-2048,dictionary[-2048]], [-128,dictionary[-128]], [-32,dictionary[-32]], [-8,dictionary[-8]], [-2,dictionary[-2]], [0,dictionary[0]]]
+
+    for elnum,elem in enumerate(dict_list):
+        dict_list[elnum][1] = sorted(elem[1], key=lambda lili: lili[0])
+
+    #Now both are sorted.
+
+    #ret = np.empty((7,7),dtype=np.float64)
+    ret = []
+    for n1, item1 in enumerate(dict_list):
+        ret2 = []
+        for n2, item2 in enumerate(item1[1]):
+            ret2.append(item2[1])
+        ret.append(ret2)
+    return ret
+
+def get_listoflist(lili, to_be_plotted="win_rating"):
+        #Group them around wall first
+
+    dictionary = {-1:[],-4:[],-16:[],-64:[],-256:[],-1024:[],-4096:[]}
+    for item in lili:
+        dictionary[item["wall"]].append([item["floor"],item[to_be_plotted]])
+
+
+    dict_list = [ [-4096,dictionary[-4096]], [-1024,dictionary[-1024]], [-256,dictionary[-256]], [-64,dictionary[-64]], [-16,dictionary[-16]], [-4,dictionary[-4]], [-1,dictionary[-1]]]
+
+
+    for elnum,elem in enumerate(dict_list):
+        dict_list[elnum][1] = sorted(elem[1], key=lambda lili: lili[0])
+
+    #Now both are sorted.
+
+    #ret = np.empty((7,7),dtype=np.float64)
+    ret = []
+    for n1, item1 in enumerate(dict_list):
+        ret2 = []
+        for n2, item2 in enumerate(item1[1]):
+            ret2.append(item2[1])
+        ret.append(ret2)
+    return ret
+
+
+if __name__ == "__main__":
+    #save_another_type_graph(None)
+    portal_dict = group_on_portal_reward(compute_on_all())
+    portal_rewards = [1,25,625,15625,390625]
+    alternate_pr = [625,15625,390625]
+    lilili = []
+    lilili_alt = []
+    for a in portal_rewards:
+        lilili.append(get_listoflist(portal_dict[a]))
+
+    #for a in alternate_pr:
+    #    lilili_alt.append(get_listoflist_alt(portal_dict[a]))
+
+    save_another_type_graph(lilili)
+    #save_alternate_graph(lilili_alt)
