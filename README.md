@@ -29,8 +29,8 @@ You will pass the class and function definitions to the simulation manager, and 
 
 # TODO
 - implement at least functional tests
--- implement all units' tests
--- Refactor like hell
+  - implement all units' tests
+  - Refactor like hell
 - ~~implement all the games via PROMELA.~~
 - ~~Implement base game via MCTS just to benchmark. ~~
 
