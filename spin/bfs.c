@@ -36,7 +36,9 @@ int goalx, goaly;
 
 float DistanceBetween(int X1,int Y1, int X2, int Y2)
 {
-  return sqrt((float)((X2-X1)*(X2-X1))+((Y2-Y1)*(Y2-Y1)));
+  //return sqrt((float)((X2-X1)*(X2-X1))+((Y2-Y1)*(Y2-Y1)));
+  //Manhattan distance as heuristic.
+  return abs(X2-X1)+abs(Y2-Y1);
 }
 float CostOfGoal(int X1,int Y1, int X2, int Y2,int (*GetMap)(int,int))
 {

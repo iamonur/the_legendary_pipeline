@@ -410,7 +410,6 @@ proctype avatar_same_goal(int x; int y){
   lock = 0
 }
 """
-
 promela_avatar_game_3_smart = """
 proctype avatar_same_goal(int x; int y){
   map[x].a[y] = 2;
@@ -705,20 +704,18 @@ promela_opponent_for_game_2_smart = """
 proctype opponent_runner(int x; int y){
    map[x].a[y] = 4;
    int foo;
-   //c_code{put_map();};
  
    do
    :: (win == 0 && dead == 0) ->
-       //c_code{printf("2\\n");};
        !lock;
       
        if
        :: win == 1 -> break
        :: else -> skip
        fi;
-       //c_code{printf("3\\n");};
+       
        c_code{calculate_next_move_to_portal(Popponent_runner->x, Popponent_runner->y, &(now.next_x), &(now.next_y));};
-       //c_code{printf("4\\n");};
+
        map[x].a[y] = 0;
        foo = map[next_x].a[next_y];
        map[next_x].a[next_y] = 4;
@@ -732,7 +729,7 @@ proctype opponent_runner(int x; int y){
        fi;
       
        lock = 1;
-       //c_code{printf("5\\n");};
+       
    :: else -> break
    od;
  
@@ -866,20 +863,18 @@ promela_opponent_for_game_3_smart = """
 proctype opponent_same_goal(int x; int y; int xx; int yy){ //Works on a global turn variable
   map[x].a[y] = 4;
   int foo;
-  //c_code{put_map();};
  
    do
    :: (win == 0 && dead == 0) ->
-       //c_code{printf("2\\n");};
        !lock;
       
        if
        :: win == 1 -> break
        :: else -> skip
        fi;
-       //c_code{printf("3\\n");};
+       
        c_code{calculate_next_move_to_portal_avatar_blocks(Popponent_same_goal->x, Popponent_same_goal->y, &(now.next_x), &(now.next_y));};
-       //c_code{printf("4\\n");};
+       
        map[x].a[y] = 0;
        foo = map[next_x].a[next_y];
        map[next_x].a[next_y] = 4;
@@ -892,7 +887,6 @@ proctype opponent_same_goal(int x; int y; int xx; int yy){ //Works on a global t
        fi;
       
        lock = 1;
-       //c_code{printf("5\\n");};
    :: else -> break
    od;
  
