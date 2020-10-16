@@ -8,7 +8,7 @@ import spinner          #my module
 import spinParser       #my module
 import random           #used in the example feeder
 import time
-import dbWrapper
+#import dbWrapper
 
 def pipelineError(Exception):
     pass
@@ -96,7 +96,7 @@ def isOKDummy(dict):
 
 class FeederException(Exception):
     pass
-"""
+
 class startFeeder: #You can build rules, purely random or just serve a list. This basic guy just returns 10 different randoms, than raises. Remember to raise on yours. 
     def __init__(self):
         self.count = 0
@@ -109,7 +109,7 @@ class startFeeder: #You can build rules, purely random or just serve a list. Thi
             ret.append(str(random.randint(0,1)))
         self.count += 1
         return "".join(ret)
-"""
+
 class randomFeeder_Generic:
     def __init__(self, size=24):
         self.count = 0
@@ -124,7 +124,7 @@ class randomFeeder_Generic:
 
         self.count += 1
         return "".join(ret)
-"""
+
 class startFeederEight:
     def __init__(self):
         self.count = 0
@@ -189,7 +189,7 @@ class startFeederSixteen:
             ret.append(str(random.randint(0,1)))
         self.count += 1
         return "".join(ret)
-"""
+
 class dummyFeeder:
     def __init__(self):
         self.count = 0
@@ -423,7 +423,7 @@ class SimManager:
     #@classmethod
     #def createSimManager(mapgenclass, polisherclass, plannerclass, spinnerclass=SpinClass, parserclass=spinParser, playerclass=GameClass, startFeed)
         
-    def __init__(self, isOK, mapGenerator, mapPolisher, sprPlanner, spin=spinner.SpinClass, parser=spinParser.spinParser, player=player.GameClass, feed=startFeeder, json_args=None):#Gets class definitions as parameters, which is kinda cool.
+    def __init__(self, isOK=isOKDummy, mapGenerator=cellularAutomata.elementary_cellular_automata, mapPolisher=caPolisher.polisher, sprPlanner=spritePlanner.spritePlanner, spin=spinner.SpinClass, parser=spinParser.spinParser, player=player.RacerGameClass_Smart, feed=startFeeder, json_args=None):#Gets class definitions as parameters, which is kinda cool.
         self.mapgen = mapGenerator
         self.mappolish = mapPolisher
         self.spriter = sprPlanner
@@ -432,12 +432,9 @@ class SimManager:
         self.game = player
         self.rng = startFeeder
         self.isOK = isOK
-        self.db = dbWrapper.DBWrapper()
         #if json_args != None:
             #To be implemented. Just wanna see if the pipeline works well.
     
-
-
     def pipeline(self):
 
         rng = self.rng()
@@ -512,10 +509,101 @@ class SimManager:
                 raise NameError("Nuncked up")
                 #raise ("Map: " + map_ + " avatar_moves: " + "".join(avatar) + " opponent_moves: " + "".join(opponent) + " failed.") #This can be reconstructed.
 
-class spin_tryout:
-    def __init__(self, is_absolute):
+#Notes on the below simulation:
+#1- SpritePlanner is kinda shitty and lets you win near %50. Probably a new one is needed.
+
+class Simulation:
+    def __init__(self, map_percentage=30, level_size=24, map_generator=cellularAutomata.elementary_cellular_automata, map_polisher=caPolisher.polisher, sprite_planner=spritePlanner.equalSpritePlanner, spin=spinner.SpinClass_Game3_smart, parser=spinParser.spinParser, searcher=spinner.MCTS_Runner_Regular, player=player.RacerGameClass_Smart, feed=randomFeeder_Generic):
+        self.pol_pct = map_percentage
+        self.lvl_sz  = 24
+        self.map_gen = map_generator
+        self.map_pol = map_polisher
+        self.spr_pln = sprite_planner
+        self.spinner = spin
+        self.parser  = parser
+        self.player  = player
+        self.rng_fdr = feed
+        self.mcts_ag = searcher
+
+    def pipeline(self):
+        rng_feed = self.rng_fdr(size=level_size)
+        while(True):
+        ############################ LEVEL-GEN PHASE    
+            try:
+                line = rng.serve()
+            except FeederException:
+                #You get this, you're depleted
+                return None
+
+            try:
+                map_ = self.map_pol(ca=self.map_gen(size=self.lvl_sz, limit=self.lvl_sz, start=line), minimumArea=self.pol_pct).perform()
+            except caPolisher.polisherException:
+                continue
+            #Sprite Planners do raise, but if you didn't throw at polisher, you shouldn't be here. Fix your polisher first.
+            mind = self.spr_pln(map_)
+            mind.perform()
+            map_ = mind.getMap()
+        ############################ LEVEL-SOLVING PHASE
+
+            modelling_time = time.time()
+
+            modelChecker = self.spinner(map_)
+            try:
+                modelChecker.perform()
+            except spinner.spinCompileException:
+                continue
+
+            get_moves = self.parser()
+            try:
+                avatar, opponent = get_moves.perform()
+            except spinParser.cannotWinException:
+                continue
+
+            modelling_time = time.time()-modelling_time
+
+            game = self.player(action_list=avatar, level_desc=map_)
+            spin_score, spin_terminal = game.play()
+
+            map2 = "\n".join(map_)
+        ############################ MCTS: 1
+            mcts1_time = time.time()
+            moves_1 = self.mcts_ag(max_d= level_size*20, n_playouts=level_size*20, game_desc=game.level, level_desc=map2, render=False).run()[0][0]
+            mcts1_time = time.time() - mcts1_time
+            mcts1_score, mcts1_terminal = self.player(action_list=moves_1, level_desc=map_).play()
+        ############################ MCTS: 2
+            mcts2_time = time.time()
+            moves_2 = self.mcts_ag(max_d= level_size*40, n_playouts=level_size*10, game_desc=game.level, level_desc=map2, render=False).run()[0][0]
+            mcts2_time = time.time() - mcts2_time
+            mcts2_score, mcts2_terminal = self.player(action_list=moves_2, level_desc=map_).play()
+        ############################ MCTS: 3
+            mcts3_time = time.time()
+            moves_3 = self.mcts_ag(max_d= level_size*80, n_playouts=level_size*5, game_desc= game.level, level_desc=map2, render=False).run()[0][0]
+            mcts3_time = time.time() - mcts3_time
+            mcts3_score, mcts3_terminal = self.player(action_list=moves_3, level_desc=map_).play()
+        ############################ MCTS: 4
+            mcts4_time = time.time()
+            moves_4 = self.mcts_ag(max_d= level_size*10, n_playouts=level_size*40, game_desc= game.level, level_desc=map2, render=False).run()[0][0]
+            mcts4_time = time.time() - mcts4_time
+            mcts4_score, mcts4_terminal = self.player(action_list=moves_4, level_desc=map_).play()
+        ############################ MCTS: 5
+            mcts5_time = time.time()
+            moves_5 = self.mcts_ag(max_d= level_size*5, n_playouts=level_size*80, game_desc= game.level, level_desc=map2, render=False).run()[0][0]
+            mcts5_time = time.time() - mcts5_time
+            mcts5_score, mcts5_terminal = self.player(action_list=moves_5, level_desc=map_).play()
+        ############################ FINISHING PHASE
+            line_to_write = ""
+            #### SUB-PHASE 1 - Record Level
+                line_to_write += "{},{},{}".format(self.lvl_sz, self.pol_pct, self.line, self.map2)
+            #### SUB-PHASE 2 - Record SPIN performance
+            #### SUB-PHASE 3 - Record MCTS performance
+            #### SUB-PHASE 4 - Record
+            
+
+
+
+
 
 if __name__ == "__main__":
     
-    ss = experiment_on_time()
+    ss = SimManager()
     ss.pipeline()

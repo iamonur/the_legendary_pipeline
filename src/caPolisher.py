@@ -115,7 +115,6 @@ reverse_space_identifiers = {}
 for item in space_identifiers:
     reverse_space_identifiers.update({space_identifiers[item]:item})
 
-
 class polisher:
     def __init__(self, ca=cellularAutomata.bl_tr_odd_p_mid_nybble_switch_srca(), minimumArea=50, map_1=None):
         self.minArea = minimumArea
@@ -309,7 +308,6 @@ class polisher:
             map[ln] = "".join(foo)
         return map
 
-
     def perform(self):
         
         #while self.connected_spaces[max(self.connected_spaces, key=self.connected_spaces.get)] < ((self.minArea/100)*self.ca.limit*self.ca.size):
@@ -408,6 +406,12 @@ class CApolisher(polisher):
         if n is '1':
             count += 1
 
+        #If born:
+        #0: Die
+        #1-5: Survive
+        #6-9: Die
+        #If dead:
+        #3: Born
 
         change = False
         if self.map[positions[0]][positions[1]] == '1':
@@ -438,6 +442,48 @@ class CApolisher(polisher):
 
         p = polisher(map_1 = self.map)
         a = p.perform()
+        return a
+
+class polisher2(polisher):
+    def perform():
+        import random
+        while max(self.connected_spaces.values()) < ((self.minArea/100)*self.ca.limit*self.ca.size):
+            if len(self.connected_spaces) == 1:
+                self.map_1[random.randint(0,(len(self.map_1) + 1))][random.randint(0,(len(self.map_1[0]) +1))] = '0'+
+                self.whole_space = self.get_full_fs(self.map_1)
+                self.connected_spaces, self.map_enumed = self.get_connected_fses(self.map_1)
+            else:
+                self.map_enumed = self.iterate_on_distance_matrix(self.create_distance_matrix(self.connected_spaces, self.map_enumed), self.connected_spaces, self.map_enumed)
+                self.map_1 = self.reset_map(self.map_enumed)
+                self.whole_space = self.get_full_fs(self.map_1)
+                self.connected_spaces, self.map_enumed = self.get_connected_fses(self.map_1)
+
+
+        a, b = self.get_connected_fses(self.reset_map(self.map_enumed))
+        return self.reset_map (self.wallify (self.map_enumed, a))
+
+class CAPolisher_MinArea(CApolisher):
+    def __init__(self, ca=cellularAutomata.elementary_cellular_automata(), percentage=50):
+        self.percentage = percentage
+        self.map_in = ca.perform()
+        self.map = []
+        for line in self.map_in:
+            self.map.append(list(line))
+        self.ca = ca
+        self.border = '0'
+        self.size = self.ca.size
+        self.limit = self.ca.limit
+        self.bornAt = 3
+        self.die_low = 1
+        self.die_high = 5
+
+    def perform(self):
+        while self.iterate_on_map() >= 4:
+            pass 
+
+        p = polisher2(map_1 = self.map, minimumArea=self.percentage)
+        a = p.perform()
+
         return a
 
 class dummyPolisher(polisher):
