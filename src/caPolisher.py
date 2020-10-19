@@ -449,7 +449,7 @@ class polisher2(polisher):
         import random
         while max(self.connected_spaces.values()) < ((self.minArea/100)*self.ca.limit*self.ca.size):
             if len(self.connected_spaces) == 1:
-                self.map_1[random.randint(0,(len(self.map_1) + 1))][random.randint(0,(len(self.map_1[0]) +1))] = '0'+
+                self.map_1[random.randint(0,(len(self.map_1) + 1))][random.randint(0,(len(self.map_1[0]) +1))] = '0'
                 self.whole_space = self.get_full_fs(self.map_1)
                 self.connected_spaces, self.map_enumed = self.get_connected_fses(self.map_1)
             else:

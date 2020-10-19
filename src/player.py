@@ -21,6 +21,7 @@ BasicGame
     TerminationSet
         SpriteCounter stype=goalportal limit=0 win=True
     InteractionSet
+        avatar EOS > stepBack
         avatar wall > stepBack scoreChange=-1000
         avatar floor2> NullEffect scoreChange=-1000
         floor avatar > transformTo stype=floor2 scoreChange=-1
@@ -42,6 +43,7 @@ BasicGame
     TerminationSet
         SpriteCounter stype=goalportal limit=0 win=True
     InteractionSet
+        avatar EOS > stepBack
         avatar wall > stepBack scoreChange={WallReward}
         floor avatar > NullEffect scoreChange={FloorReward}
         goalportal avatar > killSprite scoreChange={PortalReward}
@@ -62,6 +64,7 @@ BasicGame
     TerminationSet
         SpriteCounter stype=goalportal limit=0 win=True
     InteractionSet
+        avatar EOS > stepBack
         avatar wall > stepBack scoreChange=-100
         floor avatar > NullEffect scoreChange=-1
         goalportal avatar > killSprite scoreChange=1000009
@@ -83,6 +86,7 @@ BasicGame
         SpriteCounter stype=goalportal limit=0 win=True
         SpriteCounter stype=opponent limit=0 win=False
     InteractionSet
+        avatar EOS > stepBack
         opponent goalportal > stepBack
         avatar wall > stepBack
         opponent wall > stepBack
@@ -107,6 +111,7 @@ BasicGame
         SpriteCounter stype=goalportal limit=0 win=True
         SpriteCounter stype=opponent limit=0 win=False
     InteractionSet
+        avatar EOS > stepBack
         opponent goalportal > stepBack
         avatar wall > stepBack
         opponent wall > stepBack
@@ -131,6 +136,7 @@ BasicGame
         SpriteCounter stype=goalportal limit=0 win=True
         SpriteCounter stype=opponent limit=0 win=False
     InteractionSet
+        avatar EOS > stepBack    
         goalportal opponent > killSprite scoreChange=-1
         avatar wall > stepBack
         opponent wall > stepBack
@@ -156,10 +162,11 @@ BasicGame
         SpriteCounter stype=goalportal limit=0 win=True
         SpriteCounter stype=opponent limit=0 win=False
     InteractionSet
-        goalportal opponent > killSprite scoreChange=-1
-        avatar wall > stepBack
+        avatar EOS > stepBack
+        goalportal opponent > killSprite scoreChange=-100000
+        avatar wall > stepBack scoreChange=-1000
         opponent wall > stepBack
-        goalportal avatar > killSprite scoreChange=1
+        goalportal avatar > killSprite scoreChange=10000
         opponent avatar > stepBack
         avatar opponent > stepBack
     LevelMapping
@@ -181,6 +188,7 @@ BasicGame
         SpriteCounter stype=goalportal limit=0 win=False
         SpriteCounter stype=opponent limit=0 win=True
     InteractionSet
+        avatar EOS > stepBack
         goalportal opponent > killSprite scoreChange=-1
         avatar wall > stepBack
         opponent wall > stepBack
@@ -205,6 +213,7 @@ BasicGame
         SpriteCounter stype=goalportal limit=0 win=False
         SpriteCounter stype=opponent limit=0 win=True
     InteractionSet
+        avatar EOS > stepBack
         goalportal opponent > killSprite scoreChange=-1
         avatar wall > stepBack
         opponent wall > stepBack
@@ -765,8 +774,8 @@ class MCTS_Runner_Regular:
         self.level =level_desc
         self._save_game_files()
         self.df = 0.7
-        self.width = 8
-        self.height = 8
+        self.width = 26
+        self.height = 26
 
     def init_my_second_level(self):
         self.second_level = []
@@ -805,12 +814,12 @@ class MCTS_Runner_Regular:
             self.init_my_second_level()
             for a in range(0,self.height):
                 temp[a] = list(temp[a])
-
-
+                
             for a in range(self.height):
                 for b in range(self.width):
 
                     if temp[a][b] == 'A':
+
                         p1 = a
                         p2 = b
                         self.second_level[a][b] += 1
@@ -850,26 +859,26 @@ class MCTS_Runner_Regular:
 
                 # Expansion
                 if not terminal:
-
+                    
                     node.children = []
-                    if temp[node.first-1][node.second] == '1':
+                    if node.first != 0 and temp[node.first-1][node.second] == '1':
                         node.children.append(MCTS_Node(node.first,node.second,node,0))#UP
                     else:
                         node.children.append(MCTS_Node(node.first-1,node.second,node,0))#UP
 
-                    if temp[node.first+1][node.second] == '1':
+                    if node.first != (self.width-1) and temp[node.first+1][node.second] == '1':
                         node.children.append(MCTS_Node(node.first,node.second,node,2))#DOWN
                     else:
                         node.children.append(MCTS_Node(node.first+1,node.second,node,2))#DOWN
                     
-                    if temp[node.first][node.second-1] == '1':
+                    if node.second != 0 and temp[node.first][node.second-1] == '1':
                         node.children.append(MCTS_Node(node.first,node.second,node,1))#LEFT
                     else:
                         node.children.append(MCTS_Node(node.first,node.second-1,node,1))#LEFT
                     
                     
                     
-                    if temp[node.first][node.second+1] == '1':
+                    if node.first != (self.width-1) and temp[node.first][node.second+1] == '1':
                         node.children.append(MCTS_Node(node.first,node.second,node,3))#RIGHT
                     else:
                         node.children.append(MCTS_Node(node.first,node.second+1,node,3))#RIGHT

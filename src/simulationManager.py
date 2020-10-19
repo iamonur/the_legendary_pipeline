@@ -119,7 +119,7 @@ class randomFeeder_Generic:
         if self.count == 10:
             raise FeederException("Your feeder is depleted.")
         ret = []
-        for i in range(0,size):
+        for i in range(0,self.size):
             ret.append(str(random.randint(0,1)))
 
         self.count += 1
@@ -513,7 +513,7 @@ class SimManager:
 #1- SpritePlanner is kinda shitty and lets you win near %50. Probably a new one is needed.
 
 class Simulation:
-    def __init__(self, map_percentage=30, level_size=24, map_generator=cellularAutomata.elementary_cellular_automata, map_polisher=caPolisher.polisher, sprite_planner=spritePlanner.equalSpritePlanner, spin=spinner.SpinClass_Game3_smart, parser=spinParser.spinParser, searcher=spinner.MCTS_Runner_Regular, player=player.RacerGameClass_Smart, feed=randomFeeder_Generic):
+    def __init__(self, map_percentage=30, level_size=24, map_generator=cellularAutomata.elementary_cellular_automata, map_polisher=caPolisher.polisher, sprite_planner=spritePlanner.equalSpritePlanner, spin=spinner.SpinClass_Game3_smart, parser=spinParser.spinParser, searcher=player.MCTS_Runner_Regular, player=player.RacerGameClass_Smart, feed=randomFeeder_Generic):
         self.pol_pct = map_percentage
         self.lvl_sz  = 24
         self.map_gen = map_generator
@@ -526,11 +526,12 @@ class Simulation:
         self.mcts_ag = searcher
 
     def pipeline(self):
+        level_size = self.lvl_sz
         rng_feed = self.rng_fdr(size=level_size)
         while(True):
         ############################ LEVEL-GEN PHASE    
             try:
-                line = rng.serve()
+                line = rng_feed.serve()
             except FeederException:
                 #You get this, you're depleted
                 return None
@@ -564,39 +565,43 @@ class Simulation:
             game = self.player(action_list=avatar, level_desc=map_)
             spin_score, spin_terminal = game.play()
 
-            map2 = "\n".join(map_)
+            map2 = "11111111111111111111111111\n1"+"1\n1".join(map_)+"1\n11111111111111111111111111"
         ############################ MCTS: 1
-            mcts1_time = time.time()
-            moves_1 = self.mcts_ag(max_d= level_size*20, n_playouts=level_size*20, game_desc=game.level, level_desc=map2, render=False).run()[0][0]
+            """    mcts1_time = time.time()
+            moves_1 = self.mcts_ag(max_d= level_size*20, n_playouts=level_size*200, game_desc=game.game, level_desc=map2, render=False).run()[0][0]
             mcts1_time = time.time() - mcts1_time
             mcts1_score, mcts1_terminal = self.player(action_list=moves_1, level_desc=map_).play()
         ############################ MCTS: 2
             mcts2_time = time.time()
-            moves_2 = self.mcts_ag(max_d= level_size*40, n_playouts=level_size*10, game_desc=game.level, level_desc=map2, render=False).run()[0][0]
+            moves_2 = self.mcts_ag(max_d= level_size*40, n_playouts=level_size*100, game_desc=game.game, level_desc=map2, render=False).run()[0][0]
             mcts2_time = time.time() - mcts2_time
             mcts2_score, mcts2_terminal = self.player(action_list=moves_2, level_desc=map_).play()
         ############################ MCTS: 3
             mcts3_time = time.time()
-            moves_3 = self.mcts_ag(max_d= level_size*80, n_playouts=level_size*5, game_desc= game.level, level_desc=map2, render=False).run()[0][0]
+            moves_3 = self.mcts_ag(max_d= level_size*80, n_playouts=level_size*50, game_desc= game.game, level_desc=map2, render=False).run()[0][0]
             mcts3_time = time.time() - mcts3_time
             mcts3_score, mcts3_terminal = self.player(action_list=moves_3, level_desc=map_).play()
         ############################ MCTS: 4
             mcts4_time = time.time()
-            moves_4 = self.mcts_ag(max_d= level_size*10, n_playouts=level_size*40, game_desc= game.level, level_desc=map2, render=False).run()[0][0]
+            moves_4 = self.mcts_ag(max_d= level_size*10, n_playouts=level_size*400, game_desc= game.game, level_desc=map2, render=False).run()[0][0]
             mcts4_time = time.time() - mcts4_time
-            mcts4_score, mcts4_terminal = self.player(action_list=moves_4, level_desc=map_).play()
+            mcts4_score, mcts4_terminal = self.player(action_list=moves_4, level_desc=map_).play()"""
         ############################ MCTS: 5
             mcts5_time = time.time()
-            moves_5 = self.mcts_ag(max_d= level_size*5, n_playouts=level_size*80, game_desc= game.level, level_desc=map2, render=False).run()[0][0]
+            moves_5 = self.mcts_ag(max_d= level_size*2, n_playouts=level_size*256, game_desc= game.game, level_desc=map2, render=False).run()[0][0]
             mcts5_time = time.time() - mcts5_time
             mcts5_score, mcts5_terminal = self.player(action_list=moves_5, level_desc=map_).play()
         ############################ FINISHING PHASE
             line_to_write = ""
             #### SUB-PHASE 1 - Record Level
-                line_to_write += "{},{},{}".format(self.lvl_sz, self.pol_pct, self.line, self.map2)
+            line_to_write += "{},{},{},{}".format(self.lvl_sz, self.pol_pct, line, map2)
             #### SUB-PHASE 2 - Record SPIN performance
+            line_to_write += ",{},{},{}".format(spin_score, spin_terminal, modelling_time)
             #### SUB-PHASE 3 - Record MCTS performance
+            #line_to_write += ",{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}".format(mcts1_score,mcts1_terminal,mcts1_time,mcts2_score,mcts2_terminal,mcts2_time,mcts3_score,mcts3_terminal,mcts3_time,mcts4_score,mcts4_terminal,mcts4_time,mcts5_score,mcts5_terminal,mcts5_time)
+            line_to_write += ",{},{},{}".format(mcts5_score,mcts5_terminal,mcts5_time)
             #### SUB-PHASE 4 - Record
+            print(line_to_write)
             
 
 
@@ -605,5 +610,5 @@ class Simulation:
 
 if __name__ == "__main__":
     
-    ss = SimManager()
+    ss = Simulation()
     ss.pipeline()
