@@ -2138,7 +2138,7 @@ class SpinClass_Game3_smart():
     (out, err) = proc.communicate()
     if out != b'':
       raise spinCompileException("Cannot compile with gcc.")
-    os.system("../spin/temp.out -a -I >/dev/null")
+    os.system("../spin/temp.out -a -i >/dev/null")
 
 class SpinClass_Game4_smart():### XXX: Cannot be a smart game 4, it's only us!
   def __init__(self, map):

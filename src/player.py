@@ -248,7 +248,7 @@ def stringify_list_level(level):
 dummy_actions = ['D', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip', 'Skip']
 
 immovable_opponent_str ="\n        opponent > Immovable color=BLUE"
-smart_racer_opponent_str = "\n        opponent > SmartChaser stype=goalportal color=RED"
+smart_racer_opponent_str = "\n        opponent > LookupChaser stype=goalportal color=RED"
 smart_chaser_opponent_str = "\n        opponent > SmartChaser stype=goalportal color=RED"
 chaser_opponent_str="\n        opponent > Chaser stype=avatar color=RED"
 racer_str="\n        opponent > Chaser stype=goalportal color=RED"

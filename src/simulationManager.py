@@ -116,8 +116,9 @@ class randomFeeder_Generic:
         self.size = size
 
     def serve(self):
-        if self.count == 10:
-            raise FeederException("Your feeder is depleted.")
+        #DO NOT DEPLETE
+        #if self.count == 10:
+        #    raise FeederException("Your feeder is depleted.")
         ret = []
         for i in range(0,self.size):
             ret.append(str(random.randint(0,1)))
@@ -525,7 +526,9 @@ class Simulation:
         self.rng_fdr = feed
         self.mcts_ag = searcher
 
-    def pipeline(self):
+    def pipeline(self, mcts_adv=1):
+        if mcts_adv <= 0:
+            raise Exception("ERROR ON PIPELINE DUDE!")
         level_size = self.lvl_sz
         rng_feed = self.rng_fdr(size=level_size)
         while(True):
@@ -566,49 +569,52 @@ class Simulation:
             spin_score, spin_terminal = game.play()
 
             map2 = "11111111111111111111111111\n1"+"1\n1".join(map_)+"1\n11111111111111111111111111"
-        ############################ MCTS: 1
-            """    mcts1_time = time.time()
-            moves_1 = self.mcts_ag(max_d= level_size*20, n_playouts=level_size*200, game_desc=game.game, level_desc=map2, render=False).run()[0][0]
-            mcts1_time = time.time() - mcts1_time
-            mcts1_score, mcts1_terminal = self.player(action_list=moves_1, level_desc=map_).play()
-        ############################ MCTS: 2
-            mcts2_time = time.time()
-            moves_2 = self.mcts_ag(max_d= level_size*40, n_playouts=level_size*100, game_desc=game.game, level_desc=map2, render=False).run()[0][0]
-            mcts2_time = time.time() - mcts2_time
-            mcts2_score, mcts2_terminal = self.player(action_list=moves_2, level_desc=map_).play()
-        ############################ MCTS: 3
-            mcts3_time = time.time()
-            moves_3 = self.mcts_ag(max_d= level_size*80, n_playouts=level_size*50, game_desc= game.game, level_desc=map2, render=False).run()[0][0]
-            mcts3_time = time.time() - mcts3_time
-            mcts3_score, mcts3_terminal = self.player(action_list=moves_3, level_desc=map_).play()
-        ############################ MCTS: 4
-            mcts4_time = time.time()
-            moves_4 = self.mcts_ag(max_d= level_size*10, n_playouts=level_size*400, game_desc= game.game, level_desc=map2, render=False).run()[0][0]
-            mcts4_time = time.time() - mcts4_time
-            mcts4_score, mcts4_terminal = self.player(action_list=moves_4, level_desc=map_).play()"""
-        ############################ MCTS: 5
-            mcts5_time = time.time()
-            moves_5 = self.mcts_ag(max_d= level_size*2, n_playouts=level_size*256, game_desc= game.game, level_desc=map2, render=False).run()[0][0]
-            mcts5_time = time.time() - mcts5_time
-            mcts5_score, mcts5_terminal = self.player(action_list=moves_5, level_desc=map_).play()
+        ############################ MCTS
+            mcts_time = time.time()
+            mcts_moves = self.mcts_ag(max_d= level_size, n_playouts=level_size*32*mcts_adv, game_desc= game.game, level_desc=map2, render=False).run()[0][0]
+            mcts_time = time.time() - mcts_time
+            mcts_score, mcts_terminal = self.player(action_list=mcts_moves, level_desc=map_).play()
         ############################ FINISHING PHASE
-            line_to_write = ""
+            mcts_moves = list(map(str,mcts_moves))
+            avatar = list(map(str, avatar))
             #### SUB-PHASE 1 - Record Level
-            line_to_write += "{},{},{},{}".format(self.lvl_sz, self.pol_pct, line, map2)
+            level_line = "Level size: {}\nPolisher percentage: {}\nStarter line: {},\nWhole Level:\n{}".format(self.lvl_sz, self.pol_pct, line, map2)
             #### SUB-PHASE 2 - Record SPIN performance
-            line_to_write += ",{},{},{}".format(spin_score, spin_terminal, modelling_time)
+            spin_line  = "Spin score: {}\nSpin terminal:{}\nSpin time: {}\nSpin moves: {}".format(spin_score, spin_terminal, modelling_time, "*".join(avatar))
             #### SUB-PHASE 3 - Record MCTS performance
-            #line_to_write += ",{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}".format(mcts1_score,mcts1_terminal,mcts1_time,mcts2_score,mcts2_terminal,mcts2_time,mcts3_score,mcts3_terminal,mcts3_time,mcts4_score,mcts4_terminal,mcts4_time,mcts5_score,mcts5_terminal,mcts5_time)
-            line_to_write += ",{},{},{}".format(mcts5_score,mcts5_terminal,mcts5_time)
+            mcts_line  = "MCTS score: {}\nMCTS terminal: {}\nMCTS time:{}\nMCTS moves: {}".format(mcts_score,mcts_terminal,mcts_time, "*".join(mcts_moves))
             #### SUB-PHASE 4 - Record
-            print(line_to_write)
+            return level_line, spin_line, mcts_line, (mcts_terminal and (mcts_score > 0))
             
 
+def record_simulation(simno, levelinfo, spininfo, mctsinfo):
+    filename = str(magic_number) + str(simno)
+    
+    f = open(filename + "_level", "a")
+    f.write(levelinfo)
+    f.close()
 
+    f = open(filename + "_spin", "a")
+    f.write(spininfo)
+    f.close()
 
+    f = open(filename + "_mcts", "a")
+    f.write(mctsinfo)
+    f.close()
 
+magic_number = 0
 
 if __name__ == "__main__":
-    
-    ss = Simulation()
-    ss.pipeline()
+    magic_number = random.random()
+    ss = Simulation(map_percentage=50)
+    sim_no = 0
+    mcts_lost_count = 0
+    while True:
+        lline, sline, mline, mwin = ss.pipeline(mcts_lost_count + 1)
+        if mwin == False:
+            mcts_lost_count += 1
+        elif mcts_lost_count != 0:
+            mcts_lost_count -= 1
+        record_simulation(sim_no, lline, sline, mline)
+        sim_no += 1
+        
