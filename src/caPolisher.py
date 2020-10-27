@@ -463,8 +463,8 @@ class polisher2(polisher):
         return self.reset_map (self.wallify (self.map_enumed, a))
 
 class CAPolisher_MinArea(CApolisher):
-    def __init__(self, ca=cellularAutomata.elementary_cellular_automata(), percentage=50):
-        self.percentage = percentage
+    def __init__(self, ca=cellularAutomata.elementary_cellular_automata(), minimumArea=50):
+        self.percentage = minimumArea
         self.map_in = ca.perform()
         self.map = []
         for line in self.map_in:
@@ -481,7 +481,7 @@ class CAPolisher_MinArea(CApolisher):
         while self.iterate_on_map() >= 4:
             pass 
 
-        p = polisher2(map_1 = self.map, minimumArea=self.percentage)
+        p = polisher(map_1 = self.map)
         a = p.perform()
 
         return a

@@ -165,8 +165,9 @@ BasicGame
         avatar EOS > stepBack
         goalportal opponent > killSprite scoreChange=-100000
         avatar wall > stepBack scoreChange=-1000
+        floor avatar > NullEffect scoreChange=-1
         opponent wall > stepBack
-        goalportal avatar > killSprite scoreChange=10000
+        goalportal avatar > killSprite scoreChange=1000000
         opponent avatar > stepBack
         avatar opponent > stepBack
     LevelMapping

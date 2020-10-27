@@ -514,7 +514,7 @@ class SimManager:
 #1- SpritePlanner is kinda shitty and lets you win near %50. Probably a new one is needed.
 
 class Simulation:
-    def __init__(self, map_percentage=30, level_size=24, map_generator=cellularAutomata.elementary_cellular_automata, map_polisher=caPolisher.polisher, sprite_planner=spritePlanner.equalSpritePlanner, spin=spinner.SpinClass_Game3_smart, parser=spinParser.spinParser, searcher=player.MCTS_Runner_Regular, player=player.RacerGameClass_Smart, feed=randomFeeder_Generic):
+    def __init__(self, map_percentage=30, level_size=24, map_generator=cellularAutomata.elementary_cellular_automata, map_polisher=caPolisher.CAPolisher_MinArea, sprite_planner=spritePlanner.equalSpritePlanner, spin=spinner.SpinClass_Game3_smart, parser=spinParser.spinParser, searcher=player.MCTS_Runner_Regular, player=player.RacerGameClass_Smart, feed=randomFeeder_Generic):
         self.pol_pct = map_percentage
         self.lvl_sz  = 24
         self.map_gen = map_generator
@@ -571,7 +571,7 @@ class Simulation:
             map2 = "11111111111111111111111111\n1"+"1\n1".join(map_)+"1\n11111111111111111111111111"
         ############################ MCTS
             mcts_time = time.time()
-            mcts_moves = self.mcts_ag(max_d= level_size, n_playouts=level_size*32*mcts_adv, game_desc= game.game, level_desc=map2, render=False).run()[0][0]
+            mcts_moves = self.mcts_ag(max_d= level_size*2, n_playouts=level_size*16*mcts_adv, game_desc= game.game, level_desc=map2, render=False).run()[0][0]
             mcts_time = time.time() - mcts_time
             mcts_score, mcts_terminal = self.player(action_list=mcts_moves, level_desc=map_).play()
         ############################ FINISHING PHASE
@@ -580,9 +580,9 @@ class Simulation:
             #### SUB-PHASE 1 - Record Level
             level_line = "Level size: {}\nPolisher percentage: {}\nStarter line: {},\nWhole Level:\n{}".format(self.lvl_sz, self.pol_pct, line, map2)
             #### SUB-PHASE 2 - Record SPIN performance
-            spin_line  = "Spin score: {}\nSpin terminal:{}\nSpin time: {}\nSpin moves: {}".format(spin_score, spin_terminal, modelling_time, "*".join(avatar))
+            spin_line  = "Spin score: {}\nSpin terminal:{}\nSpin time: {}\nSpin moves: {}".format(spin_score, (spin_terminal and (spin_score > 0)), modelling_time, "*".join(avatar))
             #### SUB-PHASE 3 - Record MCTS performance
-            mcts_line  = "MCTS score: {}\nMCTS terminal: {}\nMCTS time:{}\nMCTS moves: {}".format(mcts_score,mcts_terminal,mcts_time, "*".join(mcts_moves))
+            mcts_line  = "MCTS score: {}\nMCTS terminal: {}\nMCTS time:{}\nMCTS moves: {}".format(mcts_score,(mcts_terminal and (mcts_score > 0)),mcts_time, "*".join(mcts_moves))
             #### SUB-PHASE 4 - Record
             return level_line, spin_line, mcts_line, (mcts_terminal and (mcts_score > 0))
             
@@ -613,8 +613,6 @@ if __name__ == "__main__":
         lline, sline, mline, mwin = ss.pipeline(mcts_lost_count + 1)
         if mwin == False:
             mcts_lost_count += 1
-        elif mcts_lost_count != 0:
-            mcts_lost_count -= 1
         record_simulation(sim_no, lline, sline, mline)
         sim_no += 1
         
