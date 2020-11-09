@@ -803,6 +803,38 @@ class MCTS_Runner_Regular:
         level_fh.write(self.level)
         level_fh.close()
 
+
+    def run_(self):
+        terminal = False
+        to_ret = []
+        env = cim.VGDLEnv(game_file=gamefile, level_file=levelfile, obs_type='features', block_size=24)
+
+        for loop in range(self.loops):
+
+            moves_to_play = []
+            sum_reward = 0
+            while not terminal or len(moves_to_play) != self.rollout_depth:
+
+                env.reset()
+                #Get your second level started.
+
+                for move in moves_to_play:
+                    env.step(move.action)
+
+
+                move = self.search() #search function to be filled.
+
+
+    def search(self, env):
+        best_action = None
+        best_reward = float(-inf)
+        root = MCTS_Node()#Find your avatar's position on game map?
+        for num_playout in range(self.playouts):
+            state = copy.deepcopy(env)
+            state.observer.game = env.observer.game
+            sum_reward = 0
+            sum_reward2= 0
+
     def run(self):
 
         toret = []
