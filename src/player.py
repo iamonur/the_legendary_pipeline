@@ -766,15 +766,16 @@ class MCTS_Runner_Regular_Old:
         return toret
 
 class MCTS_Runner_Regular:
-    def __init__(self,nloops=1,max_d=20,n_playouts=500, game_desc=skeleton_game_4_backup, level_desc=dummy_maze, observer=None, render=True):
+    def __init__(self,nloops=1,max_d=20,n_playouts=500, rollout_depth=50, game_desc=skeleton_game_4_backup, level_desc=dummy_maze, observer=None, render=True, discount_factor=0.95):
         self.loops = nloops
         self.max_depth = max_d
+        self.rollout_depth = rollout_depth
         self.playouts = n_playouts
         self.render = render        
         self.game =game_desc
         self.level =level_desc
         self._save_game_files()
-        self.df = 0.7
+        self.df = discount_factor
         self.width = 26
         self.height = 26
 
@@ -901,12 +902,13 @@ class MCTS_Runner_Regular:
                     sum_reward2+= reward
                     actions.append(action)
 
-                    if len(actions) > self.max_depth:
+                    if len(actions) > self.rollout_depth:
                         break
+
 
                 # Remember the best
                 
-                if best_reward < sum_reward:
+                if best_reward < sum_reward: #XXX: Remember next action only, not all actions.
                     best_reward = sum_reward
                     best_actions = actions
 
@@ -918,11 +920,12 @@ class MCTS_Runner_Regular:
                     node.visits += 1
                     node.value += sum_reward
                     node = node.parent
+                    sum_reward = sum_reward * self.df
 
             sum_reward = 0
             del state
             
-            for action in best_actions:
+            for action in best_actions: #XXX: Should play and return single moves.
 
                 if self.render:
 
