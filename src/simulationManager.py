@@ -571,7 +571,7 @@ class Simulation:
             map2 = "11111111111111111111111111\n1"+"1\n1".join(map_)+"1\n11111111111111111111111111"
         ############################ MCTS
             mcts_time = time.time()
-            mcts_moves = self.mcts_ag(max_d= level_size*2, n_playouts=level_size*16*mcts_adv, game_desc= game.game, level_desc=map2, render=False).run()[0][0]
+            mcts_moves = self.mcts_ag(nloops = mcts_adv*2,max_d= level_size*mcts_adv,rollout_depth=level_size*mcts_adv, n_playouts=level_size*16, game_desc= game.game, level_desc=map2, render=False).run()[0][0]
             mcts_time = time.time() - mcts_time
             mcts_score, mcts_terminal = self.player(action_list=mcts_moves, level_desc=map_).play()
         ############################ FINISHING PHASE
