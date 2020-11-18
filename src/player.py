@@ -815,7 +815,7 @@ class MCTS_Runner_Regular:
             
             moves_to_play = []
             
-            while len(moves_to_play) != self.max_depth:
+            while len(moves_to_play) != self.rollout_depth:
                 self.init_my_second_level()
                 sum_reward = 0
                 env.reset()
