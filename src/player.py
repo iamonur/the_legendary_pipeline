@@ -23,9 +23,8 @@ BasicGame
     InteractionSet
         avatar EOS > stepBack
         avatar wall > stepBack scoreChange=-1000
-        avatar floor2> NullEffect scoreChange=-1000
-        floor avatar > transformTo stype=floor2 scoreChange=-1
-        goalportal avatar > killSprite scoreChange=9
+        floor avatar > NullEffect scoreChange=-1
+        goalportal avatar > killSprite scoreChange=1000000
     LevelMapping
         1 > wall
         G > goalportal
@@ -280,7 +279,7 @@ class MCTS_Node:
         self.value = 0
 
 def ucb(node):
-    return node.value / node.visits + sqrt(log(node.parent.visits)/node.visits)
+    return node.value / node.visits + 1417*sqrt(log(node.parent.visits)/node.visits)
 
 def moving_average(v, n):
     n = min(len(v), n)
@@ -765,8 +764,9 @@ class MCTS_Runner_Regular_Old:
             toret.append([best_actions,sum_reward])
         return toret
 
-class MCTS_Runner_Regular:
-    def __init__(self,nloops=1,max_d=40,n_playouts=500, rollout_depth=40, game_desc=skeleton_game_4_backup, level_desc=dummy_maze, observer=None, render=True, discount_factor=0.95):
+class MCTS_Runner_Regular_with_Time_Limit:
+    def __init__(self,time_limit,nloops=1,max_d=40,n_playouts=500, rollout_depth=40, game_desc=skeleton_game_4_backup, level_desc=dummy_maze, observer=None, render=True, discount_factor=0.99):
+        self.deadline = time_limit
         self.loops = nloops
         self.max_depth = max_d
         self.rollout_depth = rollout_depth
@@ -776,8 +776,185 @@ class MCTS_Runner_Regular:
         self.level =level_desc
         self._save_game_files()
         self.df = discount_factor
-        self.width = 26
-        self.height = 26
+        self.width = len(level_desc.split('\n')[0])
+        self.height = self.width
+
+    def init_my_second_level(self):
+        self.second_level = []
+        
+        for i in range(0,self.height):
+
+            temp = []
+
+            for i in range(0, self.width):
+
+                temp.append(0)
+
+            self.second_level.append(copy.deepcopy(temp))
+
+
+    def _save_game_files(self):
+
+        game_fh = open(gamefile,'w')
+        game_fh.write(self.game)
+        game_fh.close()
+
+        level_fh = open(levelfile,'w')
+        level_fh.write(self.level)
+        level_fh.close()
+
+
+    def run(self):
+        start_time = time.time()
+
+        terminal = False
+        to_ret = []
+        max_reward = float(-inf)
+        env = cim.VGDLEnv(game_file=gamefile, level_file=levelfile, obs_type='features', block_size=24)
+        total_search_count = 0
+
+        for loop in range(self.loops):
+            if time.time()-start_time > self.deadline:
+                break
+
+            moves_to_play = []
+            
+            while len(moves_to_play) != self.rollout_depth:
+                self.init_my_second_level()
+                sum_reward = 0
+                env.reset()
+                for move in moves_to_play:
+                    _, rew, terminal, _ = env.step(move)
+                    sum_reward += rew
+
+                if terminal: #I guess? If a search returns a terminal state, either we cannot win the game at this position, or it is possible to win and this route is returned.
+                    break
+                total_search_count += 1
+                move = self.search(env) #search function to be filled.
+                moves_to_play.append(move)
+                
+            if sum_reward > max_reward:
+                max_reward = sum_reward
+                to_ret = moves_to_play
+
+        return [[to_ret, max_reward]]
+
+    def search(self, env):
+        #Get your second level started here.
+        best_actions = []
+        temp = self.level.split('\n')
+        
+        my_pos_left = env.game.sprite_registry.get_avatar().rect.left
+        my_pos_top = env.game.sprite_registry.get_avatar().rect.top
+        
+        for a in range(0,self.height):
+            temp[a] = list(temp[a])
+
+        self.second_level[my_pos_top][my_pos_left] += 1
+        best_reward = float(-inf)
+        
+        root = MCTS_Node(my_pos_top, my_pos_left)#Find your avatar's position on game map?
+        for num_playout in range(self.playouts):
+            actions = []
+            state = copy.deepcopy(env)
+            state.observer.game = env.observer.game
+            sum_reward = 0
+            sum_reward2= 0
+            terminal   = False
+            node = root
+
+            while node.children:
+
+                if node.explored_children < len(node.children):
+                    child = node.children[node.explored_children]
+                    node.explored_children += 1
+                    node = child
+
+                else:
+
+                    node = max(node.children, key=ucb)
+                        
+                _, reward, terminal, _ = state.step(node.action) #This is where
+                self.second_level[node.first][node.second] += 1
+                sum_reward += reward * self.second_level[node.first][node.second]
+                sum_reward2+= reward
+                actions.append(node.action)
+
+
+            if not terminal:
+                    
+                node.children = []
+                if node.first != 0 and temp[node.first-1][node.second] == '1':
+                    node.children.append(MCTS_Node(node.first,node.second,node,0))#UP
+                else:
+                    node.children.append(MCTS_Node(node.first-1,node.second,node,0))#UP
+
+                if node.first != (self.width-1) and temp[node.first+1][node.second] == '1':
+                    node.children.append(MCTS_Node(node.first,node.second,node,2))#DOWN
+                else:
+                    node.children.append(MCTS_Node(node.first+1,node.second,node,2))#DOWN
+                    
+                if node.second != 0 and temp[node.first][node.second-1] == '1':
+                    node.children.append(MCTS_Node(node.first,node.second,node,1))#LEFT
+                else:
+                    node.children.append(MCTS_Node(node.first,node.second-1,node,1))#LEFT
+
+                if node.first != (self.width-1) and temp[node.first][node.second+1] == '1':
+                    node.children.append(MCTS_Node(node.first,node.second,node,3))#RIGHT
+                else:
+                    node.children.append(MCTS_Node(node.first,node.second+1,node,3))#RIGHT
+
+                random.shuffle(node.children)
+
+            while not terminal:
+
+                action = state.action_space.sample()
+
+                if self.render:
+
+                    state.render()
+
+                _, reward, terminal, _ = state.step(action) #And where
+                sum_reward += reward
+                sum_reward2+= reward
+                actions.append(action)
+
+                if len(actions) > self.max_depth:
+                    break
+
+
+                # Remember the best
+                
+            if best_reward < sum_reward: #XXX: Remember next action only, not all actions.
+                best_reward = sum_reward
+                best_actions = actions
+
+            while node:
+
+                node.visits += 1
+                node.value += sum_reward
+                node = node.parent
+                sum_reward = sum_reward * self.df
+
+        sum_reward = 0
+        del state
+        return best_actions[0]
+
+
+class MCTS_Runner_Regular:
+    def __init__(self,nloops=1,max_d=40,n_playouts=500, rollout_depth=40, game_desc=skeleton_game_4_backup, level_desc=dummy_maze, observer=None, render=True, discount_factor=0.95):
+        
+        self.loops = nloops
+        self.max_depth = max_d
+        self.rollout_depth = rollout_depth
+        self.playouts = n_playouts
+        self.render = render        
+        self.game =game_desc
+        self.level =level_desc
+        self._save_game_files()
+        self.df = discount_factor
+        self.width = len(level_desc.split('\n')[0])
+        self.height = self.width
 
     def init_my_second_level(self):
         self.second_level = []
@@ -834,13 +1011,6 @@ class MCTS_Runner_Regular:
                 to_ret = moves_to_play
 
         return [[to_ret, max_reward]]
-
-            
-
-                
-
-            
-
 
     def search(self, env):
         #Get your second level started here.
@@ -994,6 +1164,8 @@ class MCTS_Runner_Regular:
                         node = max(node.children, key=ucb)
                         
                     _, reward, terminal, _ = state.step(node.action) #This is where
+                    if reward > 0:
+                        print("GOTCHA")
                     self.second_level[node.first][node.second] += 1
                     sum_reward += reward * self.second_level[node.first][node.second]
                     sum_reward2+= reward

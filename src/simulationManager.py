@@ -512,6 +512,170 @@ class SimManager:
 
 #Notes on the below simulation:
 #1- SpritePlanner is kinda shitty and lets you win near %50. Probably a new one is needed.
+class Sim_Nov:
+    def __init__(
+        self, 
+        time_multiplier=60,
+        map_percentage=50, 
+        level_size=24, 
+        map_generator=cellularAutomata.elementary_cellular_automata, 
+        map_polisher=caPolisher.CAPolisher_MinArea, 
+        sprite_planner=spritePlanner.equalSpritePlanner, 
+        spin=spinner.SpinClass_Game3_smart, 
+        parser=spinParser.spinParser, 
+        searcher=player.MCTS_Runner_Regular_with_Time_Limit, 
+        player=player.RacerGameClass_Smart, 
+        feed=randomFeeder_Generic):
+        
+        self.pol_pct = map_percentage
+        self.lvl_sz  = level_size
+        self.map_gen = map_generator
+        self.map_pol = map_polisher
+        self.spr_pln = sprite_planner
+        self.spinner = spin
+        self.parser  = parser
+        self.player  = player
+        self.rng_fdr = feed
+        self.mcts_ag = searcher
+        self.time_mul= time_multiplier
+
+    def pipeline(self):
+        rng_feeder = self.rng_fdr(size=self.lvl_sz)
+        while(True):
+            try:
+                line = rng_feeder.serve()
+            except FeederException:
+                print("Feeder depleted")
+                return None
+
+            try:
+                map_ = self.map_pol(ca=self.map_gen(size=self.lvl_sz, limit = self.lvl_sz, start=line), minimumArea=self.pol_pct).perform()
+            except caPolisher.polisherException:
+                print("Polisher fault")
+                continue
+
+            mind = self.spr_pln(map_)
+            mind.perform()
+            map_ = mind.getMap()
+            temp = ""
+            for i in range(0, self.lvl_sz+2):
+                temp += "1"
+            map2 = temp + "\n1"+"1\n1".join(map_)+"1\n" + temp
+            """
+            At this point, your level is generated.
+            You better save the level at this point,
+            because this may result in calculation of your spinner's quality.
+            """
+            level_line = "Level size: {}\nPolisher percentage: {}\nStarter line: {},\nWhole Level:\n{}".format(
+                self.lvl_sz, self.pol_pct, line, map2)
+            """
+            This boolean will decide if you will play this level or not (is it playable?)
+            """
+            modelling_success = True
+            modelling_time = time.time()
+            
+            modelChecker = self.spinner(map_)
+            try:
+                modelChecker.perform()
+            except spinner.spinCompileException:
+                modelling_success = False
+            if modelling_success:
+                get_moves = self.parser()
+                try:
+                    avatar, opponent = get_moves.perform()
+                except spinParser.cannotWinException:
+                    modelling_success = False
+
+                if modelling_success:
+                    modelling_time = time.time() - modelling_time
+
+                    game = self.player(action_list=avatar, level_desc=map_)
+                    spin_score, spin_terminal = game.play()
+                    
+                    """
+                    If modelling is not successful, don't wait for mcts to run.
+                    """
+                    mcts_time_limit   = self.time_mul * modelling_time # Thanks to this, you can pass huge params without scaring.
+                    number_of_loops   = 1000
+                    max_search_depth  = len(avatar)
+                    max_rollout_depth = len(avatar)*2
+                    number_of_playouts= self.lvl_sz * self.lvl_sz
+                    mcts_time = time.time()
+                    mcts_moves = self.mcts_ag(mcts_time_limit, nloops=number_of_loops,max_d=max_search_depth, n_playouts=number_of_playouts, rollout_depth=max_rollout_depth, game_desc=game.game, level_desc=map2, render=True).run()[0][0]
+                    mcts_time = time.time() - mcts_time
+                    mcts_score, mcts_terminal = self.player(action_list=mcts_moves, level_desc=map_).play()
+
+
+
+                    mcts_moves = list(map(str,mcts_moves))
+                    avatar = list(map(str, avatar))
+                    spin_line  = "Spin score: {}\nSpin terminal:{}\nSpin time: {}\nSpin moves: {}".format(
+                        spin_score, (spin_terminal and (spin_score > 0)), modelling_time, "*".join(avatar))
+                    mcts_line  = "MCTS score: {}\nMCTS terminal: {}\nMCTS time:{}\nMCTS moves: {}".format(
+                        mcts_score,(mcts_terminal and (mcts_score > 0)),mcts_time, "*".join(mcts_moves))
+
+                    return level_line, spin_line, mcts_line, (mcts_terminal and (mcts_score > 0))
+            return level_line, None, None, None
+
+"""
+A game is a list of:
+    - Sprite planner
+    - Spinner
+    - Player
+    - Name of the game
+"""
+
+sizes_to_try = [8,10,12,14,16,18,20,22,24]
+games_implemented = [
+    [spritePlanner.dualSpritePlanner,       spinner.SpinClass_Game4,                        player.MazeGameClass,           "Regular_Maze"  ],
+    [spritePlanner.equalSpritePlanner,      spinner.SpinClass_Game3_smart,                  player.RacerGameClass_Smart,    "Regular_Race"  ],
+    [spritePlanner.reverseSpritePlanner,    spinner.SpinClass_Game3_smart,                  player.RacerGameClass_Smart,    "Race_Easy_Mode"],
+    [spritePlanner.spritePlanner,           spinner.SpinClass_Game3_smart,                  player.RacerGameClass_Smart,    "Race_Hard_Mode"]]
+class Sim_Nov_Wrapper:
+    def __init__(self, number_of_episodes, level_sizes=sizes_to_try, game_types=games_implemented):
+        self.magic = random.random()
+        self.my_sizes = level_sizes
+        self.my_types = game_types
+        self.numOfEps = number_of_episodes
+
+    def record_episode_(self, num, size, game_name, levelStr):
+        filename = str(self.magic) + "_" + str(size) + "_" + game_name + "_" + str(num) 
+
+        f = open(filename + "_level", "a")
+        f.write(levelStr)
+        f.close()
+
+    def record_episode(self, num, size, game_name, levelStr, spinStr, mctsStr):
+        filename = str(self.magic) + "_" + str(size) + "_" + game_name + "_" + str(num)
+
+        f = open(filename + "_level", "a")
+        f.write(levelStr)
+        f.close()
+
+        f = open(filename + "_spin", "a")
+        f.write(spinStr)
+        f.close()
+
+        f = open(filename + "_mcts", "a")
+        f.write(mctsStr)
+        f.close()
+
+
+
+    def run_simulation(self):
+        for size in self.my_sizes:
+            for game in self.my_types:
+                sim = Sim_Nov(level_size=size,sprite_planner=game[0],spin=game[1],player=game[2])
+                for i in range(0,self.numOfEps):
+                    print("---")
+                    level_str, spin_str, mcts_str, _ = sim.pipeline()
+                    if spin_str == None:
+                        self.record_episode_(i, size, game[3], level_str)
+                    else:
+                        self.record_episode(i, size, game[3], level_str, spin_str, mcts_str)
+
+
+
 
 class Simulation:
     def __init__(self, map_percentage=30, level_size=24, map_generator=cellularAutomata.elementary_cellular_automata, map_polisher=caPolisher.CAPolisher_MinArea, sprite_planner=spritePlanner.equalSpritePlanner, spin=spinner.SpinClass_Game3_smart, parser=spinParser.spinParser, searcher=player.MCTS_Runner_Regular, player=player.RacerGameClass_Smart, feed=randomFeeder_Generic):
@@ -606,6 +770,7 @@ def record_simulation(simno, levelinfo, spininfo, mctsinfo):
 magic_number = 0
 
 if __name__ == "__main__":
+    """ 
     magic_number = random.random()
     ss = Simulation(map_percentage=50)
     sim_no = 0
@@ -616,4 +781,5 @@ if __name__ == "__main__":
             mcts_lost_count += 1
         record_simulation(sim_no, lline, sline, mline)
         sim_no += 1
-        
+    """
+    Sim_Nov_Wrapper(8).run_simulation()

@@ -116,13 +116,15 @@ for item in space_identifiers:
     reverse_space_identifiers.update({space_identifiers[item]:item})
 
 class polisher:
-    def __init__(self, ca=cellularAutomata.bl_tr_odd_p_mid_nybble_switch_srca(), minimumArea=50, map_1=None):
+    def __init__(self, ca=cellularAutomata.bl_tr_odd_p_mid_nybble_switch_srca, minimumArea=50, map_1=None):
         self.minArea = minimumArea
-        self.ca = ca
+        #self.ca = ca
         if map_1 is None:
-            self.map_1 = self.ca.perform()
+            raise polisherException("Pass a map!")
         else:
             self.map_1 = map_1
+        self.size =len(map_1)
+        self.limit = len(map_1)
         self.whole_space = self.get_full_fs(self.map_1)
         self.connected_spaces, self.map_enumed = self.get_connected_fses(self.map_1)
 
@@ -312,7 +314,7 @@ class polisher:
         
         #while self.connected_spaces[max(self.connected_spaces, key=self.connected_spaces.get)] < ((self.minArea/100)*self.ca.limit*self.ca.size):
        
-        while max(self.connected_spaces.values()) < ((self.minArea/100)*self.ca.limit*self.ca.size):
+        while max(self.connected_spaces.values()) < ((self.minArea/100)*self.limit*self.size):
             if len(self.connected_spaces) == 1:
                 raise polisherException("Cannot generate map with that percentage of area!")
                 

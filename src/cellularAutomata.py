@@ -293,6 +293,7 @@ class bl_tr_odd_p_mid_nybble_switch_srca(selfref_ca):
         self.border = borders
         self.limit = limit
         self.size = size
+        print(self.size)
         self.map = []
 
     def calculateRule(self):
