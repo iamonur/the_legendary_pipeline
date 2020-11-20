@@ -16,13 +16,13 @@ BasicGame
         wall > Immovable color=BLACK
         floor > Immovable color=BROWN
         floor2> Immovable color=BLUE
-        players > MazeAvatar
+        players > MovingAvatar
             avatar > alternate_keys=True color=WHITE
     TerminationSet
         SpriteCounter stype=goalportal limit=0 win=True
     InteractionSet
         avatar EOS > stepBack
-        avatar wall > stepBack scoreChange=-1000
+        avatar wall > stepBack scoreChange=-100000
         floor avatar > NullEffect scoreChange=-1
         goalportal avatar > killSprite scoreChange=1000000
     LevelMapping
@@ -279,7 +279,8 @@ class MCTS_Node:
         self.value = 0
 
 def ucb(node):
-    return node.value / node.visits + 1417*sqrt(log(node.parent.visits)/node.visits)
+    return node.value / node.visits + 0.5*sqrt(log(node.parent.visits)/node.visits) 
+    #For a game with rewards [0,1], ideal C is sqrt(2)
 
 def moving_average(v, n):
     n = min(len(v), n)
@@ -812,7 +813,7 @@ class MCTS_Runner_Regular_with_Time_Limit:
         max_reward = float(-inf)
         env = cim.VGDLEnv(game_file=gamefile, level_file=levelfile, obs_type='features', block_size=24)
         total_search_count = 0
-
+        self.init_my_second_level()
         for loop in range(self.loops):
             if time.time()-start_time > self.deadline:
                 break
@@ -820,7 +821,7 @@ class MCTS_Runner_Regular_with_Time_Limit:
             moves_to_play = []
             
             while len(moves_to_play) != self.rollout_depth:
-                self.init_my_second_level()
+                
                 sum_reward = 0
                 env.reset()
                 for move in moves_to_play:
@@ -875,6 +876,8 @@ class MCTS_Runner_Regular_with_Time_Limit:
                     node = max(node.children, key=ucb)
                         
                 _, reward, terminal, _ = state.step(node.action) #This is where
+                if reward > 0:
+                    print("GOTCHA")
                 self.second_level[node.first][node.second] += 1
                 sum_reward += reward * self.second_level[node.first][node.second]
                 sum_reward2+= reward

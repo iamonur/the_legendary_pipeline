@@ -515,7 +515,7 @@ class SimManager:
 class Sim_Nov:
     def __init__(
         self, 
-        time_multiplier=60,
+        time_multiplier=300,
         map_percentage=50, 
         level_size=24, 
         map_generator=cellularAutomata.elementary_cellular_automata, 
@@ -596,12 +596,12 @@ class Sim_Nov:
                     If modelling is not successful, don't wait for mcts to run.
                     """
                     mcts_time_limit   = self.time_mul * modelling_time # Thanks to this, you can pass huge params without scaring.
-                    number_of_loops   = 1000
-                    max_search_depth  = len(avatar)
-                    max_rollout_depth = len(avatar)*2
-                    number_of_playouts= self.lvl_sz * self.lvl_sz
+                    number_of_loops   = 99999
+                    max_search_depth  = len(avatar) 
+                    max_rollout_depth = len(avatar) * 2
+                    number_of_playouts= len(avatar) ** 3
                     mcts_time = time.time()
-                    mcts_moves = self.mcts_ag(mcts_time_limit, nloops=number_of_loops,max_d=max_search_depth, n_playouts=number_of_playouts, rollout_depth=max_rollout_depth, game_desc=game.game, level_desc=map2, render=True).run()[0][0]
+                    mcts_moves = self.mcts_ag(mcts_time_limit, nloops=number_of_loops,max_d=max_search_depth, n_playouts=number_of_playouts, rollout_depth=max_rollout_depth, game_desc=game.game, level_desc=map2, render=False).run()[0][0]
                     mcts_time = time.time() - mcts_time
                     mcts_score, mcts_terminal = self.player(action_list=mcts_moves, level_desc=map_).play()
 
