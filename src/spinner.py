@@ -1690,16 +1690,226 @@ class SpinClass_Game4():
   def perform(self):
     self.create_spin()
     os.system("mkdir ../spin > /dev/null 2>&1")
+    tt = time.time()
     os.system("rm ../spin/temp.pml > /dev/null")
     f = open("../spin/temp.pml", "a")
     f.write(self.promela_whole_file)
     f.close()
-    os.system("spin -a ../spin/temp.pml")
+    tt = time.time() - tt
+    print("   creating temp.pml: " + str(tt))
+    tt = time.time()
+    os.system("spin -a -DREACH ../spin/temp.pml")
+    tt = time.time() - tt
+    print("   creating pan.c: " + str(tt))
+    tt = time.time()
     proc = subprocess.Popen(["gcc pan.c -DREACH -o ../spin/temp.out -lm"], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
     if out != b'':
       raise spinCompileException("Cannot compile with gcc.")
+    tt = time.time() - tt
+    print("   creating temp.out: " + str(tt))
+    tt = time.time()
     os.system("../spin/temp.out -a -i >/dev/null")
+    tt = time.time() - tt
+    print("   executing temp.out: " + str(tt))
+
+class A_Star_Graph_Node:
+  def __init__(self, parent=None, position=None):
+    self.parent = parent
+    self.position = position
+
+    self.g = 0
+    self.h = 0
+    self.f = 0
+
+  def __eq__(self, other):
+    return self.position == other.position
+
+class A_Star_Game4():
+  def __init__(self, map):
+    self.map = map
+    self.length = len(map)
+    self.width = len(map[0])
+    self.__fix_map()
+    self.moves = []
+
+  def __fix_map(self):
+    self.fixed_map = []
+
+    for line in self.map:
+      self.fixed_map.append(list(line))
+        
+    checklist = 0
+
+    for lineNum, line in enumerate(self.fixed_map):
+      for chNum, ch in enumerate(line):
+        if ch == '0':
+          self.fixed_map[lineNum][chNum] = 0
+        elif ch == 'A':
+          self.avatar_location = (lineNum, chNum)
+          self.fixed_map[lineNum][chNum] = 0
+          checklist += 1
+        elif ch == 'G':
+          self.portal_location = (lineNum, chNum)
+          self.fixed_map[lineNum][chNum] = 0
+          checklist += 1
+        elif ch == 'w' or ch == '1':
+          self.fixed_map[lineNum][chNum] = 1
+        else: #Probs a 'E' slipped in.  
+          raise spinCompileException("Unrecognized sprite in map!")
+
+    if checklist != 2:
+      raise spinCompileException("Multiple placement of sprites!")
+
+  def __wheresWaldo(self, level, Waldo):
+    for line_num, line in enumerate(level):
+      for cell_num, cell in enumerate(line):
+        if cell == Waldo:
+          return[line_num, cell_num]
+
+  def __get_moves_from_map(self, level):
+    if self.moves != []:
+      return self.moves
+    max_ = 0
+    for line in level:
+      for cell in line:
+        if cell > max_:
+          max_ = cell
+
+    for i in range(max_, -1, -1):
+      self.moves.append(self.__wheresWaldo(level, i))
+
+    return self.moves
+
+  def __return_path(self, current_node):
+    path = []
+    result = [[-1 for i in range(self.width)] for j in range(self.length)]
+    current = current_node
+
+    while current is not None:
+      path.append(current.position)
+      current = current.parent
+
+    path = path[::-1]
+    start_value = 0
+
+    for i in range(len(path)):
+      result[path[i][0]][path[i][1]] = start_value
+      start_value += 1
+    return result
+
+  def __search(self, frm=None):
+    cost = 1 # Moving costs 1 by default.
+    if frm == None:
+      start = [(x) for x in self.avatar_location]
+    else:
+      start = [(x) for x in frm]
+    end = [(x) for x in self.portal_location]
+
+    start_node = A_Star_Graph_Node(position = tuple(start))
+    start_node.g = start_node.h = start_node.f = 0
+
+    end_node = A_Star_Graph_Node(position = tuple(end))
+    end_node.g = end_node.h = end_node.f = 0
+
+    yet_to_visit_list = []
+    visited_list = []
+
+    yet_to_visit_list.append(start_node)
+
+    outer_iterations = 0
+    max_iterations = (self.length//2)**10
+
+    move = [
+      [-1,0], #Goes up
+      [0,-1], #Goes left
+      [1, 0], #Goes down
+      [0, 1]  #Goes right
+    ]
+
+    no_rows = len(self.fixed_map)
+    no_colums = len(self.fixed_map[0])
+
+    while len(yet_to_visit_list) > 0:
+
+      outer_iterations += 1
+
+      current_node = yet_to_visit_list[0]
+      current_index= 0
+
+      for index, item in enumerate(yet_to_visit_list):
+        if item.f < current_node.f:
+          current_node = item
+          current_index = index
+
+      if outer_iterations > max_iterations:
+        return self.__return_path(current_node)
+
+
+      yet_to_visit_list.pop(current_index)
+      visited_list.append(current_node)
+
+      if current_node == end_node:
+        return self.__return_path(current_node)
+
+      children = []
+      for new_position in move:
+        node_position = (
+          current_node.position[0] + new_position[0],
+          current_node.position[1] + new_position[1]
+          )
+
+        if (
+            node_position[0] > (self.length - 1) or 
+            node_position[0] < 0 or 
+            node_position[1] > (self.width -1) or 
+            node_position[1] < 0):
+            continue
+
+        if self.fixed_map[node_position[0]][node_position[1]] != 0:
+            continue
+
+        new_node = A_Star_Graph_Node(current_node, node_position)
+        children.append(new_node)
+
+      for child in children:
+        if len([visited_child for visited_child in visited_list if visited_child == child]) > 0:
+          continue
+        child.g = current_node.g + cost
+        child.h = abs(child.position[0]-end_node.position[0]) + abs(child.position[1]-end_node.position[1]) #Manhattan distance is my heuristic.
+        child.f  = child.g + child.h
+
+        if len([i for i in yet_to_visit_list if child == i and child.g > i.g]) > 0:
+          continue
+
+        yet_to_visit_list.append(child)
+
+  def __directionize(self, movelist):
+    import vgdl.ontology.constants as consts
+    to_ret = []
+    for index, element in enumerate(movelist):
+      if index == len(movelist)-1:
+        break
+
+      frm = element
+      to = movelist[index + 1]
+      if frm[0] > to[0]:
+        to_ret.append(consts.UP)
+      elif frm[0] < to[0]:
+        to_ret.append(consts.DOWN)
+      elif frm[1] > to[1]:
+        to_ret.append(consts.LEFT)
+      elif frm[1] < to[1]:
+        to_ret.append(consts.RIGHT)
+      else:
+        raise "WUT"
+    return to_ret[::-1]
+
+  def perform(self):
+    #GET ALL THE MOVES FROM MAP
+    asd = self.__search()
+    tmp_moves_from_map = self.__get_moves_from_map(asd)
+    return self.__directionize(tmp_moves_from_map)
 
 class SpinClass_Game4_Parameter_Capital_I():
 
@@ -1745,7 +1955,6 @@ class SpinClass_Game4_Parameter_Capital_I():
 
     if checklist != 2:
       raise spinCompileException("Inproper placement of sprites!")
-
 
     self.fixed_map = []
 
@@ -2346,9 +2555,24 @@ class SpinClass_smart(): ### XXX: NOT DONE YET.
 if __name__ == "__main__":
 
   import cellularAutomata, caPolisher, spritePlanner
-  ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="010101010011001100011100")
+  ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="101010101010101010101010")
   cap = caPolisher.CApolisher(ca = ca)
   sp = spritePlanner.dualSpritePlanner(cap.perform())
   sp.perform()
-  sa = SpinClass_Game4(sp.getMap())
+  sa = A_Star_Game4(sp.getMap())
+  import time
+  st = time.time()
   sa.perform()
+  st = time.time() - st
+  print("This is the time for a-star search:" + str(st))
+  ss = SpinClass_Game4(sp.getMap())
+  import spinParser
+  spp = spinParser.spinParser()
+  st = time.time()
+  ss.perform()
+  st = time.time() - st
+  print("This is the time for generating .pml, .c, compilation, and execution." + str(st))
+  st = time.time()
+  spp.perform()
+  st = time.time() - st
+  print("This is the time for parsing:" + str(st))
