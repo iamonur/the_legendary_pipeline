@@ -1866,6 +1866,7 @@ class A_Star_Game4_Multiple_Searches():
         yet_to_visit_list.append(child)
   def __directionize(self, movelist):
     import vgdl.ontology.constants as consts
+    movelist = movelist[::-1]
     to_ret = []
     for index, element in enumerate(movelist):
       if index == len(movelist)-1:
@@ -1882,9 +1883,10 @@ class A_Star_Game4_Multiple_Searches():
         to_ret.append(consts.RIGHT)
       else:
         raise "WUT"
-    return to_ret[::-1]
+    return to_ret
   def perform(self):
     #GET_MOVES_ONE_BY_ONE
+    pass
     
 
 class A_Star_Game4():
@@ -1956,7 +1958,6 @@ class A_Star_Game4():
       start_value += 1
     return result
   def __search(self, frm=None):
-    from math import sqrt
     cost = 1 # Moving costs 1 by default.
     if frm == None:
       start = [(x) for x in self.avatar_location]
@@ -2017,7 +2018,7 @@ class A_Star_Game4():
         if len([visited_child for visited_child in visited_list if visited_child == child]) > 0:
           continue
         child.g = current_node.g + cost
-        child.h = sqrt((child.position[0]-end_node.position[0])**2 + (child.position[1]-end_node.position[1])**2)#abs(child.position[0]-end_node.position[0]) + abs(child.position[1]-end_node.position[1]) #Manhattan distance is my heuristic.
+        child.h = abs(child.position[0]-end_node.position[0]) + abs(child.position[1]-end_node.position[1]) #Manhattan distance is my heuristic.
         child.f  = child.g + child.h
 
         if len([i for i in yet_to_visit_list if child == i and child.g > i.g]) > 0:
@@ -2025,7 +2026,7 @@ class A_Star_Game4():
 
         yet_to_visit_list.append(child)
   def __directionize(self, movelist):
-    import vgdl.ontology.constants as consts
+    #import vgdl.ontology.constants as consts
     to_ret = []
     for index, element in enumerate(movelist):
       if index == len(movelist)-1:
@@ -2034,13 +2035,13 @@ class A_Star_Game4():
       frm = element
       to = movelist[index + 1]
       if frm[0] > to[0]:
-        to_ret.append(consts.UP)
+        to_ret.append('D')
       elif frm[0] < to[0]:
-        to_ret.append(consts.DOWN)
+        to_ret.append('A')
       elif frm[1] > to[1]:
-        to_ret.append(consts.LEFT)
+        to_ret.append('S')
       elif frm[1] < to[1]:
-        to_ret.append(consts.RIGHT)
+        to_ret.append('W')
       else:
         raise "WUT"
     return to_ret[::-1]
@@ -2048,8 +2049,8 @@ class A_Star_Game4():
   def perform(self):
     #GET ALL THE MOVES FROM MAP
     asd = self.__search()
-    tmp_moves_from_map = self.__get_moves_from_map(asd)
-    return self.__directionize(tmp_moves_from_map)
+    self.moves_from_map = self.__get_moves_from_map(asd)
+    return self.__directionize(self.moves_from_map)
 
 class SpinClass_Game4_Parameter_Capital_I():
 
@@ -2692,17 +2693,29 @@ class SpinClass_smart(): ### XXX: NOT DONE YET.
             raise spinCompileException("Cannot compile with gcc.")
         os.system("../spin/temp.out -a -i >/dev/null")
 
-if __name__ == "__main__":
+def create_spin_from_game_5(map_):
 
+  from copy import deepcopy 
+  _map = deepcopy(map_)
+  for ln, line in enumerate(_map):
+    tmp = list(line)
+    for cn, char in enumerate(tmp):
+      if char == 'g':
+        tmp[cn] = '0'
+    _map[ln] = "".join(tmp)
+  return SpinClass_Game4(_map)
+
+if __name__ == "__main__":
+  """
   import cellularAutomata, caPolisher, spritePlanner
-  ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="101010101010101010101010")
+  ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="100101101001011010010110")
   cap = caPolisher.CApolisher(ca = ca)
   sp = spritePlanner.dualSpritePlanner(cap.perform())
   sp.perform()
   sa = A_Star_Game4(sp.getMap())
   import time
   st = time.time()
-  sa.perform()
+  print_1=sa.perform()
   st = time.time() - st
   print("This is the time for a-star search:" + str(st))
   ss = SpinClass_Game4(sp.getMap())
@@ -2713,6 +2726,33 @@ if __name__ == "__main__":
   st = time.time() - st
   print("This is the time for generating .pml, .c, compilation, and execution." + str(st))
   st = time.time()
-  spp.perform()
+  print_2=spp.perform()
   st = time.time() - st
   print("This is the time for parsing:" + str(st))
+
+  #print(print_1)
+  #print(print_2[0])
+  import player
+  p = player.MazeGameClass(action_list=print_1, level_desc=sp.getMap())
+  print(p.play())
+
+  p = player.MazeGameClass(action_list=print_2[0], level_desc=sp.getMap())
+  print(p.play())"""
+
+  import cellularAutomata, caPolisher, spritePlanner, spinParser, time, player
+  ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="100101101001011010010110")
+  cap = caPolisher.CApolisher(ca = ca)
+  sp = spritePlanner.mazeWithSubGoalsPlanner(cap.perform(),goalCount=18)
+  sp.perform()
+  mapp = sp.getMap()
+  create_spin_from_game_5(mapp).perform()
+  asd, _ = spinParser.spinParser().perform()
+  game = player.Maze_SubGoals_GameClass(action_list=asd, level_desc=mapp)
+  print(game.play())
+  temp = ""
+  for i in range(0, 26):
+    temp += "1"
+  map2 = temp + "\n1"+"1\n1".join(mapp)+"1\n" + temp
+  
+  mcts = player.MCTS_Runner_Regular_with_Time_Limit(1000,max_d=14,n_playouts=25000,rollout_depth=80,game_desc=game.game, render=True, level_desc=map2, discount_factor=0.99)
+  mcts.run()

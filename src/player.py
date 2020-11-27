@@ -9,6 +9,30 @@ import vgdl.ai
 import time
 from math import sqrt, log
 from numpy import inf
+skeleton_game_5 = """
+BasicGame
+    SpriteSet
+        goalportal > Immovable color=GREEN
+        subgoal > Immovable color=BLUE
+        wall > Immovable color=BLACK
+        floor > Immovable color=BROWN
+        players > MovingAvatar
+            avatar > alternate_keys=True color=WHITE
+    TerminationSet
+        SpriteCounter stype=goalportal limit=0 win=True
+    InteractionSet
+        avatar EOS > stepBack
+        avatar wall > stepBack scoreChange=-10000
+        floor avatar > NullEffect scoreChange=-1
+        subgoal avatar > transformTo stype=floor scoreChange=500
+        goalportal avatar > killSprite scoreChange=10000
+    LevelMapping
+        1 > wall
+        G > goalportal
+        g > subgoal
+        A > avatar floor
+        0 > floor
+"""
 skeleton_game_4 = """
 BasicGame
     SpriteSet
@@ -279,7 +303,7 @@ class MCTS_Node:
         self.value = 0
 
 def ucb(node):
-    return node.value / node.visits + 0.5*sqrt(log(node.parent.visits)/node.visits) 
+    return node.value / node.visits + 1.41*sqrt(log(node.parent.visits)/node.visits) 
     #For a game with rewards [0,1], ideal C is sqrt(2)
 
 def moving_average(v, n):
@@ -826,6 +850,8 @@ class MCTS_Runner_Regular_with_Time_Limit:
                 env.reset()
                 for move in moves_to_play:
                     _, rew, terminal, _ = env.step(move)
+                    if rew > 0:
+                        print('+')
                     sum_reward += rew
 
                 if terminal: #I guess? If a search returns a terminal state, either we cannot win the game at this position, or it is possible to win and this route is returned.
@@ -876,8 +902,6 @@ class MCTS_Runner_Regular_with_Time_Limit:
                     node = max(node.children, key=ucb)
                         
                 _, reward, terminal, _ = state.step(node.action) #This is where
-                if reward > 0:
-                    print("GOTCHA")
                 self.second_level[node.first][node.second] += 1
                 sum_reward += reward * self.second_level[node.first][node.second]
                 sum_reward2+= reward
@@ -1340,6 +1364,17 @@ class GameClass:
 class RacerGameClass(GameClass):
 
     def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_3.format(immovable_opponent = "", free_mover_opponent = "", chaser_opponent = racer_str), level_desc=dummy_maze):
+        self.actions = action_list
+        self.level = level_desc
+        self.game = game_desc
+        self._save_game_files()
+        self._register_environment(gamefile, levelfile)
+        self._format_actions()
+        self._create_controller()
+
+class Maze_SubGoals_GameClass(GameClass):
+
+    def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_5, level_desc=dummy_maze):
         self.actions = action_list
         self.level = level_desc
         self.game = game_desc

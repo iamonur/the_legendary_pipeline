@@ -52,13 +52,100 @@ class dualSpritePlanner:
 
         (y, x) = self.portalAt
         dummy_map[y][x] = 'G'
-
-        
+       
 
         for ln, line in enumerate(dummy_map):
             self.map[ln] = "".join(line)
 
         return self.map
+
+class mazeWithSubGoalsPlanner:
+    def __init__(self, map, goalCount=3):
+        self.map = map
+        self.avatarAt = (-1,-1)
+        self.portalAt = (-1, 1)
+        self.goalCount = goalCount
+        self.goalLocations = []
+
+    def findMostDistantCells(self):
+        maxDist = 0
+        cells =((-1,-1),(-1,-1))
+
+        for ln1, l1 in enumerate(self.map):
+            for cn1, c1 in enumerate(l1):
+                if c1 == "1":
+                    continue
+                for ln2, l2 in enumerate(self.map):
+                    for cn2, c2 in enumerate(l2):
+                        if c2 == '1':
+                            continue
+                        if (abs(ln1-ln2)+abs(cn1-cn2)) > maxDist:
+                            maxDist = (abs(ln1-ln2)+abs(cn1-cn2))
+                            cells = ((ln1,cn1),(ln2,cn2))
+
+        return cells
+    
+    def place_subgoals(self):
+        total_pieces = self.goalCount + 1
+        import spinner
+        tmp = spinner.A_Star_Game4(self.getMap())
+        tmp.perform()
+        shortest_path = tmp.moves_from_map
+        if self.goalCount > (len(shortest_path)-2):
+            self.goalCount = (len(shortest_path) - 2)
+        
+        for index in range(self.goalCount):
+            print(index)
+            place = (len(shortest_path)*(index+1) // (self.goalCount+2))
+            coordinates = shortest_path[place]
+            self.goalLocations.append((coordinates[0], coordinates[1]))
+
+    def perform(self):
+        (self.avatarAt, self.portalAt) = self.findMostDistantCells()
+        self.place_subgoals()
+        #return self.getMap()
+
+    def getMap(self):
+        if self.avatarAt == (-1,-1) or self.portalAt == (-1,-1):
+            raise spritePlannerException("Plan the sprites first before placing!")
+
+        if len(self.goalLocations) == 0:
+            dummy_map = []
+            for line in self.map:
+                dummy_map.append(list(line))
+
+            (y, x) = self.avatarAt
+            dummy_map[y][x] = 'A'
+
+            (y, x) = self.portalAt
+            dummy_map[y][x] = 'G'
+       
+
+            for ln, line in enumerate(dummy_map):
+                self.map[ln] = "".join(line)
+
+            return self.map
+
+        else:
+            dummy_map = []
+
+            for line in self.map:
+                dummy_map.append(list(line))
+
+            (y,x) = self.avatarAt
+            dummy_map[y][x] = 'A'
+            (y,x) = self.portalAt
+            dummy_map[y][x] = 'G'
+
+            for subgoal in self.goalLocations:
+                (y,x) = subgoal
+                dummy_map[y][x]='g'
+
+            for ln, line in enumerate(dummy_map):
+                self.map[ln] = "".join(line)
+
+            return self.map
+        
 
 class spritePlanner:
     """
