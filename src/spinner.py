@@ -1688,6 +1688,7 @@ class SpinClass_Game4():
 		)
 
   def perform(self):
+    import time
     self.create_spin()
     os.system("mkdir ../spin > /dev/null 2>&1")
     tt = time.time()
@@ -2706,9 +2707,9 @@ def create_spin_from_game_5(map_):
   return SpinClass_Game4(_map)
 
 if __name__ == "__main__":
-  """
+  
   import cellularAutomata, caPolisher, spritePlanner
-  ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="100101101001011010010110")
+  ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="111110101100011010001000")
   cap = caPolisher.CApolisher(ca = ca)
   sp = spritePlanner.dualSpritePlanner(cap.perform())
   sp.perform()
@@ -2737,8 +2738,8 @@ if __name__ == "__main__":
   print(p.play())
 
   p = player.MazeGameClass(action_list=print_2[0], level_desc=sp.getMap())
-  print(p.play())"""
-
+  print(p.play())
+  """
   import cellularAutomata, caPolisher, spritePlanner, spinParser, time, player
   ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="100101101001011010010110")
   cap = caPolisher.CApolisher(ca = ca)
@@ -2755,4 +2756,4 @@ if __name__ == "__main__":
   map2 = temp + "\n1"+"1\n1".join(mapp)+"1\n" + temp
   
   mcts = player.MCTS_Runner_Regular_with_Time_Limit(1000,max_d=14,n_playouts=25000,rollout_depth=80,game_desc=game.game, render=True, level_desc=map2, discount_factor=0.99)
-  mcts.run()
+  mcts.run()"""
