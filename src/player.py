@@ -9,6 +9,33 @@ import vgdl.ai
 import time
 from math import sqrt, log
 from numpy import inf
+sokoban_ruleset = """
+BasicGame
+    SpriteSet
+        floor > Immovable color=BROWN
+        hole > Immovable color=DARKBLUE
+        box > Passive color=RED
+        wall > Immovable color=BLACK
+        avatar > MovingAvatar color=WHITE
+    TerminationSet
+        SpriteCounter stype=box limit=0 win=True
+        Timeout limit=1000 win=False
+    InteractionSet
+        avatar wall > stepBack
+        avatar EOS > stepBack
+        avatar hole > killSprite scoreChange=-10
+        box EOS box > undoAll
+        box avatar > bounceForward
+        box wall box > undoAll
+        box EOS box > undoAll
+        box hole > killSprite scoreChange=10
+    LevelMapping
+        1 > wall
+        0 > floor
+        B > box floor
+        H > hole floor
+        A > avatar floor
+"""
 skeleton_game_5 = """
 BasicGame
     SpriteSet
@@ -1364,6 +1391,16 @@ class GameClass:
 class RacerGameClass(GameClass):
 
     def __init__(self, action_list=dummy_actions, game_desc=skeleton_game_3.format(immovable_opponent = "", free_mover_opponent = "", chaser_opponent = racer_str), level_desc=dummy_maze):
+        self.actions = action_list
+        self.level = level_desc
+        self.game = game_desc
+        self._save_game_files()
+        self._register_environment(gamefile, levelfile)
+        self._format_actions()
+        self._create_controller()
+
+class SokobanClass(GameClass):
+    def __init__(self, action_list=dummy_actions, game_desc=sokoban_ruleset, level_desc=dummy_maze):
         self.actions = action_list
         self.level = level_desc
         self.game = game_desc

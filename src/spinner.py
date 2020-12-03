@@ -7,7 +7,24 @@ class spinCompileException(Exception):
 
 class MCTS_Exception(Exception):
   pass
-
+promela_comment_01_sokoban = """
+//Game:
+//Push all boxes into all holes to win.
+//After pushing a box into a hole, both will disappear.
+//'.' -> Floor
+//'W' -> Wall
+//'A' -> Avatar
+//'B' -> Box
+//'H' -> Hole
+"""
+promela_comment_02_sokoban = """
+//The level as enumeration
+//0 -> Floor
+//1 -> Wall
+//2 -> Avatar
+//3 -> Box
+//4 -> Hole
+"""
 promela_comment_01 = """
 //Game-1: Escape from opponent to the portal
 //Game-2: Catch the opponent before it gets into the portal.
@@ -26,6 +43,15 @@ promela_comment_02 = """
 //2 -> Avatar
 //3 -> End Portal
 //4 -> Opponent
+"""
+promela_header_for_sokoban = """
+typedef row {{
+  byte a[{}];
+}}
+byte remaining_goals = {};
+bit win = 0;
+bit lose = 0;
+row map[{}];
 """
 promela_header_for_game_2 = """
 typedef row{{
@@ -109,6 +135,130 @@ typedef row{{ //This is for creating 2-D arrays, since they are not supported.
 
   int next_x;
   int next_y;
+"""
+promela_avatar_sokoban = """
+proctype avatar_sokoban(int x; int y){
+  map[x].a[y] = 2;
+  byte w, a, s, d;
+
+  do
+  ::(win == 0) ->
+    w = map[x].a[y-1];
+    a = map[x-1].a[y];
+    s = map[x].a[y+1];
+    d = map[x+1].a[y];
+
+    if
+    :: (w != 1 && w != 4) -> //Cannot move into a wall or hole.
+      printf("Avatar - W\\n");
+      if
+      :: w == 0 -> //Empty cell
+        map[x].a[y] = 0;
+        map[x].a[y - 1] = 2;
+        y = y - 1
+      :: w == 3 -> //Pusha-pusha
+        if
+        :: map[x].a[y - 2] == 1 -> //This is a wall, so stop pushing.
+          skip
+        :: map[x].a[y - 2] == 4 -> //This is a hole, so congrats on reducing the targets by one.
+          map[x].a[y] = 0;
+          map[x].a[y - 1] = 2;
+          map[x].a[y - 2] = 0;
+          remaining_goals = remaining_goals - 1;
+          if
+          :: remaining_goals == 0 -> win = 1
+          :: else -> skip
+          fi
+        :: map[x].a[y - 2] == 0 -> //This is a floor, a valid push.
+          map[x].a[y] = 0;
+          map[x].a[y - 1] = 2;
+          map[x].a[y - 2] = 3
+        fi
+      fi
+    :: (a != 1 && a != 4) -> //Cannot move into a wall or hole.
+      printf("Avatar - A\\n");
+      if
+      :: a == 0 -> //Empty cell
+        map[x].a[y] = 0;
+        map[x-1].a[y] = 2;
+        x = x - 1
+      :: a == 3 -> //Pusha-pusha
+        if
+        :: map[x - 2].a[y] == 1 ->
+          skip
+        :: map[x - 2].a[y] == 4 ->
+          map[x].a[y] = 0;
+          map[x - 1].a[y] = 2;
+          map[x - 2].a[y] = 0;
+          remaining_goals = remaining_goals - 1;
+          if
+          :: remaining_goals == 0 -> win = 1
+          :: else -> skip
+          fi
+        :: map[x - 2].a[y] == 0 ->
+          map[x].a[y] = 0;
+          map[x - 1].a[y] = 2;
+          map[x - 2].a[y] = 3
+        fi
+      fi
+    :: (s != 1 && s != 4) -> //Cannot move into a wall or hole.
+      printf("Avatar - S\\n");
+      if
+      :: s == 0 -> //Empty cell
+        map[x].a[y] = 0;
+        map[x].a[y+1] = 2;
+        y = y + 1
+      :: s == 3 -> //Pusha-pusha
+        if
+        :: map[x].a[y + 2] == 1 -> 
+          skip
+        :: map[x].a[y + 2] == 4 ->
+          map[x].a[y] = 0;
+          map[x].a[y + 1] = 2;
+          map[x].a[y + 2] = 0;
+          remaining_goals = remaining_goals - 1;
+          if
+          :: remaining_goals == 0 -> win = 1
+          :: else -> skip
+          fi
+        :: map[x].a[y + 2] == 0 ->
+          map[x].a[y] = 0;
+          map[x].a[y + 1] = 2;
+          map[x].a[y + 2] = 3
+        fi
+      fi
+    :: (d != 1 && d != 4) -> //Cannot move into a wall or hole.
+      printf("Avatar - D\\n");
+      if
+      :: d == 0 -> //Empty cell
+        map[x].a[y] = 0;
+        map[x + 1].a[y] = 2;
+        x = x + 1
+      :: d == 3 -> //Pusha-pusha
+        if
+        :: map[x + 2].a[y] == 1 ->
+          skip
+        :: map[x + 2].a[y] == 4 ->
+          map[x].a[y] = 0;
+          map[x + 1].a[y] = 2;
+          map[x + 2].a[y] = 0;
+          remaining_goals = remaining_goals - 1;
+          if
+          :: remaining_goals == 0 -> win = 1
+          :: else -> skip
+          fi
+        :: map[x + 2].a[y] == 0 ->
+          map[x].a[y] = 0;
+          map[x + 1].a[y] = 2;
+          map[x + 2].a[y] = 3
+        fi
+      fi
+    //One of these should happen. Don't see why we need an else here.
+    fi
+  :: else -> break
+  od;
+  printf("Avatar - Win \\n")
+}
 """
 promela_avatar_game_4 = """
 proctype avatar_mazesolver(int x; int y){
@@ -858,7 +1008,6 @@ proctype opponent_runner(int x; int y; int xx; int yy){ //Works on a global turn
   lock = 1
 }
 """
-
 promela_opponent_for_game_3_smart = """
 proctype opponent_same_goal(int x; int y; int xx; int yy){ //Works on a global turn variable
   map[x].a[y] = 4;
@@ -1169,6 +1318,32 @@ promela_ltl_formula_basic = """
 // Counter-Example will be generated -> A scenario to win.
 ltl  { [] !win };
 """
+promela_init_sokoban = """
+init {{
+  int i, ii;
+  for (i : 0 .. {length}){{
+    map[i].a[0] = 1;
+    map[i].a[{width}] = 1;
+  }}
+  for (i : 0 .. {length}){{
+    map[0].a[i] = 1;
+    map[{length}].a[i] = 1;
+  }}
+  for (i : 1 .. {length2}){{
+    for (ii : 1 .. {width2}){{
+      map[i].a[ii] = 0;
+    }}
+  }}
+
+  {wall_str}
+
+  {boxes_str}
+
+  {holes_str}
+
+  run avatar_sokoban({avatar_y},{avatar_x});
+}}
+"""
 promela_init_for_game_4 = """
 init{{
     int i, ii;
@@ -1179,7 +1354,7 @@ init{{
     }}
     for (i : 0 .. {length}){{
         map[0].a[i] = 1;
-		map[{length}].a[i] = 1;
+		    map[{length}].a[i] = 1;
     }}
     for (i : 1 .. {length2}) {{
         for (ii : 1 .. {width2}) {{
@@ -1888,7 +2063,6 @@ class A_Star_Game4_Multiple_Searches():
   def perform(self):
     #GET_MOVES_ONE_BY_ONE
     pass
-    
 
 class A_Star_Game4():
   def __init__(self, map):
@@ -2053,6 +2227,133 @@ class A_Star_Game4():
     self.moves_from_map = self.__get_moves_from_map(asd)
     return self.__directionize(self.moves_from_map)
 
+class SpinClass_Sokoban():
+  def __init__(self, map, goals):
+    self.map = map
+    self.length = len(map)
+    self.width = len(map[0])
+    self.fixed_map = None
+    self.list_walls = []
+    self.wall_string = "{}"
+    self.list_holes = []
+    self.hole_string = "{}"
+    self.list_boxes = []
+    self.box_string = "{}"
+    self.promela_whole_file = """{}\n{}\n{}\n{}\n{}\n{}\n"""
+    self.goal_count = goals
+
+  def fix_map(self):
+    temp_map = []
+
+    for line in self.map:
+      temp_map.append(list(line))
+      checklist = 0
+      must_be_zero = 0
+
+    for lineNum, line in enumerate(temp_map):
+      for chNum, ch in enumerate(line):
+        if ch == '0':
+          temp_map[lineNum][chNum] = '.'
+        elif ch == '1':
+          temp_map[lineNum][chNum] = 'w'
+          self.list_walls.append((lineNum + 1, chNum + 1))
+        elif ch == 'A':
+          self.avatar_location = (lineNum, chNum)
+          checklist += 1
+        elif ch == 'B':
+          self.list_boxes.append((lineNum + 1, chNum + 1))
+          must_be_zero += 1
+        elif ch == 'H':
+          self.list_holes.append((lineNum + 1, chNum + 1))
+          must_be_zero -= 1
+
+    if must_be_zero != 0:
+      raise spinCompileException("Holes not equal to boxes!")
+    if checklist != 1:
+      raise spinCompileException("")
+
+    self.fixed_map = []
+
+    to_attach = ""
+    to_attach_list = []
+    for i in range(0, self.width + 2):
+      to_attach_list.append('w')
+
+    to_attach = to_attach.join(to_attach_list)
+
+    for ln, line in enumerate(temp_map):
+      temp = ''.join(line)
+      temp = 'w' + temp + 'w'
+      self.fixed_map.append(temp)
+
+    self.fixed_map.insert(0, to_attach)
+    self.fixed_map.append(to_attach)
+
+  def create_wall_string(self):
+    for wall in self.list_walls:
+      self.wall_string = self.wall_string.format("\tmap[{}].a[{}] = 1;\n{}".format(wall[0], wall[1], "{}"))
+    self.wall_string = self.wall_string.format("\n")
+
+  def create_holes_string(self):
+    for hole in self.list_holes:
+      self.hole_string = self.hole_string.format("\tmap[{}].a[{}] = 4;\n{}".format(hole[0], hole[1], "{}"))
+    self.hole_string = self.hole_string.format("\n")
+
+  def create_boxes_string(self):
+    for box in self.list_boxes:
+      self.box_string = self.box_string.format("\tmap[{}].a[{}] = 3;\n{}".format(box[0], box[1], "{}"))
+    self.box_string = self.box_string.format("\n")
+
+  def create_spin(self):
+    if self.fixed_map is None:
+      self.fix_map()
+
+    self.create_wall_string()
+    self.create_boxes_string()
+    self.create_holes_string()
+
+    formatted_init = promela_init_sokoban.format(
+      avatar_y = self.avatar_location[0] + 1,
+      avatar_x = self.avatar_location[1] + 1,
+      length = self.length + 1,
+      length2 = self.length,
+      width = self.width + 1,
+      width2 = self.width,
+      wall_str = self.wall_string,
+      boxes_str = self.box_string,
+      holes_str = self.hole_string
+    )
+    formatted_header = promela_header_for_sokoban.format(
+      self.length + 2,
+      self.goal_count,
+      self.width + 2
+    )
+    self.promela_whole_file = self.promela_whole_file.format(
+      promela_comment_01_sokoban,
+      promela_comment_02_sokoban,
+      formatted_header,
+      promela_avatar_sokoban,
+      formatted_init,
+      promela_ltl_formula_basic
+    )
+
+  def perform(self):
+    self.create_spin()
+    os.system("mkdir ../spin > /dev/null 2>&1")
+    os.system("rm ../spin/temp.pml > /dev/null")
+
+    fd = open("../spin/temp.pml", "a")
+    fd.write(self.promela_whole_file)
+    fd.close()
+
+    os.system("spin -a ../spin/temp.pml")
+    proc = subprocess.Popen(["gcc -std=c99 pan.c -DREACH -o ../spin/temp.out -lm"], stdout=subprocess.PIPE, shell=True)
+    (out, err) = proc.communicate()
+    if out != b'':
+      raise spinCompileException("Cannot compile with gcc.")
+    os.system("../spin/temp.out -a -I > /dev/null")
+      
+
 class SpinClass_Game4_Parameter_Capital_I():
 
 	#self.map = map fed to instance
@@ -2078,7 +2379,6 @@ class SpinClass_Game4_Parameter_Capital_I():
 
     for line in self.map:
       temp_map.append(list(line))
-
       checklist = 0
 
     for lineNum, line in enumerate(temp_map):
@@ -2375,11 +2675,6 @@ class SpinClass_Game2_smart():
     f.write(self.promela_whole_file)
     f.close()
     
-    #os.system("rm ../spin/bfs.c > /dev/null")
-    #f = open("../spin/bfs.c", "a")
-    #f.write(promela_c_code_for_game_2_smart.format(width=self.width+2, length=self.length+2))
-    #f.close()
-
     os.system("spin -a ../spin/temp.pml")
     proc = subprocess.Popen(["gcc -std=c99 pan.c -DREACH -o ../spin/temp.out -lm"], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
@@ -2708,7 +3003,18 @@ def create_spin_from_game_5(map_):
 
 if __name__ == "__main__":
   
-  import cellularAutomata, caPolisher, spritePlanner
+  import cellularAutomata, caPolisher, spritePlanner, spinParser, player
+  ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="000101010101010101010101")
+  cap = caPolisher.CApolisher(ca = ca)
+  sp = spritePlanner.sokobanPlanner(cap.perform(), count_boxes=1)
+  sp.perform()
+  s = SpinClass_Sokoban(sp.getMap(), sp.get_goals())
+  s.perform()
+  spp = spinParser.spinParser()
+  caPolisher.map_print(sp.getMap())
+  moves = spp.perform()[0]
+  player.SokobanClass(action_list=moves, level_desc=sp.getMap()).play()
+  """
   ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="111110101100011010001000")
   cap = caPolisher.CApolisher(ca = ca)
   sp = spritePlanner.dualSpritePlanner(cap.perform())
@@ -2739,6 +3045,7 @@ if __name__ == "__main__":
 
   p = player.MazeGameClass(action_list=print_2[0], level_desc=sp.getMap())
   print(p.play())
+  """
   """
   import cellularAutomata, caPolisher, spritePlanner, spinParser, time, player
   ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="100101101001011010010110")
