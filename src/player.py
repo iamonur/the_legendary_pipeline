@@ -21,9 +21,10 @@ BasicGame
         SpriteCounter stype=box limit=0 win=True
         Timeout limit=1000 win=False
     InteractionSet
-        avatar wall > stepBack
+        avatar wall > stepBack scoreChange=-3
         avatar EOS > stepBack
         avatar hole > killSprite scoreChange=-10
+        avatar floor > NullEffect scoreChange=-1
         box EOS box > undoAll
         box avatar > bounceForward
         box wall box > undoAll

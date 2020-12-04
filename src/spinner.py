@@ -3002,18 +3002,57 @@ def create_spin_from_game_5(map_):
   return SpinClass_Game4(_map)
 
 if __name__ == "__main__":
-  
+  import cellularAutomata, caPolisher, spritePlanner, spinParser, player
+  ca = cellularAutomata.elementary_cellular_automata(ruleset=30,size=8,limit=8, start="01111111")
+  cap = caPolisher.CApolisher(ca = ca)
+  sp = spritePlanner.sokobanPlanner(cap.perform(), count_boxes=1)
+  sp.perform()
+  map_ = sp.getMap()
+  s = SpinClass_Sokoban(map_, sp.get_goals())
+  s.perform()
+  spp = spinParser.spinParser()
+  caPolisher.map_print(map_)
+  moves = spp.perform()[0]
+  q = player.SokobanClass(action_list=moves, level_desc=map_)
+  q.play()
+  temp = ""
+  for i in range(0,10):
+    temp += "1"
+  map2 = temp + "\n1" + "1\n1".join(map_) + "1\n" + temp
+  mcts_time_limit = 120
+  number_of_loops = 2
+  max_search_depth = 16
+  max_rollout_depth = 32
+  number_of_playouts = 64
+  mcts_moves = player.MCTS_Runner_Regular_with_Time_Limit(mcts_time_limit, nloops=number_of_loops, max_d=max_search_depth, n_playouts=number_of_playouts, rollout_depth=max_rollout_depth, game_desc = q.game, level_desc=map2, render=True).run()[0][0]
+  print(player.SokobanClass(action_list=mcts_moves, level_desc=map_).play()[0])
+  """
   import cellularAutomata, caPolisher, spritePlanner, spinParser, player
   ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="000101010101010101010101")
   cap = caPolisher.CApolisher(ca = ca)
   sp = spritePlanner.sokobanPlanner(cap.perform(), count_boxes=1)
   sp.perform()
-  s = SpinClass_Sokoban(sp.getMap(), sp.get_goals())
+  map_ = sp.getMap()
+  s = SpinClass_Sokoban(map_, sp.get_goals())
   s.perform()
   spp = spinParser.spinParser()
   caPolisher.map_print(sp.getMap())
   moves = spp.perform()[0]
-  player.SokobanClass(action_list=moves, level_desc=sp.getMap()).play()
+  q = player.SokobanClass(action_list=moves, level_desc=sp.getMap())
+  q.play()
+  temp = ""
+  for i in range(0, 26):
+    temp += "1"
+  map2 = temp + "\n1"+"1\n1".join(map_)+"1\n" + temp
+  mcts_time_limit   = 1200 # Thanks to this, you can pass huge params without scaring.
+  number_of_loops   = 99999
+  max_search_depth  = 50 
+  max_rollout_depth = 100
+  number_of_playouts= 1000000
+  mcts_moves = player.MCTS_Runner_Regular_with_Time_Limit(mcts_time_limit, nloops=number_of_loops,max_d=max_search_depth, n_playouts=number_of_playouts, rollout_depth=max_rollout_depth, game_desc=q.game, level_desc=map2, render=True).run()[0][0]
+  mcts_score, mcts_terminal = self.player(action_list=mcts_moves, level_desc=map_).play()
+  """
+
   """
   ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="111110101100011010001000")
   cap = caPolisher.CApolisher(ca = ca)
