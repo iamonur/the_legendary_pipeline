@@ -1,5 +1,6 @@
 """
     This is the test suite for functionalities. Not a deep-down one, but check if modules/classes raise when need be, and works properly, at least in a given case.
+    So, there will be probably only few tests for all classes.
 """
 import sys
 sys.path.insert(1, '../src') #That's where my modules are

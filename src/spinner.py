@@ -164,6 +164,7 @@ proctype avatar_sokoban(int x; int y){
           map[x].a[y] = 0;
           map[x].a[y - 1] = 2;
           map[x].a[y - 2] = 0;
+          y = y - 1;
           remaining_goals = remaining_goals - 1;
           if
           :: remaining_goals == 0 -> win = 1
@@ -172,7 +173,8 @@ proctype avatar_sokoban(int x; int y){
         :: map[x].a[y - 2] == 0 -> //This is a floor, a valid push.
           map[x].a[y] = 0;
           map[x].a[y - 1] = 2;
-          map[x].a[y - 2] = 3
+          map[x].a[y - 2] = 3;
+          y = y - 1
         fi
       fi
     :: (a != 1 && a != 4) -> //Cannot move into a wall or hole.
@@ -191,6 +193,7 @@ proctype avatar_sokoban(int x; int y){
           map[x - 1].a[y] = 2;
           map[x - 2].a[y] = 0;
           remaining_goals = remaining_goals - 1;
+          x = x - 1;
           if
           :: remaining_goals == 0 -> win = 1
           :: else -> skip
@@ -198,7 +201,8 @@ proctype avatar_sokoban(int x; int y){
         :: map[x - 2].a[y] == 0 ->
           map[x].a[y] = 0;
           map[x - 1].a[y] = 2;
-          map[x - 2].a[y] = 3
+          map[x - 2].a[y] = 3;
+          x = x - 1
         fi
       fi
     :: (s != 1 && s != 4) -> //Cannot move into a wall or hole.
@@ -220,11 +224,13 @@ proctype avatar_sokoban(int x; int y){
           if
           :: remaining_goals == 0 -> win = 1
           :: else -> skip
-          fi
+          fi;
+          y = y + 1
         :: map[x].a[y + 2] == 0 ->
           map[x].a[y] = 0;
           map[x].a[y + 1] = 2;
-          map[x].a[y + 2] = 3
+          map[x].a[y + 2] = 3;
+          y = y + 1
         fi
       fi
     :: (d != 1 && d != 4) -> //Cannot move into a wall or hole.
@@ -246,11 +252,13 @@ proctype avatar_sokoban(int x; int y){
           if
           :: remaining_goals == 0 -> win = 1
           :: else -> skip
-          fi
+          fi;
+          x = x + 1
         :: map[x + 2].a[y] == 0 ->
           map[x].a[y] = 0;
           map[x + 1].a[y] = 2;
-          map[x + 2].a[y] = 3
+          map[x + 2].a[y] = 3;
+          x = x + 1
         fi
       fi
     //One of these should happen. Don't see why we need an else here.
@@ -2351,7 +2359,7 @@ class SpinClass_Sokoban():
     (out, err) = proc.communicate()
     if out != b'':
       raise spinCompileException("Cannot compile with gcc.")
-    os.system("../spin/temp.out -a -I > /dev/null")
+    os.system("../spin/temp.out -a -i > /dev/null")
       
 
 class SpinClass_Game4_Parameter_Capital_I():
@@ -3003,9 +3011,9 @@ def create_spin_from_game_5(map_):
 
 if __name__ == "__main__":
   import cellularAutomata, caPolisher, spritePlanner, spinParser, player
-  ca = cellularAutomata.elementary_cellular_automata(ruleset=30,size=8,limit=8, start="01111111")
+  ca = cellularAutomata.elementary_cellular_automata(ruleset=30,size=10,limit=10, start="0111111111")
   cap = caPolisher.CApolisher(ca = ca)
-  sp = spritePlanner.sokobanPlanner(cap.perform(), count_boxes=1)
+  sp = spritePlanner.sokobanPlanner(cap.perform(), count_boxes=2)
   sp.perform()
   map_ = sp.getMap()
   s = SpinClass_Sokoban(map_, sp.get_goals())
@@ -3014,9 +3022,9 @@ if __name__ == "__main__":
   caPolisher.map_print(map_)
   moves = spp.perform()[0]
   q = player.SokobanClass(action_list=moves, level_desc=map_)
-  q.play()
+  print(q.play())
   temp = ""
-  for i in range(0,10):
+  for i in range(0,12):
     temp += "1"
   map2 = temp + "\n1" + "1\n1".join(map_) + "1\n" + temp
   mcts_time_limit = 120
@@ -3024,7 +3032,7 @@ if __name__ == "__main__":
   max_search_depth = 16
   max_rollout_depth = 32
   number_of_playouts = 64
-  mcts_moves = player.MCTS_Runner_Regular_with_Time_Limit(mcts_time_limit, nloops=number_of_loops, max_d=max_search_depth, n_playouts=number_of_playouts, rollout_depth=max_rollout_depth, game_desc = q.game, level_desc=map2, render=True).run()[0][0]
+  mcts_moves = player.MCTS_Runner_Regular_with_Time_Limit(mcts_time_limit, nloops=number_of_loops, max_d=max_search_depth, n_playouts=number_of_playouts, rollout_depth=max_rollout_depth, game_desc = q.game, level_desc=map2, render=False).run()[0][0]
   print(player.SokobanClass(action_list=mcts_moves, level_desc=map_).play()[0])
   """
   import cellularAutomata, caPolisher, spritePlanner, spinParser, player

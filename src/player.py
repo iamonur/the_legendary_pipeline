@@ -21,15 +21,15 @@ BasicGame
         SpriteCounter stype=box limit=0 win=True
         Timeout limit=1000 win=False
     InteractionSet
-        avatar wall > stepBack scoreChange=-3
+        avatar wall > stepBack scoreChange=-100
         avatar EOS > stepBack
-        avatar hole > killSprite scoreChange=-10
+        avatar hole > stepBack scoreChange=-100
         avatar floor > NullEffect scoreChange=-1
         box EOS box > undoAll
         box avatar > bounceForward
         box wall box > undoAll
         box EOS box > undoAll
-        box hole > killSprite scoreChange=10
+        box hole > killBoth scoreChange=1000
     LevelMapping
         1 > wall
         0 > floor
@@ -1369,7 +1369,7 @@ class GameClass:
 
     def _create_controller(self):
         
-        self.controller = RecordedController(self.env_name, self.actions, fps=60)
+        self.controller = RecordedController(self.env_name, self.actions, fps=5)
 
     def _save_game_files(self):
 
