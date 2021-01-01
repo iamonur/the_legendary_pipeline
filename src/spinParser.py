@@ -60,7 +60,8 @@ class spinParser:
                 return returnable
 
     def __parse_moves(self, moves):
-
+        if moves is None:
+            return None, None
         if len(moves) == 0:
             return None, None
 

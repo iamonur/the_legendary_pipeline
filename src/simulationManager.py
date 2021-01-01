@@ -547,13 +547,11 @@ class Sim_Nov:
             except FeederException:
                 print("Feeder depleted")
                 return None
-
             try:
                 map_ = self.map_pol(ca=self.map_gen(size=self.lvl_sz, limit = self.lvl_sz, start=line), minimumArea=self.pol_pct).perform()
             except caPolisher.polisherException:
                 print("Polisher fault")
                 continue
-
             mind = self.spr_pln(map_)
             mind.perform()
             map_ = mind.getMap()
@@ -599,7 +597,7 @@ class Sim_Nov:
                     number_of_loops   = 99999
                     max_search_depth  = len(avatar) 
                     max_rollout_depth = len(avatar) * 2
-                    number_of_playouts= len(avatar) ** 3
+                    number_of_playouts= len(avatar) ** 2
                     mcts_time = time.time()
                     mcts_moves = self.mcts_ag(mcts_time_limit, nloops=number_of_loops,max_d=max_search_depth, n_playouts=number_of_playouts, rollout_depth=max_rollout_depth, game_desc=game.game, level_desc=map2, render=False).run()[0][0]
                     mcts_time = time.time() - mcts_time
@@ -627,7 +625,7 @@ A game is a list of:
 
 sizes_to_try = [8,10,12,14,16,18,20,22,24]
 games_implemented = [
-    [spritePlanner.dualSpritePlanner,       spinner.SpinClass_Game4,                        player.MazeGameClass,           "Regular_Maze"  ],
+    #[spritePlanner.dualSpritePlanner,       spinner.SpinClass_Game4,                        player.MazeGameClass,           "Regular_Maze"  ],
     [spritePlanner.equalSpritePlanner,      spinner.SpinClass_Game3_smart,                  player.RacerGameClass_Smart,    "Regular_Race"  ],
     [spritePlanner.reverseSpritePlanner,    spinner.SpinClass_Game3_smart,                  player.RacerGameClass_Smart,    "Race_Easy_Mode"],
     [spritePlanner.spritePlanner,           spinner.SpinClass_Game3_smart,                  player.RacerGameClass_Smart,    "Race_Hard_Mode"]]
@@ -663,8 +661,9 @@ class Sim_Nov_Wrapper:
 
 
     def run_simulation(self):
-        for size in self.my_sizes:
-            for game in self.my_types:
+
+        for game in self.my_types:
+            for size in self.my_sizes:
                 sim = Sim_Nov(level_size=size,sprite_planner=game[0],spin=game[1],player=game[2])
                 for i in range(0,self.numOfEps):
                     print("---")

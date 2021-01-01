@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#define MAX_LEN 26
+//#define MAX_LEN 26
 #define MAX_QUEUE 1024
 //#define __DEBUG_PRINT
 
@@ -515,9 +515,12 @@ void calculate_next_move_to_portal_avatar_blocks(int xx, int yy, int* next_x, in
     while ((SolutionNavigator->X != StartX) || (SolutionNavigator->Y != StartY));
   }
   //printf("b\n");
+  if(next_x == NULL || next_y == NULL)
+	fprintf(stderr,"NiL_00");
   *next_y = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->X;
   *next_x = ((AStar_Node*)SolutionNavigator->NextInSolvedPath)->Y;
   printf("Opponent - [%d,%d]\n", (*next_y-yy), (*next_x-xx));
+  //fprintf(stderr,"Opponent - [%d,%d]\n", (*next_y-yy), (*next_x-xx));
   RemoveAllFromNodeList(&AllNodesGSet,1);
   free(dataMap);
 }

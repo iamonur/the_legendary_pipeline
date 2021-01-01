@@ -1954,7 +1954,7 @@ class A_Star_Game4_Multiple_Searches():
         if cell > max_:
           max_ = cell
 
-    for i in range(max__, -1, -1):
+    for i in range(max_, -1, -1):
       moves.append(self.__wheresWaldo(level,i))
     return moves
   def __return_path(self, current_node):
@@ -2788,7 +2788,7 @@ class SpinClass_Game3_smart():
     f.write(self.promela_whole_file)
     f.close()
     os.system("spin -a ../spin/temp.pml")
-    proc = subprocess.Popen(["gcc -std=c99 pan.c -DREACH -o ../spin/temp.out  -lm"], stdout=subprocess.PIPE, shell=True)
+    proc = subprocess.Popen(["gcc -std=c99 pan.c -DREACH -DMAX_LEN={} -o ../spin/temp.out  -lm".format(self.length+2)], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
     if out != b'':
       raise spinCompileException("Cannot compile with gcc.")
