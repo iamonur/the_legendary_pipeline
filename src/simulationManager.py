@@ -571,7 +571,6 @@ class Sim_Nov:
             """
             modelling_success = True
             modelling_time = time.time()
-            
             modelChecker = self.spinner(map_)
             try:
                 modelChecker.perform()
