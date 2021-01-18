@@ -2359,7 +2359,136 @@ class SpinClass_Sokoban():
     (out, err) = proc.communicate()
     if out != b'':
       raise spinCompileException("Cannot compile with gcc.")
-    os.system("../spin/temp.out -a -i > /dev/null")
+    os.system("../spin/temp.out -a -I > /dev/null")
+      
+
+
+
+class SpinClass_Sokoban_100k():
+  def __init__(self, map, goals):
+    self.map = map
+    self.length = len(map)
+    self.width = len(map[0])
+    self.fixed_map = None
+    self.list_walls = []
+    self.wall_string = "{}"
+    self.list_holes = []
+    self.hole_string = "{}"
+    self.list_boxes = []
+    self.box_string = "{}"
+    self.promela_whole_file = """{}\n{}\n{}\n{}\n{}\n{}\n"""
+    self.goal_count = goals
+
+  def fix_map(self):
+    temp_map = []
+
+    for line in self.map:
+      temp_map.append(list(line))
+      checklist = 0
+      must_be_zero = 0
+
+    for lineNum, line in enumerate(temp_map):
+      for chNum, ch in enumerate(line):
+        if ch == '0':
+          temp_map[lineNum][chNum] = '.'
+        elif ch == '1':
+          temp_map[lineNum][chNum] = 'w'
+          self.list_walls.append((lineNum + 1, chNum + 1))
+        elif ch == 'A':
+          self.avatar_location = (lineNum, chNum)
+          checklist += 1
+        elif ch == 'B':
+          self.list_boxes.append((lineNum + 1, chNum + 1))
+          must_be_zero += 1
+        elif ch == 'H':
+          self.list_holes.append((lineNum + 1, chNum + 1))
+          must_be_zero -= 1
+
+    if must_be_zero != 0:
+      raise spinCompileException("Holes not equal to boxes!")
+    if checklist != 1:
+      raise spinCompileException("")
+
+    self.fixed_map = []
+
+    to_attach = ""
+    to_attach_list = []
+    for i in range(0, self.width + 2):
+      to_attach_list.append('w')
+
+    to_attach = to_attach.join(to_attach_list)
+
+    for ln, line in enumerate(temp_map):
+      temp = ''.join(line)
+      temp = 'w' + temp + 'w'
+      self.fixed_map.append(temp)
+
+    self.fixed_map.insert(0, to_attach)
+    self.fixed_map.append(to_attach)
+
+  def create_wall_string(self):
+    for wall in self.list_walls:
+      self.wall_string = self.wall_string.format("\tmap[{}].a[{}] = 1;\n{}".format(wall[0], wall[1], "{}"))
+    self.wall_string = self.wall_string.format("\n")
+
+  def create_holes_string(self):
+    for hole in self.list_holes:
+      self.hole_string = self.hole_string.format("\tmap[{}].a[{}] = 4;\n{}".format(hole[0], hole[1], "{}"))
+    self.hole_string = self.hole_string.format("\n")
+
+  def create_boxes_string(self):
+    for box in self.list_boxes:
+      self.box_string = self.box_string.format("\tmap[{}].a[{}] = 3;\n{}".format(box[0], box[1], "{}"))
+    self.box_string = self.box_string.format("\n")
+
+  def create_spin(self):
+    if self.fixed_map is None:
+      self.fix_map()
+
+    self.create_wall_string()
+    self.create_boxes_string()
+    self.create_holes_string()
+
+    formatted_init = promela_init_sokoban.format(
+      avatar_y = self.avatar_location[0] + 1,
+      avatar_x = self.avatar_location[1] + 1,
+      length = self.length + 1,
+      length2 = self.length,
+      width = self.width + 1,
+      width2 = self.width,
+      wall_str = self.wall_string,
+      boxes_str = self.box_string,
+      holes_str = self.hole_string
+    )
+    formatted_header = promela_header_for_sokoban.format(
+      self.length + 2,
+      self.goal_count,
+      self.width + 2
+    )
+    self.promela_whole_file = self.promela_whole_file.format(
+      promela_comment_01_sokoban,
+      promela_comment_02_sokoban,
+      formatted_header,
+      promela_avatar_sokoban,
+      formatted_init,
+      promela_ltl_formula_basic
+    )
+
+  def perform(self):
+    self.create_spin()
+    os.system("mkdir ../spin > /dev/null 2>&1")
+    os.system("rm ../spin/temp.pml > /dev/null")
+
+    fd = open("../spin/temp.pml", "a")
+    fd.write(self.promela_whole_file)
+    fd.close()
+
+    os.system("spin -a ../spin/temp.pml")
+    proc = subprocess.Popen(["gcc -std=c99 pan.c -DREACH -o ../spin/temp.out -lm"], stdout=subprocess.PIPE, shell=True)
+    (out, err) = proc.communicate()
+    if out != b'':
+      raise spinCompileException("Cannot compile with gcc.")
+    os.system("../spin/temp.out -a -I -n100k > /dev/null")
       
 
 class SpinClass_Game4_Parameter_Capital_I():
@@ -2466,6 +2595,7 @@ class SpinClass_Game4_Parameter_Capital_I():
     proc = subprocess.Popen(["gcc pan.c -DREACH -o ../spin/temp.out -lm"], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
     if out != b'':
+      print("ASD")
       raise spinCompileException("Cannot compile with gcc.")
     os.system("../spin/temp.out -a -I >/dev/null")
 
