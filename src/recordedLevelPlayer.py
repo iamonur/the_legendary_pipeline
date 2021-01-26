@@ -10,7 +10,7 @@ def pipelineError(Exception):
 class Recorded_lvl_spin_player:
     def __init__(
         self,
-        spin=spinner.SpinClass_Sokoban_100k,
+        spin=spinner.SpinClass_Sokoban_100k_optimal_init,
         parser=spinParser.spinParser,
         player=player.SokobanClass):
         self.spinner = spin
@@ -44,6 +44,7 @@ class Recorded_lvl_spin_player:
 
         modelling_success = True
         modelling_time = time.time()
+
         count = 0
         for a in map2:
             for b in a:
@@ -65,6 +66,7 @@ class Recorded_lvl_spin_player:
                 modelling_success = False
             
             modelling_time = time.time() - modelling_time
+            print(modelling_time)
             if modelling_success:
                 game = self.player(action_list=avatar, level_desc=map_)
                 spin_score, spin_terminal = game.play()
