@@ -2382,11 +2382,14 @@ class SpinClass_Sokoban_100k_optimal_init():
     fd.close()
 
     os.system("spin -a ../spin/temp.pml")
-    proc = subprocess.Popen(["gcc -std=c99 pan.c -DREACH -o ../spin/temp.out -lm"], stdout=subprocess.PIPE, shell=True)
+    proc = subprocess.Popen(["gcc -std=c99 pan.c -DBITSTATE -DNOBOUNDCHECK -DNOFAIR  -o ../spin/temp.out -lm"], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
+    print("a")
     if out != b'':
       raise spinCompileException("Cannot compile with gcc.")
-    os.system("../spin/temp.out -a -I > /dev/null")
+    #os.system("../spin/temp.out -a -G6 -m10000000> /dev/null")
+    os.system("../spin/temp.out -a -w36 -c1 -m1000000> /dev/null")
+
       
 
 class SpinClass_Sokoban():
