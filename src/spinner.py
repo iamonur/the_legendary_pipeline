@@ -7,6 +7,466 @@ class spinCompileException(Exception):
 
 class MCTS_Exception(Exception):
   pass
+
+soko_search = """
+#ifndef NUM_OF_BOXES 
+#define NUM_OF_BOXES 1
+#endif
+
+#ifndef MAX_LEN
+#define MAX_LEN 26
+#endif
+
+#define NUM_OF_CHOICES NUM_OF_BOXES*4
+
+char sokoban_map[MAX_LEN][MAX_LEN];
+char sokoban_map2[MAX_LEN][MAX_LEN];
+
+unsigned int sokoban_avatar_1, sokoban_avatar_2;
+
+void sokoban_putMapToMem() {{
+  unsigned int i, i;
+
+  for(i = 0; i < MAX_LEN; i++) {{
+    for(j = 0; j < MAX_LEN; j++) {{
+      switch(now.map[i].a[j]){{
+        case 0:
+          sokoban_map[i][j] = ' ';
+        break;
+        case 1:
+          sokoban_map[i][j] = 'w';
+        break;
+        case 2:
+          sokoban_map[i][j] = 'a';
+          sokoban_avatar_1 = i;
+          sokoban_avatar_2 = j;
+        break;
+        case 3:
+          sokoban_map[i][j] = 'b';
+        break;
+        case 4:
+          sokoban_map[i][j] = 'h';
+        break;
+        default:
+          exit(0);
+      }}
+    }}
+  }}
+}}
+
+void sokoban_recurseAvatarizedMap(int avatar_f, int avatar_s) {{
+  sokoban_map2[avatar_f][avatar_s] = 'a';
+  if( sokoban_map2[avatar_f - 1][avatar_s] == ' ')
+    sokoban_recurseAvatarizedMap(avatar_f - 1, avatar_s);
+  if( sokoban_map2[avatar_f + 1][avatar_s] == ' ')
+    sokoban_recurseAvatarizedMap(avatar_f + 1, avatar_s);
+  if( sokoban_map2[avatar_f][avatar_s - 1] == ' ')
+    sokoban_recurseAvatarizedMap(avatar_f, avatar_s - 1);
+  if( sokoban_map2[avatar_f][avatar_s + 1] == ' ')
+    sokoban_recurseAvatarizedMap(avatar_f, avatar_s + 1);
+  return;
+}}
+
+void sokoban_getAvatarizedMap() {{
+  memcpy(sokoban_map2, sokoban_map, MAX_LEN * MAX_LEN);
+  sokoban_recurseAvatarizedMap(sokoban_avatar_1, sokoban_avatar_2);
+}}
+
+void sokoban_updateTarget(int coor_1, int coor_2, int box_num) {{
+  if(sokoban_map2[coor_1 - 1][coor_2] == 'a')
+    switch(sokoban_map2[coor_1 + 1][coor_2]){{
+      case 'a':
+      case ' ':
+      case 'h':
+        now.choices[box_num*4 + 0] = 1;
+      break;
+      default:
+        now.choices[box_num*4 + 0] = 0;
+    }}
+  else now.choices[box_num*4 + 0] = 0;
+
+  if(sokoban_map2[coor_1][coor_2 - 1] == 'a')
+    switch(sokoban_map2[coor_1][coor_2 + 1]){{
+      case 'a':
+      case ' ':
+      case 'h':
+        now.choices[box_num*4 + 1] = 1;
+      break;
+      default:
+        now.choices[box_num*4 + 1] = 0;
+    }}
+  else now.choices[box_num*4 + 1] = 0;
+
+  if(sokoban_map2[coor_1 + 1][coor_2] == 'a')
+    switch(sokoban_map2[coor_1 - 1][coor_2]){{
+      case 'a':
+      case ' ':
+      case 'h':
+        now.choices[box_num*4 + 2] = 1;
+      break;
+      default:
+        now.choices[box_num*4 + 2] = 0;
+    }}
+  else now.choices[box_num*4 + 2] = 0;
+
+  if(sokoban_map2[coor_1][coor_2 + 1] == 'a')
+    switch(sokoban_map2[coor_1][coor_2 - 1]){{
+      case 'a':
+      case ' ':
+      case 'h':
+        now.choices[box_num*4 + 3] = 1;
+      break;
+      default:
+        now.choices[box_num*4 + 3] = 0;
+    }}
+  else now.choices[box_num*4 + 3] = 0;
+  return;
+}}
+
+void sokoban_updateAllTargets(){{
+  for(unsigned int a = 0; a < NUM_OF_BOXES*4; a++) {{
+    now.choices[a] = 0;
+  }}
+
+  sokoban_getAvatarizedMap();
+
+  unsigned char box_number = 0;
+  for(unsigned int i = 0; i < MAX_LEN; i++) {{
+    for(unsigned int j = 0; j < MAX_LEN; j++) {{
+      if(sokoban_map2[i][j] == 'b') {{
+        sokoban_updateTarget(i,j,box_number);
+        box_number++;
+      }}
+    }}
+  }}
+
+  now.remaining_goals = box_number;
+}}
+
+void push_a_box(unsigned int ind1, unsigned int ind2, unsigned int pos) {{
+  now.map[ind1].a[ind2] = 2;
+  now.map[sokoban_avatar_1].a[sokoban_avatar_2] = 0;
+  
+  switch(pos) {{
+    case 0:
+      switch(sokoban_map[ind1 + 1][ind2]) {{
+        case ' ':
+          now.map[ind1 + 1].a[ind2] = 3;
+        break;
+        case 'h':
+          now.map[ind1 + 1].a[ind2] = 0;
+          now.remaining_goals--;
+        break;
+        default:
+          exit(0);
+      }}
+    break;
+    case 1:
+      switch(sokoban_map[ind1][ind2 + 1]){{
+        case ' ':
+          now.map[ind1].a[ind2 + 1] = 3;
+        break;
+        case 'h':
+          now.map[ind1].a[ind2 + 1] = 0;
+          now.remaining_goals--;
+        break;
+        default:
+          exit(0);
+      }}
+    break;
+    case 2:
+      switch(sokoban_map[ind1 - 1][ind2]){{
+        case ' ':
+          now.map[ind1 - 1].a[ind2] = 3;
+        break;
+        case 'h':
+          now.map[ind1 - 1].a[ind2] = 0;
+          now.remaining_goals--;
+        break;
+        default:
+          exit(0);
+      }}
+    break;
+    case 3:
+      switch(sokoban_map[ind1][ind2 - 1]) {{
+        case ' ':
+          now.map[ind1].a[ind2 - 1] = 3;
+        break;
+        case 'h':
+          now.map[ind1].a[ind2 - 1] = 0;
+          now.remaining_goals--;
+        break;
+        default:
+          exit(0);
+      }}
+    break;
+    default:
+      exit(0);
+  }}
+
+}}
+
+void push(unsigned int choice){{
+  unsigned int box = choice/4;
+  unsigned int side = choice%4;
+  for(unsigned int i = 0; i < MAX_LEN; i++){{
+    for(unsigned int j = 0; j < MAX_LEN; j++){{
+      if(sokoban_map[i][j] == 'b') {{
+        if(box == 0){{
+          push_a_box(i, j, side);
+          return;
+        }}
+        else box--;
+      }}
+    }}
+  }}
+}}
+
+void sokoban_init(){{
+  sokoban_putMapToMemory();
+  sokoban_updateAllTargets();
+}}
+
+void sokoban_push(unsinged int choice){{
+  sokoban_putMapToMemory();
+  push(choice);
+  sokoban_updateAllTargets();
+}}
+"""
+
+sokoban2_avatar_choice = """
+    :: (choices[{choiceNumber}] == 1 && last_move != {choiceNumber2}) ->
+      
+      last_move = {choiceNumber};
+      printf(\"%d\\n\", last_move);
+      c_code {{sokoban_push({choiceNumber});}}
+
+"""
+
+sokoban2_avatar = """
+proctype avatar_sokoban(int x; int y) {{
+  map[x].a[y] = 2;
+  int last_move = -2;
+  c_code{{sokoban_init();}};
+  do
+    ::(win != 1) ->
+      if
+      {choices_string}
+      fi;
+      if
+      :: (remaining_goals == 0) -> win = 1; break
+      :: else -> skip
+      fi
+    :: else -> break
+  od;
+  printf("Won\\n");
+}}
+"""
+
+sokoban2_map_init = """
+proctype map_init() {{
+  int i;
+  int ii;
+  for (i : 0 .. {length}) {{
+    map[i].a[0] = 1;
+    map[i].a[{width}] = 1;
+  }}
+  for (i : 0 ..{width}) {{
+    map[0].a[i] = 1;
+    map[{length}].a[i] = 1;
+  }}
+  for (i : 1 .. {length2}) {{
+    for (ii : 1 .. {width2}) {{
+      map[i].a[ii] = 0;
+    }}
+  }}
+
+  {wall_string}
+
+  {boxes_string}
+
+  {holes_string}
+
+  map_inited = 1;
+}}
+"""
+
+sokoban2_init = """
+init {{
+  run map_init();
+  map_inited == 1;
+
+  run avatar_sokoban({avatar_1}, {avatar_2});
+}}
+"""
+
+sokoban2_ltl = """
+ltl { [] !(win) };
+"""
+
+sokoban2_header = """
+c_code{{\#include "../spin/sokoban2.c"}};
+typedef row {{
+  byte a[{width}];
+}}
+byte remaining_goals = {goals};
+bit win = 0;
+bit map_inited = 0;
+int choices[{choice_count}];
+row map[{length}];
+"""
+
+sokoban2_wall = "map[].a[] = 1;\n\t{}"
+
+
+class SpinClass_Sokoban2():
+  def __init__(self, map, goals):
+    self.map = map
+    self.length = len(map)
+    self.width = len(map[0])
+    self.fixed_map = None
+    self.list_walls = []
+    self.wall_string = "{}"
+    self.list_holes = []
+    self.hole_string = "{}"
+    self.list_boxes = []
+    self.box_string = "{}"
+    self.choices_string = ""
+    self.promela_whole_file = """{}\n{}\n{}\n{}\n{}\n"""
+    self.goal_count = goals
+
+  def fix_map(self):
+    temp_map = []
+
+    for line in self.map:
+      temp_map.append(list(line))
+      checklist = 0
+      must_be_zero = 0
+
+    for lineNum, line in enumerate(temp_map):
+      for chNum, ch in enumerate(line):
+        if ch == '0':
+          temp_map[lineNum][chNum] = '.'
+        elif ch == '1':
+          temp_map[lineNum][chNum] = 'w'
+          self.list_walls.append((lineNum + 1, chNum + 1))
+        elif ch == 'A':
+          self.avatar_location = (lineNum, chNum)
+          checklist += 1
+        elif ch == 'B':
+          self.list_boxes.append((lineNum + 1, chNum + 1))
+          must_be_zero += 1
+        elif ch == 'H':
+          self.list_holes.append((lineNum + 1, chNum + 1))
+          must_be_zero -= 1
+
+    if must_be_zero != 0:
+      raise spinCompileException("Holes not equal to boxes!")
+    if checklist != 1:
+      raise spinCompileException("")
+
+    self.fixed_map = []
+
+    to_attach = ""
+    to_attach_list = []
+    for i in range(0, self.width + 2):
+      to_attach_list.append('w')
+
+    to_attach = to_attach.join(to_attach_list)
+
+    for ln, line in enumerate(temp_map):
+      temp = ''.join(line)
+      temp = 'w' + temp + 'w'
+      self.fixed_map.append(temp)
+
+    self.fixed_map.insert(0, to_attach)
+    self.fixed_map.append(to_attach)
+
+  def create_wall_string(self):
+    for wall in self.list_walls:
+      self.wall_string = self.wall_string.format("\tmap[{}].a[{}] = 1;\n{}".format(wall[0], wall[1], "{}"))
+    self.wall_string = self.wall_string.format("\n")
+
+  def create_holes_string(self):
+    for hole in self.list_holes:
+      self.hole_string = self.hole_string.format("\tmap[{}].a[{}] = 4;\n{}".format(hole[0], hole[1], "{}"))
+    self.hole_string = self.hole_string.format("\n")
+
+  def create_boxes_string(self):
+    for box in self.list_boxes:
+      self.box_string = self.box_string.format("\tmap[{}].a[{}] = 3;\n{}".format(box[0], box[1], "{}"))
+    self.box_string = self.box_string.format("\n")
+
+  def create_choices_string(self):
+    for i in range(0, self.goal_count):
+      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 0), choiceNumber2 = (i*4 + 2))
+      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 1), choiceNumber2 = (i*4 + 3))
+      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 2), choiceNumber2 = (i*4 + 0))
+      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 3), choiceNumber2 = (i*4 + 1))
+      
+
+  def create_spin(self):
+    if self.fixed_map is None:
+      self.fix_map()
+
+    self.create_wall_string()
+    self.create_boxes_string()
+    self.create_holes_string()
+    self.create_choices_string()
+
+    map_init = sokoban2_map_init.format(
+      wall_string = self.wall_string,
+      boxes_string = self.box_string,
+      holes_string = self.hole_string,
+      length = self.length+1,
+      width = self.width+1,
+      length2 = self.length,
+      width2 = self.width,
+    )
+
+    formatted_init = sokoban2_init.format(
+      avatar_1 = self.avatar_location[0] + 1,
+      avatar_2 = self.avatar_location[1] + 1
+    )
+
+    formatted_header = sokoban2_header.format(
+      width = self.width + 2,
+      goals = self.goal_count,
+      length = self.length + 2,
+      choice_count = (self.goal_count*4)
+    )
+
+    formatted_avatar = sokoban2_avatar.format(choices_string = self.choices_string)
+
+    self.promela_whole_file = self.promela_whole_file.format(
+      formatted_header,
+      map_init,
+      formatted_avatar,
+      formatted_init,
+      sokoban2_ltl
+    )
+
+  def perform(self):
+    self.create_spin()
+    os.system("mkdir ../spin > /dev/null 2>&1")
+    os.system("rm ../spin/temp.pml > /dev/null")
+
+    fd = open("../spin/temp.pml", "a")
+    fd.write(self.promela_whole_file)
+    fd.close()
+
+    os.system("spin -a ../spin/temp.pml")
+    proc = subprocess.Popen(["gcc -std=c99 pan.c -DMAX_LEN={} -DNUM_OF_BOXES={} -DREACH -o ../spin/temp.out -lm".format(self.width+2, self.goal_count)], stdout=subprocess.PIPE, shell=True)
+    (out, err) = proc.communicate()
+    if out != b'':
+      raise spinCompileException("Cannot compile with gcc.")
+    os.system("../spin/temp.out -a -I > /dev/null")
+      
+
+
+
+
+
 promela_comment_01_sokoban = """
 //Game:
 //Push all boxes into all holes to win.
@@ -3305,7 +3765,7 @@ if __name__ == "__main__":
   sp = spritePlanner.sokobanPlanner(cap.perform(), count_boxes=2)
   sp.perform()
   map_ = sp.getMap()
-  s = SpinClass_Sokoban(map_, sp.get_goals())
+  s = SpinClass_Sokoban2(map_, sp.get_goals())
   s.perform()
   spp = spinParser.spinParser()
   caPolisher.map_print(map_)
