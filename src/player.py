@@ -19,7 +19,7 @@ BasicGame
         avatar > MovingAvatar color=WHITE
     TerminationSet
         SpriteCounter stype=box limit=0 win=True
-        Timeout limit=1000 win=False
+        Timeout limit=1000000 win=False
     InteractionSet
         avatar wall > stepBack scoreChange=-100
         avatar EOS > stepBack
@@ -1369,7 +1369,7 @@ class GameClass:
 
     def _create_controller(self):
         
-        self.controller = RecordedController(self.env_name, self.actions, fps=1)
+        self.controller = RecordedController(self.env_name, self.actions, fps=30)
 
     def _save_game_files(self):
 

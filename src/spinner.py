@@ -453,11 +453,11 @@ class SpinClass_Sokoban2():
     fd.close()
 
     os.system("spin -a ../spin/temp.pml")
-    proc = subprocess.Popen(["gcc -std=c99 pan.c -DMAX_LEN={} -DNUM_OF_BOXES={} -DREACH -o ../spin/temp.out -lm".format(self.width+2, self.goal_count)], stdout=subprocess.PIPE, shell=True)
+    proc = subprocess.Popen(["gcc -std=c99 pan.c -DMAX_LEN={} -DNUM_OF_BOXES={} -DBITSTATE -DNOFAIR -DNOBOUNDCHECK -o ../spin/temp.out -lm".format(self.width+2, self.goal_count)], stdout=subprocess.PIPE, shell=True)
     (out, err) = proc.communicate()
     if out != b'':
       raise spinCompileException("Cannot compile with gcc.")
-    os.system("../spin/temp.out -a -I > /dev/null")
+    os.system("../spin/temp.out -a -c1 > /dev/null")
       
 
 

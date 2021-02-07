@@ -99,7 +99,6 @@ class spinParser_Soko:
                     avatar_loc = (ln, cn)
                     self.mp[ln][cn] = "0" 
 
-        print(self.mp)
         for move in moves[:-1]:
             #print(move)
             sub_coordinates = self.__bfs(avatar_loc, (move[0][0], move[0][1]))
@@ -114,7 +113,6 @@ class spinParser_Soko:
                     ret.append("W")
                 if (avatar_loc[1] - sub_move[1]) == -1:
                     ret.append("S")
-                print(ret)
                 avatar_loc = sub_move
 
             if(move[1] == 'S'):
@@ -136,8 +134,6 @@ class spinParser_Soko:
                 avatar_loc = (avatar_loc[0], avatar_loc[1]+1)
             if move[1] == 'A':
                 avatar_loc = (avatar_loc[0], avatar_loc[1]-1)
-            print(self.mp)
-            print(avatar_loc)
             #avatar_loc = (move[0][0], move[0][1])
             
             self.mp[avatar_loc[0]][avatar_loc[1]] = "0"
