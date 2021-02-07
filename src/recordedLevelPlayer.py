@@ -10,8 +10,8 @@ def pipelineError(Exception):
 class Recorded_lvl_spin_player:
     def __init__(
         self,
-        spin=spinner.SpinClass_Sokoban_100k_optimal_init,
-        parser=spinParser.spinParser,
+        spin=spinner.SpinClass_Sokoban2,
+        parser=spinParser.spinParser_Soko,
         player=player.SokobanClass):
         self.spinner = spin
         self.parser  = parser
@@ -58,9 +58,9 @@ class Recorded_lvl_spin_player:
             modelling_success = False
 
         if modelling_success:
-            get_moves = self.parser()
+            get_moves = self.parser(mp=map_)
             try:
-                avatar, _ = get_moves.perform()
+                avatar = get_moves.perform()
             except spinParser.cannotWinException:
                 print("Cannot win")
                 modelling_success = False

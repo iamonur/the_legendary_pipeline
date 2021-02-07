@@ -235,10 +235,7 @@ void sokoban_push(unsinged int choice){{
 """
 
 sokoban2_avatar_choice = """
-    :: (choices[{choiceNumber}] == 1 && last_move != {choiceNumber2}) ->
-      
-      last_move = {choiceNumber};
-      printf(\"%d\\n\", last_move);
+    :: (choices[{choiceNumber}] == 1) ->
       c_code {{sokoban_push({choiceNumber});}}
 
 """
@@ -399,10 +396,10 @@ class SpinClass_Sokoban2():
 
   def create_choices_string(self):
     for i in range(0, self.goal_count):
-      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 0), choiceNumber2 = (i*4 + 2))
-      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 1), choiceNumber2 = (i*4 + 3))
-      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 2), choiceNumber2 = (i*4 + 0))
-      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 3), choiceNumber2 = (i*4 + 1))
+      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 0))
+      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 1))
+      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 2))
+      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 3))
       
 
   def create_spin(self):
@@ -3767,9 +3764,10 @@ if __name__ == "__main__":
   map_ = sp.getMap()
   s = SpinClass_Sokoban2(map_, sp.get_goals())
   s.perform()
-  spp = spinParser.spinParser()
+  spp = spinParser.spinParser_Soko(mp=map_)
   caPolisher.map_print(map_)
-  moves = spp.perform()[0]
+  moves = spp.perform()
+  print(moves)
   q = player.SokobanClass(action_list=moves, level_desc=map_)
   print(q.play())
   temp = ""

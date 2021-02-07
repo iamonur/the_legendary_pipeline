@@ -1369,7 +1369,7 @@ class GameClass:
 
     def _create_controller(self):
         
-        self.controller = RecordedController(self.env_name, self.actions, fps=5)
+        self.controller = RecordedController(self.env_name, self.actions, fps=1)
 
     def _save_game_files(self):
 
