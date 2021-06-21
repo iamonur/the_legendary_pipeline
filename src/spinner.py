@@ -325,7 +325,7 @@ init {{
 """
 #TODO: change static number.
 sokoban3_ltl = """
-ltl {([](!(win)||(aborted))) }
+ltl {([](!(win)||(moves>1))) }
 """
 
 
