@@ -240,6 +240,33 @@ sokoban2_avatar_choice = """
 
 """
 
+sokoban3_avatar = """
+proctype avatar_sokoban(int x; int y) {{
+  map[x].a[y] = 2;
+  int last_move = -2;
+  c_code{{sokoban_init();}};
+  do
+    ::(win != 1) ->
+    int foo = remaining_goals;
+      if
+      {choices_string}
+      fi;
+      if
+      :: (remaining_goals == 0) -> win = 1; break
+      :: else -> skip
+      fi;
+      if
+      :: (foo > remaining_goals) -> moves = 0
+      :: else -> moves = moves + 1
+      fi;
+      if
+      :: (moves > 1)-> aborted = 1
+      :: else -> skip
+      fi
+  od
+}}
+"""
+
 sokoban2_avatar = """
 proctype avatar_sokoban(int x; int y) {{
   map[x].a[y] = 2;
@@ -296,9 +323,28 @@ init {{
   run avatar_sokoban({avatar_1}, {avatar_2});
 }}
 """
+#TODO: change static number.
+sokoban3_ltl = """
+ltl {([](!(win)||(aborted))) }
+"""
+
 
 sokoban2_ltl = """
 ltl { [] !(win) };
+"""
+
+sokoban3_header = """
+c_code{{\#include "../spin/sokoban2.c"}};
+typedef row {{
+  byte a[{width}];
+}}
+byte remaining_goals = {goals};
+bit win = 0;
+bit map_inited = 0;
+int choices[{choice_count}];
+row map[{length}];
+int moves = 0;
+bit aborted = 0;
 """
 
 sokoban2_header = """
@@ -314,6 +360,150 @@ row map[{length}];
 """
 
 sokoban2_wall = "map[].a[] = 1;\n\t{}"
+
+class SpinClass_Sokoban3():
+  def __init__(self, map, goals):
+    self.map = map
+    self.length = len(map)
+    self.width = len(map[0])
+    self.fixed_map = None
+    self.list_walls = []
+    self.wall_string = "{}"
+    self.list_holes = []
+    self.hole_string = "{}"
+    self.list_boxes = []
+    self.box_string = "{}"
+    self.choices_string = ""
+    self.promela_whole_file = """{}\n{}\n{}\n{}\n{}\n"""
+    self.goal_count = goals
+
+  def fix_map(self):
+    temp_map = []
+
+    for line in self.map:
+      temp_map.append(list(line))
+      checklist = 0
+      must_be_zero = 0
+
+    for lineNum, line in enumerate(temp_map):
+      for chNum, ch in enumerate(line):
+        if ch == '0':
+          temp_map[lineNum][chNum] = '.'
+        elif ch == '1':
+          temp_map[lineNum][chNum] = 'w'
+          self.list_walls.append((lineNum + 1, chNum + 1))
+        elif ch == 'A':
+          self.avatar_location = (lineNum, chNum)
+          checklist += 1
+        elif ch == 'B':
+          self.list_boxes.append((lineNum + 1, chNum + 1))
+          must_be_zero += 1
+        elif ch == 'H':
+          self.list_holes.append((lineNum + 1, chNum + 1))
+          must_be_zero -= 1
+
+    if must_be_zero != 0:
+      raise spinCompileException("Holes not equal to boxes!")
+    if checklist != 1:
+      raise spinCompileException("")
+
+    self.fixed_map = []
+
+    to_attach = ""
+    to_attach_list = []
+    for i in range(0, self.width + 2):
+      to_attach_list.append('w')
+
+    to_attach = to_attach.join(to_attach_list)
+
+    for ln, line in enumerate(temp_map):
+      temp = ''.join(line)
+      temp = 'w' + temp + 'w'
+      self.fixed_map.append(temp)
+
+    self.fixed_map.insert(0, to_attach)
+    self.fixed_map.append(to_attach)
+
+  def create_wall_string(self):
+    for wall in self.list_walls:
+      self.wall_string = self.wall_string.format("\tmap[{}].a[{}] = 1;\n{}".format(wall[0], wall[1], "{}"))
+    self.wall_string = self.wall_string.format("\n")
+
+  def create_holes_string(self):
+    for hole in self.list_holes:
+      self.hole_string = self.hole_string.format("\tmap[{}].a[{}] = 4;\n{}".format(hole[0], hole[1], "{}"))
+    self.hole_string = self.hole_string.format("\n")
+
+  def create_boxes_string(self):
+    for box in self.list_boxes:
+      self.box_string = self.box_string.format("\tmap[{}].a[{}] = 3;\n{}".format(box[0], box[1], "{}"))
+    self.box_string = self.box_string.format("\n")
+
+  def create_choices_string(self):
+    for i in range(0, self.goal_count):
+      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 0))
+      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 1))
+      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 2))
+      self.choices_string += sokoban2_avatar_choice.format(choiceNumber = (i*4 + 3))
+      
+
+  def create_spin(self):
+    if self.fixed_map is None:
+      self.fix_map()
+
+    self.create_wall_string()
+    self.create_boxes_string()
+    self.create_holes_string()
+    self.create_choices_string()
+
+    map_init = sokoban2_map_init.format(
+      wall_string = self.wall_string,
+      boxes_string = self.box_string,
+      holes_string = self.hole_string,
+      length = self.length+1,
+      width = self.width+1,
+      length2 = self.length,
+      width2 = self.width,
+    )
+
+    formatted_init = sokoban2_init.format(
+      avatar_1 = self.avatar_location[0] + 1,
+      avatar_2 = self.avatar_location[1] + 1
+    )
+
+    formatted_header = sokoban3_header.format(
+      width = self.width + 2,
+      goals = self.goal_count,
+      length = self.length + 2,
+      choice_count = (self.goal_count*4)
+    )
+
+    formatted_avatar = sokoban3_avatar.format(choices_string = self.choices_string)
+
+    self.promela_whole_file = self.promela_whole_file.format(
+      formatted_header,
+      map_init,
+      formatted_avatar,
+      formatted_init,
+      sokoban3_ltl
+    )
+
+  def perform(self):
+    self.create_spin()
+    os.system("mkdir ../spin > /dev/null 2>&1")
+    os.system("rm ../spin/temp.pml > /dev/null")
+
+    fd = open("../spin/temp.pml", "a")
+    fd.write(self.promela_whole_file)
+    fd.close()
+
+    os.system("spin -a ../spin/temp.pml")
+    proc = subprocess.Popen(["gcc -std=c99 pan.c -DMAX_LEN={} -DNUM_OF_BOXES={} -DBITSTATE -DNOFAIR -DNOBOUNDCHECK -o ../spin/temp.out -lm".format(self.width+2, self.goal_count)], stdout=subprocess.PIPE, shell=True)
+    (out, err) = proc.communicate()
+    if out != b'':
+      raise spinCompileException("Cannot compile with gcc.")
+    os.system("../spin/temp.out -a -c1 > /dev/null")
+      
 
 
 class SpinClass_Sokoban2():
@@ -3762,13 +3952,14 @@ if __name__ == "__main__":
   sp = spritePlanner.sokobanPlanner(cap.perform(), count_boxes=2)
   sp.perform()
   map_ = sp.getMap()
-  s = SpinClass_Sokoban2(map_, sp.get_goals())
+  s = SpinClass_Sokoban3(map_, sp.get_goals())
   s.perform()
   spp = spinParser.spinParser_Soko(mp=map_)
   caPolisher.map_print(map_)
   moves = spp.perform()
   print(moves)
-  q = player.SokobanClass(action_list=moves, level_desc=map_)
+  print(player.SokobanClass(action_list=moves, level_desc=map_).play()[0])
+  """q = player.SokobanClass(action_list=moves, level_desc=map_)
   print(q.play())
   temp = ""
   for i in range(0,12):
@@ -3781,7 +3972,7 @@ if __name__ == "__main__":
   number_of_playouts = 64
   mcts_moves = player.MCTS_Runner_Regular_with_Time_Limit(mcts_time_limit, nloops=number_of_loops, max_d=max_search_depth, n_playouts=number_of_playouts, rollout_depth=max_rollout_depth, game_desc = q.game, level_desc=map2, render=False).run()[0][0]
   print(player.SokobanClass(action_list=mcts_moves, level_desc=map_).play()[0])
-  """
+  
   import cellularAutomata, caPolisher, spritePlanner, spinParser, player
   ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="000101010101010101010101")
   cap = caPolisher.CApolisher(ca = ca)
