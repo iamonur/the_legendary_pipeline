@@ -325,7 +325,7 @@ init {{
 """
 #TODO: change static number.
 sokoban3_ltl = """
-ltl {([](!(win)||(moves>1))) }
+ltl {([](!(win)||(moves>10))) }
 """
 
 
@@ -728,6 +728,15 @@ typedef row{{
   byte a[{}]
   }}
   bit win = 0;
+  row map[{}];
+"""
+promela_header_for_game_4_new_ltl = """
+typedef row{{
+  byte a[{}]
+  }}
+  bit win = 0;
+  int straight_moves = 0;
+  int turning_moves = 0;
   row map[{}];
 """
 promela_header_for_game_1 = """
@@ -1981,6 +1990,11 @@ promela_ltl_formula_basic = """
 // Counter-Example will be generated -> A scenario to win.
 ltl  { [] !win };
 """
+promela_ltl_formula_2 = """
+// LTL Formula : In any time, win never be true.
+// Counter-Example will be generated -> A scenario to win.
+ltl  { [] !win };
+"""
 promela_init_sokoban = """
 init {{
   int i, ii;
@@ -2441,6 +2455,119 @@ class SpinClass_Game3():
     if out != b'':
       raise spinCompileException("Cannot compile with gcc.")
     os.system("../spin/temp.out -a -I >/dev/null")
+
+class SpinClass_Game4_New_LTL():
+  def __init__(self, map):
+    self.map = map
+    self.length = len(map)
+    self.width = len(map[0])#Assuming a rectangle
+    self.fixed_map = None
+    self.list_walls = []
+    self.promela_whole_file = """{}\n{}\n{}\n{}\n{}\n{}\n{}"""
+    self.wall_string = "{}"
+
+  def fix_map(self):
+    temp_map = []
+
+    for line in self.map:
+      temp_map.append(list(line))
+
+      checklist = 0
+
+    for lineNum, line in enumerate(temp_map):
+      for chNum, ch in enumerate(line):
+        if ch == '0':
+          temp_map[lineNum][chNum] = '.'
+        elif ch == '1':
+          temp_map[lineNum][chNum] = 'w'
+          self.list_walls.append((lineNum + 1, chNum + 1))
+        elif ch == 'A':
+          self.avatar_location = (lineNum, chNum)
+          checklist += 1
+        elif ch == 'G':
+          self.portal_location = (lineNum, chNum)
+          checklist += 1
+
+    if checklist != 2:
+      raise spinCompileException("Inproper placement of sprites!")
+
+
+    self.fixed_map = []
+
+    to_attach = ""
+    to_attach_list = []
+    for i in range(0, self.width + 2):
+      to_attach_list.append('w')
+
+    to_attach = to_attach.join(to_attach_list)
+
+    for ln, line in enumerate(temp_map):
+      temp = ''.join(line)
+      temp = 'w' + temp + 'w'
+      self.fixed_map.append(temp)
+
+    self.fixed_map.insert(0, to_attach)
+    self.fixed_map.append(to_attach)
+
+  def create_wall_string(self):
+    for wall in self.list_walls:
+      self.wall_string = self.wall_string.format("\tmap[{}].a[{}] = 1;\n{}".format(wall[0], wall[1], "{}"))
+    self.wall_string = self.wall_string.format(" ")
+
+  def create_spin(self):
+    if self.fixed_map is None:
+      self.fix_map()
+    self.create_wall_string()
+
+    formatted_init = promela_init_for_game_4.format(
+			avatar_y = self.avatar_location[0]+1,
+			avatar_x = self.avatar_location[1]+1,
+			portal_y = self.portal_location[0]+1,
+      portal_x = self.portal_location[1]+1,
+      length = self.length+1,
+      length2 = self.length,
+      width = self.width+1,
+      width2 = self.width,
+      wall_str = self.wall_string
+		)
+    formatted_header = promela_header_for_game_4_new_ltl.format(self.length+2, self.width+2)
+    self.promela_whole_file = self.promela_whole_file.format(
+			promela_comment_01,
+			promela_comment_02,
+			formatted_header,
+			promela_avatar_game_4,
+			promela_opponent_for_game_4,
+			formatted_init,
+			promela_ltl_formula_2
+		)
+
+  def perform(self):
+    import time
+    self.create_spin()
+    os.system("mkdir ../spin > /dev/null 2>&1")
+    tt = time.time()
+    os.system("rm ../spin/temp.pml > /dev/null")
+    f = open("../spin/temp.pml", "a")
+    f.write(self.promela_whole_file)
+    f.close()
+    tt = time.time() - tt
+    print("   creating temp.pml: " + str(tt))
+    tt = time.time()
+    os.system("spin -a -DREACH ../spin/temp.pml")
+    tt = time.time() - tt
+    print("   creating pan.c: " + str(tt))
+    tt = time.time()
+    proc = subprocess.Popen(["gcc pan.c -DREACH -o ../spin/temp.out -lm"], stdout=subprocess.PIPE, shell=True)
+    (out, err) = proc.communicate()
+    if out != b'':
+      raise spinCompileException("Cannot compile with gcc.")
+    tt = time.time() - tt
+    print("   creating temp.out: " + str(tt))
+    tt = time.time()
+    os.system("../spin/temp.out -a -i >/dev/null")
+    tt = time.time() - tt
+    print("   executing temp.out: " + str(tt))
+
 
 class SpinClass_Game4():
 
