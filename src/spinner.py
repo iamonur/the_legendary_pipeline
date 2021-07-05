@@ -317,8 +317,11 @@ proctype map_init() {{
 
 sokoban2_init = """
 init {{
+  atomic{{
+
   run map_init();
-  map_inited == 1;
+
+  }}
 
   run avatar_sokoban({avatar_1}, {avatar_2});
 }}
@@ -340,7 +343,6 @@ typedef row {{
 }}
 byte remaining_goals = {goals};
 bit win = 0;
-bit map_inited = 0;
 int choices[{choice_count}];
 row map[{length}];
 int moves = 0;
@@ -354,7 +356,6 @@ typedef row {{
 }}
 byte remaining_goals = {goals};
 bit win = 0;
-bit map_inited = 0;
 int choices[{choice_count}];
 row map[{length}];
 """
