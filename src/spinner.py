@@ -311,7 +311,6 @@ proctype map_init() {{
 
   {holes_string}
 
-  map_inited = 1;
 }}
 """
 
@@ -4678,7 +4677,8 @@ def create_spin_from_game_5(map_):
   return SpinClass_Game4(_map)
 
 if __name__ == "__main__":
-  import cellularAutomata, caPolisher, spritePlanner, spinParser, player
+  
+  """  
   ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="111110101100000110001000")
   cap = caPolisher.CApolisher(ca=ca)
   sp = spritePlanner.equalSpritePlanner(cap.perform())
@@ -4691,7 +4691,8 @@ if __name__ == "__main__":
   print(moves)
   p = player.RacerGameClass_Smart(action_list=moves[0], level_desc=sp.getMap())
   p.play()
-"""
+  """
+  """
   ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="111110101100011010001000")
   cap = caPolisher.CApolisher(ca = ca)
   sp = spritePlanner.dualSpritePlanner(cap.perform())
@@ -4706,20 +4707,20 @@ if __name__ == "__main__":
 
   p = player.MazeGameClass(action_list=print_2[0], level_desc=sp.getMap())
   print(p.play())
-"""
-"""
-  ca = cellularAutomata.elementary_cellular_automata(ruleset=30,size=10,limit=10, start="0111111111")
+  """
+  import cellularAutomata, caPolisher, spritePlanner, spinParser, player
+  ca = cellularAutomata.elementary_cellular_automata(ruleset=30,size=10,limit=10, start="0000001111")
   cap = caPolisher.CApolisher(ca = ca)
   sp = spritePlanner.sokobanPlanner(cap.perform(), count_boxes=2)
   sp.perform()
   map_ = sp.getMap()
   s = SpinClass_Sokoban_LTL_Outside(map_, sp.get_goals())
   s.perform()
-  spp = spinParser.spinParser_Soko(mp=map_)
+  spp = spinParser.spinParser_Soko_2(mp=map_)
   caPolisher.map_print(map_)
   moves = spp.perform()
   print(moves)
-  print(player.SokobanClass(action_list=moves, level_desc=map_).play()[0])"""
+  print(player.SokobanClass(action_list=moves, level_desc=map_).play()[0])
 """
   q = player.SokobanClass(action_list=moves, level_desc=map_)
   print(q.play())
