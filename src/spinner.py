@@ -2839,6 +2839,131 @@ class SpinClass_Game4():
     tt = time.time() - tt
     print("   executing temp.out: " + str(tt))
 
+class SpinClass_Game4_LTL_Out():
+
+	#self.map = map fed to instance
+    #self.width = width of the map
+    #self.length = length of the map
+    #self.fixed_map = map changed to vgdl compliancy
+    #self.avatar_location = (y,x) location of the avatar
+    #self.enemy_location = (y,x) location of the enemy
+    #self.portal_location = (y,x) location of the enemy
+    #self.map_to_feed = Map with outer walls.
+
+  def __init__(self, map):
+    self.map = map
+    self.length = len(map)
+    self.width = len(map[0])#Assuming a rectangle
+    self.fixed_map = None
+    self.list_walls = []
+    self.promela_whole_file = """{}\n{}\n{}\n{}\n{}\n{}\n{}"""
+    self.wall_string = "{}"
+
+  def fix_map(self):
+    temp_map = []
+
+    for line in self.map:
+      temp_map.append(list(line))
+
+      checklist = 0
+
+    for lineNum, line in enumerate(temp_map):
+      for chNum, ch in enumerate(line):
+        if ch == '0':
+          temp_map[lineNum][chNum] = '.'
+        elif ch == '1':
+          temp_map[lineNum][chNum] = 'w'
+          self.list_walls.append((lineNum + 1, chNum + 1))
+        elif ch == 'A':
+          self.avatar_location = (lineNum, chNum)
+          checklist += 1
+        elif ch == 'G':
+          self.portal_location = (lineNum, chNum)
+          checklist += 1
+
+    if checklist != 2:
+      raise spinCompileException("Inproper placement of sprites!")
+
+
+    self.fixed_map = []
+
+    to_attach = ""
+    to_attach_list = []
+    for i in range(0, self.width + 2):
+      to_attach_list.append('w')
+
+    to_attach = to_attach.join(to_attach_list)
+
+    for ln, line in enumerate(temp_map):
+      temp = ''.join(line)
+      temp = 'w' + temp + 'w'
+      self.fixed_map.append(temp)
+
+    self.fixed_map.insert(0, to_attach)
+    self.fixed_map.append(to_attach)
+
+  def create_wall_string(self):
+    for wall in self.list_walls:
+      self.wall_string = self.wall_string.format("\tmap[{}].a[{}] = 1;\n{}".format(wall[0], wall[1], "{}"))
+    self.wall_string = self.wall_string.format(" ")
+
+  def create_spin(self):
+    if self.fixed_map is None:
+      self.fix_map()
+    self.create_wall_string()
+
+    formatted_init = promela_init_for_game_4.format(
+			avatar_y = self.avatar_location[0]+1,
+			avatar_x = self.avatar_location[1]+1,
+			portal_y = self.portal_location[0]+1,
+      portal_x = self.portal_location[1]+1,
+      length = self.length+1,
+      length2 = self.length,
+      width = self.width+1,
+      width2 = self.width,
+      wall_str = self.wall_string
+		)
+    formatted_header = promela_header_for_game_3.format(self.length+2, self.width+2)
+    self.promela_whole_file = self.promela_whole_file.format(
+			promela_comment_01,
+			promela_comment_02,
+			formatted_header,
+			promela_avatar_game_4,
+			promela_opponent_for_game_4,
+			formatted_init,
+			promela_ltl_formula_basic
+		)
+
+  def perform(self):
+    import time
+    self.create_spin()
+    os.system("mkdir ../spin > /dev/null 2>&1")
+    tt = time.time()
+    os.system("rm ../spin/temp.pml > /dev/null")
+    f = open("../spin/temp.pml", "a")
+    f.write(self.promela_whole_file)
+    f.close()
+    tt = time.time() - tt
+    print("   creating temp.pml: " + str(tt))
+    tt = time.time()
+    os.system("spin -a -c2 -DREACH ../spin/temp.pml")
+    tt = time.time() - tt
+    print("   creating pan.c: " + str(tt))
+    tt = time.time()
+    proc = subprocess.Popen(["gcc pan.c -DREACH -o ../spin/temp.out -lm"], stdout=subprocess.PIPE, shell=True)
+    (out, err) = proc.communicate()
+    if out != b'':
+      raise spinCompileException("Cannot compile with gcc.")
+    tt = time.time() - tt
+    print("   creating temp.out: " + str(tt))
+    tt = time.time()
+    os.system("../spin/temp.out -e -c2 >/dev/null")
+    tt = time.time() - tt
+    print("   executing temp.out: " + str(tt))
+
+    if os.path.isfile("temp.pml2.trail") == False:
+      raise spinCompileException("Only one way to victory!")
+
 class A_Star_Graph_Node:
   def __init__(self, parent=None, position=None):
     self.parent = parent
@@ -3901,7 +4026,7 @@ class SpinClass_Game2_smart():
       raise spinCompileException("Cannot compile with gcc.")
     os.system("../spin/temp.out -a >/dev/null") #It's already nearly impossible to win this.
 
-class SpinClass_Game3_smart():
+class SpinClass_Game3_smart_LTL_Out():
   def __init__(self, map):
     self.map = map
     self.length = len(map)
@@ -4004,6 +4129,114 @@ class SpinClass_Game3_smart():
     if out != b'':
       raise spinCompileException("Cannot compile with gcc.")
     os.system("../spin/temp.out -a -i >/dev/null")
+
+class SpinClass_Game3_smart():
+  def __init__(self, map):
+    self.map = map
+    self.length = len(map)
+    self.width = len(map[0])#Assuming a rectangle
+    self.fixed_map = None
+    self.list_walls = []
+    self.promela_whole_file = """{}\n{}\n{}\n{}\n{}\n{}\n{}"""
+    self.wall_string = "{}"
+
+  def fix_map(self):
+    temp_map = []
+
+    for line in self.map:
+      temp_map.append(list(line))
+
+      checklist = 0
+
+    for lineNum, line in enumerate(temp_map):
+      for chNum, ch in enumerate(line):
+        if ch == '0':
+          temp_map[lineNum][chNum] = '.'
+        elif ch == '1':
+          temp_map[lineNum][chNum] = 'w'
+          self.list_walls.append((lineNum + 1, chNum + 1))
+        elif ch == 'A':
+          self.avatar_location = (lineNum, chNum)
+          checklist += 1
+        elif ch == 'G':
+          self.portal_location = (lineNum, chNum)
+          checklist += 1
+        elif ch == 'E':
+          self.enemy_location  = (lineNum, chNum)
+          checklist += 1
+
+    if checklist != 3:
+      raise spinCompileException("Inproper placement of sprites!")
+
+
+    self.fixed_map = []
+
+    to_attach = ""
+    to_attach_list = []
+    for i in range(0, self.width + 2):
+      to_attach_list.append('w')
+
+    to_attach = to_attach.join(to_attach_list)
+
+    for ln, line in enumerate(temp_map):
+      temp = ''.join(line)
+      temp = 'w' + temp + 'w'
+      self.fixed_map.append(temp)
+
+    self.fixed_map.insert(0, to_attach)
+    self.fixed_map.append(to_attach)
+
+  def create_wall_string(self):
+    for wall in self.list_walls:
+      self.wall_string = self.wall_string.format("\tmap[{}].a[{}] = 1;\n{}".format(wall[0], wall[1], "{}"))
+    self.wall_string = self.wall_string.format(" ")
+
+  def create_spin(self):
+    if self.fixed_map is None:
+      self.fix_map()
+    self.create_wall_string()
+
+    formatted_init = promela_init_for_game_3_smart.format(
+			avatar_y = self.avatar_location[0]+1,
+			avatar_x = self.avatar_location[1]+1,
+			portal_y = self.portal_location[0]+1,
+            portal_x = self.portal_location[1]+1,
+            opponent_y = self.enemy_location[0]+1,
+            opponent_x = self.enemy_location[1]+1,
+            length = self.length+1,
+            length2 = self.length,
+            width = self.width+1,
+            width2 = self.width,
+            wall_str = self.wall_string
+		)
+    formatted_header = promela_header_for_game_3_smart.format(self.length+2, self.width+2)
+    self.promela_whole_file = self.promela_whole_file.format(
+			promela_comment_01,
+			promela_comment_02,
+			formatted_header,
+			promela_avatar_game_3,
+			promela_opponent_for_game_3_smart,
+			formatted_init,
+			promela_ltl_formula_basic
+		)
+
+  def perform(self):
+    self.create_spin()
+    os.system("mkdir ../spin > /dev/null 2>&1")
+    os.system("rm ../spin/temp.pml > /dev/null")
+    f = open("../spin/temp.pml", "a")
+    f.write(self.promela_whole_file)
+    f.close()
+    os.system("spin -a -c2 ../spin/temp.pml")
+    proc = subprocess.Popen(["gcc -std=c99 pan.c -DREACH -DMAX_LEN={} -o ../spin/temp.out  -lm".format(self.length+2)], stdout=subprocess.PIPE, shell=True)
+    (out, err) = proc.communicate()
+    if out != b'':
+      raise spinCompileException("Cannot compile with gcc.")
+    os.system("../spin/temp.out -e -c2 >/dev/null")
+
+
+    if os.path.isfile("temp.pml2.trail") == False:
+      raise spinCompileException("Only one way to victory!")
 
 class SpinClass_Game4_smart():### XXX: Cannot be a smart game 4, it's only us!
   def __init__(self, map):
@@ -4222,6 +4455,35 @@ def create_spin_from_game_5(map_):
 
 if __name__ == "__main__":
   import cellularAutomata, caPolisher, spritePlanner, spinParser, player
+  ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="111110101100000110001000")
+  cap = caPolisher.CApolisher(ca=ca)
+  sp = spritePlanner.equalSpritePlanner(cap.perform())
+  sp.perform()
+  ss = SpinClass_Game3_smart_LTL_Out(sp.getMap())
+  spp = spinParser.spinParser()
+
+  ss.perform()
+  moves = spp.perform()
+  print(moves)
+  p = player.RacerGameClass_Smart(action_list=moves[0], level_desc=sp.getMap())
+  p.play()
+"""
+  ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="111110101100011010001000")
+  cap = caPolisher.CApolisher(ca = ca)
+  sp = spritePlanner.dualSpritePlanner(cap.perform())
+  sp.perform()
+  ss = SpinClass_Game4_LTL_Out(sp.getMap())
+  spp = spinParser.spinParser()
+
+  ss.perform()
+  
+  print_2=spp.perform()
+  
+
+  p = player.MazeGameClass(action_list=print_2[0], level_desc=sp.getMap())
+  print(p.play())
+"""
+"""
   ca = cellularAutomata.elementary_cellular_automata(ruleset=30,size=10,limit=10, start="0111111111")
   cap = caPolisher.CApolisher(ca = ca)
   sp = spritePlanner.sokobanPlanner(cap.perform(), count_boxes=2)
@@ -4233,8 +4495,9 @@ if __name__ == "__main__":
   caPolisher.map_print(map_)
   moves = spp.perform()
   print(moves)
-  print(player.SokobanClass(action_list=moves, level_desc=map_).play()[0])
-  """q = player.SokobanClass(action_list=moves, level_desc=map_)
+  print(player.SokobanClass(action_list=moves, level_desc=map_).play()[0])"""
+"""
+  q = player.SokobanClass(action_list=moves, level_desc=map_)
   print(q.play())
   temp = ""
   for i in range(0,12):
@@ -4272,9 +4535,8 @@ if __name__ == "__main__":
   number_of_playouts= 1000000
   mcts_moves = player.MCTS_Runner_Regular_with_Time_Limit(mcts_time_limit, nloops=number_of_loops,max_d=max_search_depth, n_playouts=number_of_playouts, rollout_depth=max_rollout_depth, game_desc=q.game, level_desc=map2, render=True).run()[0][0]
   mcts_score, mcts_terminal = self.player(action_list=mcts_moves, level_desc=map_).play()
-  """
-
-  """
+"""
+"""
   ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="111110101100011010001000")
   cap = caPolisher.CApolisher(ca = ca)
   sp = spritePlanner.dualSpritePlanner(cap.perform())
@@ -4305,8 +4567,8 @@ if __name__ == "__main__":
 
   p = player.MazeGameClass(action_list=print_2[0], level_desc=sp.getMap())
   print(p.play())
-  """
-  """
+"""
+"""
   import cellularAutomata, caPolisher, spritePlanner, spinParser, time, player
   ca = cellularAutomata.elementary_cellular_automata(ruleset=30, start="100101101001011010010110")
   cap = caPolisher.CApolisher(ca = ca)
@@ -4323,4 +4585,5 @@ if __name__ == "__main__":
   map2 = temp + "\n1"+"1\n1".join(mapp)+"1\n" + temp
   
   mcts = player.MCTS_Runner_Regular_with_Time_Limit(1000,max_d=14,n_playouts=25000,rollout_depth=80,game_desc=game.game, render=True, level_desc=map2, discount_factor=0.99)
-  mcts.run()"""
+  mcts.run()
+"""
